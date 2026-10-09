@@ -11,6 +11,11 @@ class Node_new extends THREE.Mesh
             this.name='Node_new';
             STATE.Three_D_objects.push(this);
         }
+    toJSON()
+      {
+        return 'Жопа';
+      }
+      
 }
 
 class Edge_new extends THREE.Mesh
@@ -38,7 +43,13 @@ class Edge_new extends THREE.Mesh
             // console.log("Конечная точка ребра",end_node.position);
             
       }
-
+    toJSON()
+      {
+        const output = {};
+        const object = {'Жопа': 'Жопа'};
+        output.object = object;
+        return output;
+      }
       // CreatePipeline () {
       //   alert('dfdfdf');
       //   // 1. Создаем общие геометрии и материалы
