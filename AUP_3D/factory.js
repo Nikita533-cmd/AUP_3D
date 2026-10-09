@@ -36,6 +36,7 @@ class Node_new extends THREE.Mesh
           ];
             
         }
+      
 }
 
 class Edge_new extends THREE.Mesh

@@ -152,13 +152,14 @@ def sole_api(request):
     
     return JsonResponse({'error': 'POST only'}, status=405)
 
-import json
-@csrf_exempt
+from rest_framework.decorators import api_view
+from rest_framework.response import Response 
+
+
+@api_view(['POST'])
 def new(request):
-    if request.method == 'POST':
-        # body = json.loads(request.body.decode('utf-8'))
-        print(request.body)
-        return JsonResponse({
-            'status': 'success'
-            #'received_data': request.body # Преобразуем QueryDict в обычный словарь для JSON
-        })
+    body = request.data
+    print(body)
+    return Response({
+        'received_data': body
+    })
