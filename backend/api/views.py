@@ -156,9 +156,9 @@ import json
 @csrf_exempt
 def new(request):
     if request.method == 'POST':
-        body = json.loads(request.body.decode('utf-8'))
-        print(body)
+        # body = json.loads(request.body.decode('utf-8'))
+        print(request.body)
         return JsonResponse({
-            'status': 'success',
-            'received_data': body # Преобразуем QueryDict в обычный словарь для JSON
+            'status': 'success'
+            #'received_data': request.body # Преобразуем QueryDict в обычный словарь для JSON
         })
