@@ -26,8 +26,9 @@
         <div class="ribbon-section">
           <div class="ribbon-btn-group">
             <button class="btn-ribbon" id="menuCreatePipeline" style="color: #d32f2f;">Создать трубопровод</button>
-            <button class="btn-ribbon" id="menuSplitSegment">Разбить участок...</button>
-            <button class="btn-ribbon" id="menuSplitPipeline">Разбить трубопровод...</button>
+            <button class="btn-ribbon" id="menuSplitPipeline" style="color: #d32f2f;">Разбить трубопровод</button>
+            <button class="btn-ribbon" id="menuPipeline_Edit" style="color: #d32f2f;">Редактировать трубопровод</button>
+            <button class="btn-ribbon" id="Check_3D" style="color: #d32f2f;">ПроCHECKовочка</button>
             <button class="btn-ribbon" id="menuDuplicateObject">Копировать...</button>
             <div style="height:1px;background:rgba(255,255,255,0.3);margin:4px 0;width:100%;"></div>
             <button class="btn-ribbon" id="menuConnectPoints">Соединить узлы...</button>
@@ -37,7 +38,8 @@
         </div>
         <div class="ribbon-section">
           <div class="ribbon-btn-group">
-            <button class="btn-ribbon" id="menuCreateBranch">Создать...</button>
+            <button class="btn-ribbon" id="menuCreateBranch" style="color: #d32f2f;">Создать ветку</button>
+            <button class="btn-ribbon" id="Add_list_object" style="color: #d32f2f;">Собрать массив данных</button>
             <button class="btn-ribbon" id="menuDuplicateBranch">Копировать...</button>
             <button class="btn-ribbon" id="menuCreateRow_new_ob">Получить элементы</button>
           </div>
@@ -176,7 +178,7 @@
         <div>Участков: <span id="pbSegmentCount">0</span></div>
         <div>Длина: <span id="pbTotalLength">0.00</span> м</div>
       </div> -->
-      <div id="pipelineSegmentsList"></div>
+      <!-- <div id="pipelineSegmentsList"></div> -->
     </div>
   </div>
 </div>  
@@ -241,18 +243,23 @@
       <h3>Ветка</h3>
       <div class="modal-section">
         <h4>Количество оросителей</h4>
-        <div class="spr-row"><input type="number" id="createBranchSprCount" min="1" max="50" value="4"><button
-            id="createBranchUpdateBtn">Обновить</button></div>
+        <div class="spr-row">
+          <input type="number" id="createBranchSprCount" min="1" max="50" value="4">
+        </div>
+        <span>Направление оси трубопровода</span>
+        <button class="axis-btn " data-axis="x">X</button>
+        <button class="axis-btn active" data-axis="y">Y</button>
+        <button class="axis-btn" data-axis="z">Z</button>
       </div>
-      <div class="modal-section">
+      <!-- <div class="modal-section">
         <h4>Участки</h4>
         <div class="segment-header"><span>№</span><span>Длина, м</span><span>DN</span></div>
         <div id="createBranchInputs"></div>
         <div class="total-length">Общая: <span id="createBranchTotalLength">0.00</span> м</div>
-      </div>
+      </div> -->
       <div class="modal-buttons">
-        <button class="btn-cancel" id="createBranchCancelBtn">Отмена</button>
         <button class="btn-apply" id="createBranchApplyBtn">Создать</button>
+        <button class="btn-cancel" id="createBranchCancelBtn">Отмена</button>        
       </div>
     </div>
   </div>
@@ -409,40 +416,66 @@
       </div>
     </div>
   </div>
-  <div id="splitPipelineModal" class="edit-modal">
-    <div class="modal-content">
-      <h3>Разбить трубопровод №<span id="splitPipeId"></span></h3>
-      <div class="modal-section" style="background:#e3f2fd;border:1px solid #90caf9">
-        <h4 style="color:#1565c0">📊 Информация</h4>
-        <div class="modal-row"><label>Оригинал:</label><span id="splitOrigInfo">0 участков, 0.00 м</span></div>
-        <div class="modal-row"><label>Общая длина:</label><strong><span id="splitTotalLength">0.00</span> м</strong>
-        </div>
+
+
+  <div id="PipelineModal_Edit" class="edit-modal">
+    <div class="modal-content">      
+      <h3>Трубопровод:<span id="number_pipe_edit"></span></h3>
+      <h3>Длина редактируемого трубопровода:<span id="Length_pipe_edit"></span></h3>
+      <div class="step">
+        <span>Введите длину:</span>
+        <input type="number" id="pipe_edit" value="1" min="1" step="1">
+        <!-- Y<input type="number" id="pbCY" value="0" step="0.1">
+        Z<input type="number" id="pbCZ" value="0" step="0.1"> -->
       </div>
-      <div class="modal-section">
-        <h4>Параметры разбиения</h4>
-        <div class="modal-row"><label>Участков:</label><input type="number" id="splitSegCount" min="1" max="50"
-            value="3" style="width:60px"><button id="splitUpdateBtn"
-            style="padding:4px 10px;font-size:11px;background:#1976d2;color:#fff;border:none;border-radius:3px;cursor:pointer">Обновить</button><button
-            id="splitEqualBtn"
-            style="padding:4px 10px;font-size:11px;background:#ff9800;color:#fff;border:none;border-radius:3px;cursor:pointer;margin-left:4px">Равномерно</button>
-        </div>
-      </div>
-      <div class="modal-section">
-        <h4>Участки</h4>
-        <div class="segment-header"><span>#</span><span>Длина, м</span><span>⌀ DN</span></div>
-        <div id="splitInputs"></div>
-        <div class="edit-total">📏 Сумма: <span id="splitSumLength">0.00</span> м | <span id="splitDiffInfo"
-            style="color:#d32f2f"></span></div>
-      </div>
-      <div class="warning" id="splitWarning" style="display:none">⚠️ Сумма длин не совпадает</div>
       <div class="modal-buttons">
-        <button class="btn-cancel" id="splitCancelBtn">Отмена</button>
-        <button class="btn-apply" id="splitApplyBtn">Разбить</button>
+        <button class="confirm" id="splitApplyBtn_Edit">Применить</button>        
+        <button class="cancel" id="splitCancelBtn_Edit">Отмена</button>
+        <!-- <button class="btn-cancel" id="splitCancelBtn">Отмена</button>
+        <button class="btn-apply" id="splitApplyBtn">Разбить</button> -->
       </div>
     </div>
   </div>
+
+
+  <div id="splitPipelineModal" class="edit-modal">
+    <div class="modal-content">      
+      <h3>Трубопровод:<span id="number_pipe_break"></span></h3>
+      <h3>Длина разбиваемого трубопровода:<span id="Length_pipe_break"></span></h3>
+      <div class="step">
+        <span>Количество участков:</span>
+        <input type="number" id="pipe_break" value="2" min="2" step="1">
+        <!-- Y<input type="number" id="pbCY" value="0" step="0.1">
+        Z<input type="number" id="pbCZ" value="0" step="0.1"> -->
+      </div>
+      <div class="modal-buttons">
+        <button class="confirm" id="splitApplyBtn">Разбить</button>        
+        <button class="cancel" id="splitCancelBtn">Отмена</button>
+        <!-- <button class="btn-cancel" id="splitCancelBtn">Отмена</button>
+        <button class="btn-apply" id="splitApplyBtn">Разбить</button> -->
+      </div>
+    </div>
+  </div>
+
+  <!-- <div id="splitPipelineModal" class="edit-modal">
+    <div class="pipeline-header" id="splitPipeline_brok">
+      <span class="title">Разбиение трубопровода</span>      
+    </div>
+    <div class="pipeline-body">
+      <div class="step">
+        <span>Трубопровод:<span id="number_pipe_break"></span></span>        
+      </div>      
+      <div class="step">
+        <button class="confirm" id="splitApplyBtn">Разбить</button>        
+        <button class="cancel" id="splitCancelBtn">Отмена</button>
+      </div>      
+    </div>            
+  </div> -->
+
+
   <div id="splitSegmentModal" class="edit-modal">
     <div class="modal-content">
+      
       <h3>Разбить сегмент #<span id="splitSegIndex"></span> трубопровода №<span id="splitSegPipelineId"></span></h3>
       <div class="modal-section" style="background:#e3f2fd;border:1px solid #90caf9">
         <h4 style="color:#1565c0">📊 Информация</h4>

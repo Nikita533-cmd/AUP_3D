@@ -6,39 +6,65 @@ class Node_new extends THREE.Mesh
 {
     constructor( geometry, material, type) 
         {
-            super( geometry, material);
-            this.type=type;
-            this.name='Node_new';
-            STATE.Three_D_objects.push(this);
+          super( geometry, material);
+          this.type=type;
+          this.name='Node_new';
+          this.X_gl=0;
+          this.Y_gl=0;
+          this.Z_gl=0;
+          STATE.Three_D_objects.push(this);
+        }
+          update_Global() {
+          const World_Vector = new THREE.Vector3();        
+          // запрос позиции объекта
+          this.getWorldPosition(World_Vector);
+          
+          // обновляем свойства объекта
+          this.X_gl = World_Vector.x;
+          this.Y_gl = World_Vector.y;
+          this.Z_gl = World_Vector.z;
+                  
+          return [this.X_gl, this.Y_gl, this.Z_gl];
+        }
+        add_list(){
+          return [
+            this.uuid,   
+            this.type,   
+            this.X_gl,  
+            this.Y_gl,   
+            this.Z_gl
+          ];
+            
         }
 }
 
 class Edge_new extends THREE.Mesh
 {
-    constructor( geometry, material, start_node, end_node) 
+    constructor( geometry, material, start_node, end_node, type, Length, DN) 
       {
             super( geometry, material);
             this.start_node=start_node;
             this.end_node= end_node;
             this.name='Edge_new';
-
+            this.type=type;
+            this.Length=Length;
+            this.DN = DN;
 
             STATE.Three_D_objects.push(this);
-
-            // this.position.set(start_node.position.x,start_node.position.y, start_node.position.z);
-            // this.point2 = new THREE.Vector3(end_node.position.x,end_node.position.y, end_node.position.z)
-            // this.lookAt(this.point2);
-            // Line
-
-            // const path = new THREE.Line(start_node.position, end_node.position)
-
-
-
-            // console.log("Начальаня точка ребра",start_node.position);
-            // console.log("Конечная точка ребра",end_node.position);
-            
+                        
       }
-
+      add_list(){
+          return [
+            this.uuid,   
+            this.type,   
+            this.DN,  
+            this.Length,   
+            this.start_node.uuid,
+            this.end_node.uuid            
+          ];
+                        
+          
+      }
       // CreatePipeline () {
       //   alert('dfdfdf');
       //   // 1. Создаем общие геометрии и материалы

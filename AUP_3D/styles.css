@@ -440,8 +440,7 @@
       gap: 6px;
     }
 
-    #pipelineBuilder .axis-btn,
-    #pipelineBuilder .dir-btn {
+    #pipelineBuilder .axis-btn, #pipelineBuilder .dir-btn, #createBranchModal .axis-btn {
       padding: 6px 10px;
       border: none;
       border-radius: 4px;
@@ -452,8 +451,7 @@
       color: #fff;
     }
 
-    #pipelineBuilder .axis-btn.active,
-    #pipelineBuilder .dir-btn.active {
+    #pipelineBuilder .axis-btn.active, #pipelineBuilder .dir-btn.active, #createBranchModal .axis-btn.active {
       background: #2a7a3e;
       color: #fff;
     }
