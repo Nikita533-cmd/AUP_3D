@@ -138,7 +138,7 @@ function buildHydraulicChart(data) {
                         font: { size: 13, weight: "bold" },
                     },
                     min: 0,
-                    max: Math.max(H_source * 1.2, Z_max * 1.5, 50),
+                    max: Math.max(H_source * 2.2, Z_max * 2, 50),
                     grid: {
                         color: "rgba(0, 0, 0, 0.05)",
                     },
