@@ -360,7 +360,6 @@ function Check_CreateBranch(){
     document.getElementById("createBranchModal").style.display = 'block';
     document.body.classList.add('builder-active');
     document.getElementById("createBranchCancelBtn").onclick = () => cancel("createBranchModal");
-
     const sprCountInput = document.getElementById("createBranchSprCount");
     sprCountInput.addEventListener("input", function() {
         let Count = parseFloat(document.getElementById("createBranchSprCount").value);        
@@ -373,6 +372,23 @@ function Check_CreateBranch(){
             });
         }
     });
+    // const sprCountInput = document.getElementById("createBranchSprCount");
+    // sprCountInput.addEventListener("input", function() {
+    //     let Count = parseFloat(document.getElementById("createBranchSprCount").value);        
+    //     const tabContent = document.getElementById('myTabContent');                
+    //     tabContent.innerHTML = html_branch_content(Count);
+    //     get_load_pipe_for_sprinkler("get_tube_pipe_sprinkler");
+    //     document.getElementById("get_tube_pipe_sprinkler").addEventListener("change", (event) => {
+    //         // get_load_pipe_for_sprinkler("get_tube_pipe_sprinkler");   
+    //     });      
+    //     for (let i = 0; i < Count; i++) {
+    //         // get_load_pipe("get_tube_pipe_sprinkler", `pbDiameter_sprinkler_${i}`);
+    //         // get_load_pbDiameter_for_sprinkler(`pbDiameter_sprinkler_${i}`);            
+    //         // document.getElementById("get_tube_pipe_sprinkler").addEventListener("change", (event) => {
+    //         //     get_load_pbDiameter_for_sprinkler(event.target.value, `pbDiameter_sprinkler_${i}`);   
+    //         // });
+    //     }
+    // });
     sprCountInput.dispatchEvent(new Event('input'));   
     document.getElementById("createBranchApplyBtn").onclick = () => create_branch(Engine.selectedObject);
     // cancel("createBranchModal");

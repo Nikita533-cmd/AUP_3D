@@ -13,6 +13,12 @@
 //     d_node_base: 0.1
 // }
 
+
+
+let Tube_data = {}; // массив данных для храенения списков ДУ труб
+
+
+
 const AXES_SETTINGS = {
     AUTO_SIZE: { ENABLED: false, RELATIVE_RATIO: .25, MIN_SIZE: .5, MAX_SIZE: 10 },
     FIXED_SIZE: 1,
