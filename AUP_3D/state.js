@@ -8,6 +8,10 @@
 // function isSamePoint(p1, p2, t) {
 //     return p1.distanceToSquared(p2) <= (t || GEOMETRY_TOLERANCE) * (t || GEOMETRY_TOLERANCE);
 // }
+const VisualPipelins = {
+    d_pipe_base: 0.05,
+    d_node_base: 0.1
+}
 
 const AXES_SETTINGS = {
     AUTO_SIZE: { ENABLED: false, RELATIVE_RATIO: .25, MIN_SIZE: .5, MAX_SIZE: 10 },
@@ -44,13 +48,7 @@ const CONFIG = {
 const STATE = {
 
 
-    Three_D_objects: [],
-
-
-
-
-
-    
+    Three_D_objects: [],    
     objects: [],
     objectCounter: 0,
     pipelineCounter: 0,
