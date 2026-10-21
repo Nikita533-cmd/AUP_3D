@@ -112,8 +112,8 @@ function cancel(name) {
 function CreatePipeline (pbCX, pbCY, pbCZ, activeAxis, activeAxis_direction, pbLength, activeAxis_rotation, rotate_value, type_tube,
             pbDiameter, k_t, kvelocity, Check_Nodes) {
     // create_Pipe_line.style.display = 'block';
-    console.log("d_node_base", VisualPipelins.d_node_base);
-    const Node_Geometry = new THREE.SphereGeometry(2*VisualPipelins.d_node_base, 32, 32);
+    // console.log("activeAxis_direction1488888",activeAxis_direction);
+    const Node_Geometry = new THREE.SphereGeometry(VisualPipelins.d_node_base/2, 32, 32);
     const Node_Material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });    
     const Edge_Material = new THREE.MeshBasicMaterial({ color: '#0F1379' });
     console.log("Check_Nodes_121123",Check_Nodes)
@@ -309,7 +309,7 @@ function edit_pipe_tube(Edge) {
     Edge.kvelocity=new_kvelocity;
     Edge.Length = new_long;
 
-    const new_Node_Geometry = new THREE.SphereGeometry(2*VisualPipelins.d_node_base, 32, 32);
+    const new_Node_Geometry = new THREE.SphereGeometry(VisualPipelins.d_node_base/2, 32, 32);
     Edge.start_node.geometry.dispose();
     Edge.end_node.geometry.dispose();
     Edge.start_node.geometry = new_Node_Geometry;
@@ -379,6 +379,8 @@ function Check_CreateBranch(){
 }
 
 
+// функция создания новой ветки
+
 function create_branch(Node) {    
     
     const activeAxis = document.querySelector('#createBranchModal .axis-btn.active').dataset.axis;
@@ -395,8 +397,7 @@ function create_branch(Node) {
     let currentX = start_World_Pos.x;
     let currentY = start_World_Pos.y;
     let currentZ = start_World_Pos.z;
-    // Дефолтный материал
-    // const Node_Geometry = new THREE.SphereGeometry(2 * 50 / 1000, 32, 32);
+    // Дефолтный материал    
     const Node_Material = new THREE.MeshBasicMaterial({ color: '#FF0000' });    
     const Edge_Material = new THREE.MeshBasicMaterial({ color: '#0F1379' });    
 
@@ -409,10 +410,7 @@ function create_branch(Node) {
         const new_DN_tube = parseFloat(pbDiameter_sprinkler.selectedOptions[0].textContent); ///// сами свойства
         const new_k_t = parseFloat(pbDiameter_sprinkler.selectedOptions[0].dataset.k_t);
         const new_kvelocity = parseFloat(pbDiameter_sprinkler.selectedOptions[0].dataset.kvelocity);
-        // const new_long = parseFloat(document.getElementById("pipe_edit").value);   
-
-
-        // const pbDiameter_sprinkler = parseFloat(document.getElementById(`pbDiameter_sprinkler_${i}`).value); //// элемент для удосбвтва вывода свойств
+        
         const pbLength_branch = parseFloat(document.getElementById(`pbLength_branch_${i}`).value); //// элемент для удосбвтва вывода свойств
         
         const [pbCX_end, pbCY_end, pbCZ_end] = calculation_end_node(currentX, currentY, currentZ, pbLength_branch, activeAxis,
@@ -420,7 +418,7 @@ function create_branch(Node) {
                 
         let currentEndNode;
         console.log("new_DN_tube в создании ветки",new_DN_tube)
-        const Node_Geometry = new THREE.SphereGeometry(2*VisualPipelins.d_node_base, 32, 32);
+        const Node_Geometry = new THREE.SphereGeometry(VisualPipelins.d_node_base/2, 32, 32);
         // проверка на созданные орсоители пока не нужна 
         const check_node_end = check_End_Node(pbCX_end, pbCY_end, pbCZ_end);
         if (check_node_end) {
@@ -429,16 +427,14 @@ function create_branch(Node) {
             currentEndNode = new Node_new(Node_Geometry, Node_Material, 'Sprinkler');
             currentEndNode.position.set(pbCX_end, pbCY_end, pbCZ_end);
         }
-        // Просто создаем новые узлы с типом орсоитель
-        // currentEndNode = new Node_new(Node_Geometry, Node_Material, 'Sprinkler');
-        // currentEndNode.position.set(pbCX_end, pbCY_end, pbCZ_end);
+        // Просто создаем новые узлы с типом орсоитель      
 
         // ==========================================================
         // ДОБАВЛЕНИЕ СТРЕЛОЧКИ (ОРОСИТЕЛЯ), НАПРАВЛЕННОЙ ВНИЗ
         // ==========================================================
         const sprinklerGroup = new THREE.Group();
         sprinklerGroup.name = 'SprinklerArrow';
-        const nodeRadius = 2 * new_DN_tube / 1000; // 0.1
+        const nodeRadius = VisualPipelins.d_node_base/2;
         // 1. Стержень стрелки (цилиндр)
         const shaftRadius = nodeRadius * 0.1; // Пропорционально размеру узла
         const shaftHeight = nodeRadius * 2.5;
@@ -471,9 +467,6 @@ function create_branch(Node) {
         
         const path = new THREE.LineCurve3(step_Start_Pos, step_End_Pos);
         const Pipe_visible = new THREE.TubeGeometry(path, 64, VisualPipelins.d_pipe_base/2, 12, false);
-        
-        // const Pipe_connection = new Edge_new(Piepe_visible, Edge_Material, Node_Start, Node_End, 'Edge', pbLength, pbDiameter,
-        //      type_tube, k_t, kvelocity );
         const Pipe_connection = new Edge_new(Pipe_visible, Edge_Material, currentStartNode, currentEndNode, 'Edge',pbLength_branch,
             new_DN_tube, type_tube, new_k_t, new_kvelocity);
         
@@ -513,7 +506,6 @@ function html_branch_content(Count) {
     }
     return html;
 }
-
 
 function check_position_node_for_edge() {
     Engine.scene.traverse((child) => {
@@ -603,11 +595,6 @@ function delete_pipe_tube() {
     console.log("Engine.scene.children проверка после удаления",Engine.scene.children);
     
 }
-
-
-
-
-
 
 
 async function sendJsonAndVisualize(v) {
@@ -845,8 +832,6 @@ function createTextLabelAlongPipe(text, startWorld, endWorld, color = '#ffffff',
     return mesh;
 }
 
-
-
 // ============================================================================
 // 2. Функция очистки старых меток (ВАЖНО для предотвращения утечек памяти!)
 // ============================================================================
@@ -905,7 +890,6 @@ function cleanSceneOrphans() {
     
     console.log(`🧹 Очистка сцены: ${STATE.Three_D_objects.length} объектов осталось`);
 }
-
 
 // ============================================================================
 // 3. Главная функция визуализации результатов
@@ -1055,6 +1039,7 @@ function checkSceneStructure() {
 // ============================================================================
 // 4. Функция создания стрелки направления течения (КОНУС ПО ОСИ ТРУБЫ)
 // ============================================================================
+
 function createFlowArrow(startWorld, endWorld, isReverse = false, color = '#006400') {
     // 1. Определяем направление потока
     const from = isReverse ? endWorld.clone() : startWorld.clone();
@@ -1067,8 +1052,9 @@ function createFlowArrow(startWorld, endWorld, isReverse = false, color = '#0064
 
     // 3. Размеры конуса (уменьшенные для лучшего вида)
     const pipeLength = startWorld.distanceTo(endWorld);
-    const coneHeight = Math.min(pipeLength * 0.15, 0.8); // Высота конуса (25% длины трубы, макс 0.8м)
-    const coneRadius = coneHeight * 0.5;                 // Радиус основания (половина высоты)
+    // const coneHeight = Math.min(pipeLength * 0.15, 0.8); // Высота конуса (25% длины трубы, макс 0.8м)
+    const coneHeight = Math.min(0.2, 0.2); 
+    const coneRadius = coneHeight * 0.25;                 // Радиус основания (половина высоты)
 
     // 4. Создаём геометрию конуса (32 сегмента для гладкости)
     const geometry = new THREE.ConeGeometry(coneRadius, coneHeight, 128);
@@ -1173,16 +1159,10 @@ function exportToJSON() {
     }
 }
 
-
-
-
-
 // ============================================================================
 // УПРАВЛЕНИЕ ДЕРЕВОМ ПОСТРОЕНИЯ
 // ============================================================================
-// ============================================================================
-// УПРАВЛЕНИЕ ДЕРЕВОМ ПОСТРОЕНИЯ
-// ============================================================================
+
 let treeVisible = false;
 let treeBuilt = false;
 
