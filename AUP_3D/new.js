@@ -957,7 +957,7 @@ function visualizeResults(result) {
             nodeObj.getWorldPosition(nodeWorldPos);
             
             // Давление — ОТДЕЛЬНОЙ меткой СВЕРХУ узла
-            const pressureLabel = `${data.pressure_m.toFixed(2)} м вод. ст.`;
+            const pressureLabel = `${data.pressure_m.toFixed(3)} м вод. ст.`;
             const pressureLabelMesh = createTextLabel(pressureLabel, '#000000', 0);
             pressureLabelMesh.position.copy(nodeWorldPos);
             pressureLabelMesh.position.y += 0.25;  // ⬆️ Поднимаем выше (было 0.25)
@@ -965,7 +965,7 @@ function visualizeResults(result) {
             
             // Для оросителей добавляем расход
             if (data.type === 'sprinkler') {
-                const flowLabel = `${data.sprinkler_flow_l_s.toFixed(2)} л/с`;
+                const flowLabel = `${data.sprinkler_flow_l_s.toFixed(3)} л/с`;
                 const flowLabelMesh = createTextLabel(flowLabel, '#000000', 0);
                 flowLabelMesh.position.copy(nodeWorldPos);
                 flowLabelMesh.position.y -= 0.6;  // Чуть ниже давления
@@ -977,7 +977,7 @@ function visualizeResults(result) {
             } 
             // Для источников
             else if (data.type === 'source') {
-                const sourceFlowLabel = `${Math.abs(result.summary.total_flow_l_s).toFixed(2)} л/с`;
+                const sourceFlowLabel = `${Math.abs(result.summary.total_flow_l_s).toFixed(3)} л/с`;
                 const sourceFlowLabelMesh = createTextLabel(sourceFlowLabel, '#000000', 0);
                 sourceFlowLabelMesh.position.copy(nodeWorldPos);
                 sourceFlowLabelMesh.position.y += 0.4;  // Чуть ниже давления
@@ -1038,17 +1038,17 @@ function visualizeResults(result) {
     console.log(`✅ ВИЗУАЛИЗАЦИЯ ЗАВЕРШЕНА! Добавлено меток: узлов=${nodesCount}, труб=${edgesCount}`);
 
     alert(
-    `✅ Расчет успешно завершен!\n` +
-    `Давление насоса: ${result.summary.source_pressure_m.toFixed(2)} м\n` +
-    `Добавлено меток: ${nodesCount + edgesCount}\n\n` +
-    `⏱️ Время расчета (всего): ${result.summary.timing.total_s.toFixed(4)} сек\n` +
-    `  • Этап 1: ${result.summary.timing.stage1_s.toFixed(4)} сек\n` +
-    `  • Поиск источника: ${result.summary.timing.source_search_s.toFixed(4)} сек\n` +
-    `  • Финальное решение: ${result.summary.timing.final_solve_s.toFixed(4)} сек\n\n` +
-    `📊 Невязки:\n` +
-    `  • Норма невязки: ${result.summary.residual_norm.toExponential(4)}\n` +
-    `  • Макс. невязка: ${result.summary.max_residual.toExponential(4)}`
-);
+        `✅ Расчет успешно завершен!\n` +
+        `Давление насоса: ${result.summary.source_pressure_m.toFixed(2)} м\n` +
+        `Добавлено меток: ${nodesCount + edgesCount}\n\n` +
+        `⏱️ Время расчета (всего): ${result.summary.timing.total_s.toFixed(4)} сек\n` +
+        `  • Этап 1: ${result.summary.timing.stage1_s.toFixed(4)} сек\n` +
+        `  • Поиск источника: ${result.summary.timing.source_search_s.toFixed(4)} сек\n` +
+        `  • Финальное решение: ${result.summary.timing.final_solve_s.toFixed(4)} сек\n\n` +
+        `📊 Невязки:\n` +
+        `  • Норма невязки: ${result.summary.residual_norm.toExponential(4)}\n` +
+        `  • Макс. невязка: ${result.summary.max_residual.toExponential(4)}`
+    );
 
 }
 

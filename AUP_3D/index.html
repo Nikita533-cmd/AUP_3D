@@ -338,7 +338,7 @@
           Y<input type="number" id="pbCY" value="0" step="0.1" readonly>
           Z<input type="number" id="pbCZ" value="0" step="0.1" readonly>
         </div>
-        <div class="step">
+        <!-- <div class="step">
           <span>Ось трубопровода</span>
           <button class="axis-btn" data-axis="x">X</button>
           <button class="axis-btn active" data-axis="y">Y</button>
@@ -347,7 +347,22 @@
           <button class="dir-btn active" data-dir="+">+</button>
           <button class="dir-btn" data-dir="-">-</button>
         </div> 
-        <div class="step">
+        <div class="step"> -->
+
+          <div class="step">
+            <span>Ось трубопровода</span>
+            <!-- По умолчанию делаем активной, например, кнопку +X -->
+            <button class="axis-btn active" data-axis="x" data-dir="+">+X</button>
+            <button class="axis-btn" data-axis="x" data-dir="-">-X</button>
+            
+            <button class="axis-btn" data-axis="y" data-dir="+">+Y</button>
+            <button class="axis-btn" data-axis="y" data-dir="-">-Y</button>
+            
+            <button class="axis-btn" data-axis="z" data-dir="+">+Z</button>
+            <button class="axis-btn" data-axis="z" data-dir="-">-Z</button>
+          </div>
+
+
           <span>Длина, м</span>
           <input type="number" id="pbLength" value="5" step="0.1" min="0.1" max="100">
         </div>
