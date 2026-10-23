@@ -1,7 +1,7 @@
 import logging
 from decimal import Decimal
 from typing import List
-
+import uuid
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
@@ -172,3 +172,22 @@ class Sprinkler(models.Model):
             data.append({"P": P.quantize(Decimal("1.000")), "intensity": intensity})
             P += step
         return data
+
+
+class CalculateResult(models.Model):
+    id = models.UUIDField(default=uuid.uuid4, primary_key=True)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
+    data = models.JSONField(verbose_name="Данные расчета", default=dict)
+    name = models.CharField(
+        "Наименование объекта",
+        max_length=1000,
+        null=True,
+    )
+
+    class Meta:
+        verbose_name = "Результат расчета"
+        verbose_name_plural = "Результаты расчетов"
+        ordering = ('-created_at',)
+
+    def __str__(self):
+        return f'{self.name} дата: {self.created_at}' 

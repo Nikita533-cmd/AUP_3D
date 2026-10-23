@@ -1,11 +1,17 @@
 from django.contrib import admin
-from .models import Sprinkler
+from .models import Sprinkler, CalculateResult
+from import_export.admin import ImportExportModelAdmin
 
 @admin.register(Sprinkler)
-class SprinklerAdmin(admin.ModelAdmin):
+class SprinklerAdmin(ImportExportModelAdmin, admin.ModelAdmin):
     list_display = ("name",)
     search_fields = ("name",)
 
+
+@admin.register(CalculateResult)
+class CalculateResultAdmin(ImportExportModelAdmin, admin.ModelAdmin):
+    list_display = ("name",)
+    search_fields = ("name",)
 # @admin.register(Type)
 # class TypeAdmin(admin.ModelAdmin):
 #     list_display = ("tube_type", "nom_size", "ext_size", "thickness", "k_t", "kvelocity")
