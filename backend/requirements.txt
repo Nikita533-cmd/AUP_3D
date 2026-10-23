@@ -77,3 +77,4 @@ networkx
 jax
 jaxlib
 jaxopt
+django-import-export
