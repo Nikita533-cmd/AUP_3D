@@ -58,7 +58,7 @@ function Check_nodes_scene() {
 function Pipe_Line_visible_block () {
     let Check_Nodes = Check_nodes_scene();
     if (Check_Nodes) {    
-        if (!Engine.selectedObject || (Engine.selectedObject.type !== 'Node' && Engine.selectedObject.type !== 'Sprinkler')) {
+        if (!Engine.selectedObject || (Engine.selectedObject.type !== 'Node' && Engine.selectedObject.type !== 'Sprinkler' && Engine.selectedObject.type !== 'Source')) {
             alert("Перед созданием трубопровода - выберите существующий узел!");
             return; 
         }
@@ -70,7 +70,7 @@ function Pipe_Line_visible_block () {
         let Check_Nodes_click = Check_nodes_scene();
         if (Check_Nodes_click) {  
             Check_Nodes = true;
-            if (!Engine.selectedObject || (Engine.selectedObject.type !== 'Node' && Engine.selectedObject.type !== 'Sprinkler')) {
+            if (!Engine.selectedObject || (Engine.selectedObject.type !== 'Node' && Engine.selectedObject.type !== 'Sprinkler' && Engine.selectedObject.type !== 'Source')) {
                 alert("Перед созданием трубопровода - выберите существующий узел!");
                 return; 
             }
@@ -348,7 +348,7 @@ function Check_CreateBranch(){
         }        
     });    
     if (Check_node) {    
-        if (!Engine.selectedObject || (Engine.selectedObject.type !== 'Node' && Engine.selectedObject.type !== 'Sprinkler')) {
+        if (!Engine.selectedObject || (Engine.selectedObject.type !== 'Node' && Engine.selectedObject.type !== 'Sprinkler' && Engine.selectedObject.type !== 'Source')) {
             alert("Выберите узел привязки!");
             return; 
         }
@@ -1176,6 +1176,13 @@ function exportToJSON() {
     if (typeof Utils !== 'undefined' && Utils.showStatus) {
         Utils.showStatus('JSON-файл экспортирован');
     }
+}
+
+function export_new()
+{
+    const exporter = new ObjectExporter();
+    var t = exporter.parse(scene); // Получаем объект с данными сцены
+    JSON.stringify()
 }
 
 // ============================================================================
