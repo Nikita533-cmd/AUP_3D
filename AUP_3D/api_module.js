@@ -55,3 +55,38 @@ async function GetSprinkler() {
   console.log("datataaa",data);// читаем ровно один раз
   return data;                        // это и есть «возвращаемые данные», но внутри Promise
 }
+
+async function GetResults() {
+  const response = await fetch('/api/results/', {
+    headers: {
+      'Accept': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`HTTP error! status: ${response.status}, body: ${text.substring(0, 500)}`);
+  }
+
+  const data = await response.json(); 
+  console.log("datataaa",data);// читаем ровно один раз
+  return data;                        // это и есть «возвращаемые данные», но внутри Promise
+}
+
+async function SaveResults(body) {
+  const response = await fetch('/api/results/', {
+    // headers: {
+    //   'Accept': 'application/json',
+    // },
+      method: "POST",
+      body: JSON.stringify(body),
+      headers: {"Content-Type": "application/json"},
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`HTTP error! status: ${response.status}, body: ${text.substring(0, 500)}`);
+  }
+  const data = await response.json(); 
+  return data;                        // это и есть «возвращаемые данные», но внутри Promise
+}
