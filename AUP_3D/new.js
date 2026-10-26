@@ -10,14 +10,13 @@ document.getElementById("menuCreateBranch").onclick = () => Check_CreateBranch()
 document.getElementById("Add_list_object").onclick = () => Add_data_base();
 // Временная проверка координат элементов
 document.getElementById("Check_3D").onclick = () => logPipelineTree();
-
 // Слушатель для экспорта JSON
-document.getElementById("menuExportJSON").onclick = () => exportToJSON();
-
+document.getElementById("menuSave").onclick = () => exportToJSON();
 // Проверка существования начального узала
 // Если существует необходимо выбрать узел привязки
 // массив для передачи на бэкэнд
 // Функция для сбора информации из объектов
+// alert("",)
 function Add_data_base () {
     const Data_base = {
         Node: [],
@@ -51,48 +50,27 @@ function Check_nodes_scene() {
         if (child.type === 'Node') {
             Check_Nodes = true;
         }
-    });    
-    // if (Check_Nodes) {    
-    //     if (!Engine.selectedObject || (Engine.selectedObject.type !== 'Node' && Engine.selectedObject.type !== 'Sprinkler')) {
-    //         alert("Перед созданием трубопровода - выберите существующий узел!");
-    //         return true; 
-    //     }
-    // }
+    });
+    
     return Check_Nodes;
 }
 // функция для вклчюения отображения блока созданяи ветки
 function Pipe_Line_visible_block () {
     let Check_Nodes = Check_nodes_scene();
     if (Check_Nodes) {    
-        if (!Engine.selectedObject || (Engine.selectedObject.type !== 'Node' && Engine.selectedObject.type !== 'Sprinkler')) {
+        if (!Engine.selectedObject || (Engine.selectedObject.type !== 'Node' && Engine.selectedObject.type !== 'Sprinkler' && Engine.selectedObject.type !== 'Source')) {
             alert("Перед созданием трубопровода - выберите существующий узел!");
             return; 
         }
     }
     document.getElementById("pipelineBuilder").style.display = 'block';
     document.body.classList.add('builder-active');
-    // логика вызова данных дял определенного DN определенного типа трубопровода    
-    // if (Engine.selectedObject && Engine.selectedObject.type === 'Node'||Engine.selectedObject && Engine.selectedObject.type === 'Sprinkler') { 
-    //     // создаем вектор для записи мировых координат выделенного объекта
-    //     const selected_World_Pos = new THREE.Vector3();
-    //     // Получаем мировые координаты выделенного объекта
-    //     Engine.selectedObject.getWorldPosition(selected_World_Pos);
-    //     // Получаем мировые координаты выделенного меша
-    //     // const selectedPos = Engine.selectedObject.position;        
-    //     // Автоматически заполняем инпуты в HTML координатами выделенного узла
-    //     document.getElementById("pbCX").value = selected_World_Pos.x;
-    //     document.getElementById("pbCY").value = selected_World_Pos.y;
-    //     document.getElementById("pbCZ").value = selected_World_Pos.z;
-    // } else {             
-    //     document.getElementById("pbCX").value = 0;
-    //     document.getElementById("pbCY").value = 0;
-    //     document.getElementById("pbCZ").value = 0;
-    // }    
+    
     document.getElementById("pbConfirm").onclick = () => {
         let Check_Nodes_click = Check_nodes_scene();
         if (Check_Nodes_click) {  
             Check_Nodes = true;
-            if (!Engine.selectedObject || (Engine.selectedObject.type !== 'Node' && Engine.selectedObject.type !== 'Sprinkler')) {
+            if (!Engine.selectedObject || (Engine.selectedObject.type !== 'Node' && Engine.selectedObject.type !== 'Sprinkler' && Engine.selectedObject.type !== 'Source')) {
                 alert("Перед созданием трубопровода - выберите существующий узел!");
                 return; 
             }
@@ -117,22 +95,7 @@ function Pipe_Line_visible_block () {
         const DN_tube = parseFloat(pbDiameter.selectedOptions[0].textContent); ///// сами свойства
         const k_t = parseFloat(pbDiameter.selectedOptions[0].dataset.k_t);
         const kvelocity = parseFloat(pbDiameter.selectedOptions[0].dataset.kvelocity);
-        // console.log("type_tube",type_tube);
-        // console.log("=== ДАННЫЕ ДЛЯ СОЗДАНИЯ ТРУБОПРОВОДА ===");
-        // console.table({
-        //     "Координата X": pbCX,
-        //     "Координата Y": pbCY,
-        //     "Координата Z": pbCZ,
-        //     "Ось направления": activeAxis,
-        //     "Знак направления": activeAxis_direction,
-        //     "Длина участка (м)": pbLength,
-        //     "Ось вращения вокруг": activeAxis_rotation,
-        //     "Угол поворота (град)": rotate_value,
-        //     "Гост на трубы": type_tube,
-        //     "Номинальный ДН трубы": DN_tube,
-        //     "Коэффициент k_t": k_t,
-        //     "Коэффициент kvelocity": kvelocity
-        // });
+        
         CreatePipeline(pbCX, pbCY, pbCZ, activeAxis, activeAxis_direction, pbLength, activeAxis_rotation, rotate_value, type_tube, 
             DN_tube, k_t, kvelocity, Check_Nodes);
     };
@@ -285,7 +248,9 @@ function check_pipe_tube_Edit(){
     document.getElementById("type_pipe_edit").innerText = Engine.selectedObject.ghost;
     document.getElementById("DN_pipe_edit").innerText = Engine.selectedObject.DN;
     document.getElementById("Length_pipe_edit").innerText = Engine.selectedObject.Length;
-    
+    document.getElementById("pipe_edit").value = Engine.selectedObject.Length; 
+    // document.getElementById("get_tube_pipe_edit").value = Engine.selectedObject.ghost;
+    // document.getElementById("pbDiameter_edit").value = Engine.selectedObject.DN;   
     // console.log("Engine.selectedObject",Engine.selectedObject);
 
     // document.getElementById("splitCancelBtn_Edit").addEventListener("click", () => cancel("PipelineModal_Edit"));
@@ -385,7 +350,7 @@ function Check_CreateBranch(){
         }        
     });    
     if (Check_node) {    
-        if (!Engine.selectedObject || (Engine.selectedObject.type !== 'Node' && Engine.selectedObject.type !== 'Sprinkler')) {
+        if (!Engine.selectedObject || (Engine.selectedObject.type !== 'Node' && Engine.selectedObject.type !== 'Sprinkler' && Engine.selectedObject.type !== 'Source')) {
             alert("Выберите узел привязки!");
             return; 
         }
@@ -398,7 +363,6 @@ function Check_CreateBranch(){
     document.getElementById("createBranchModal").style.display = 'block';
     document.body.classList.add('builder-active');
     document.getElementById("createBranchCancelBtn").onclick = () => cancel("createBranchModal");
-
     const sprCountInput = document.getElementById("createBranchSprCount");
     sprCountInput.addEventListener("input", function() {
         let Count = parseFloat(document.getElementById("createBranchSprCount").value);        
@@ -413,6 +377,23 @@ function Check_CreateBranch(){
             });
         }
     });
+    // const sprCountInput = document.getElementById("createBranchSprCount");
+    // sprCountInput.addEventListener("input", function() {
+    //     let Count = parseFloat(document.getElementById("createBranchSprCount").value);        
+    //     const tabContent = document.getElementById('myTabContent');                
+    //     tabContent.innerHTML = html_branch_content(Count);
+    //     get_load_pipe_for_sprinkler("get_tube_pipe_sprinkler");
+    //     document.getElementById("get_tube_pipe_sprinkler").addEventListener("change", (event) => {
+    //         // get_load_pipe_for_sprinkler("get_tube_pipe_sprinkler");   
+    //     });      
+    //     for (let i = 0; i < Count; i++) {
+    //         // get_load_pipe("get_tube_pipe_sprinkler", `pbDiameter_sprinkler_${i}`);
+    //         // get_load_pbDiameter_for_sprinkler(`pbDiameter_sprinkler_${i}`);            
+    //         // document.getElementById("get_tube_pipe_sprinkler").addEventListener("change", (event) => {
+    //         //     get_load_pbDiameter_for_sprinkler(event.target.value, `pbDiameter_sprinkler_${i}`);   
+    //         // });
+    //     }
+    // });
     sprCountInput.dispatchEvent(new Event('input'));   
     document.getElementById("createBranchApplyBtn").onclick = () => create_branch(Engine.selectedObject);
     // cancel("createBranchModal");
@@ -507,7 +488,6 @@ function create_branch(Node) {
         
         const path = new THREE.LineCurve3(step_Start_Pos, step_End_Pos);
         const Pipe_visible = new THREE.TubeGeometry(path, 64, VisualPipelins.d_pipe_base/2, 12, false);
-
         const Pipe_connection = new Edge_new(Pipe_visible, Edge_Material, currentStartNode, currentEndNode, 'Edge',pbLength_branch,
             new_DN_tube, type_tube, new_k_t, new_kvelocity);
         
@@ -636,6 +616,7 @@ function delete_pipe_tube() {
     console.log("Engine.scene.children проверка после удаления",Engine.scene.children);
     
 }
+
 
 async function sendJsonAndVisualize(v) {
     console.log(" Отправка данных на расчет...", v);
@@ -933,7 +914,6 @@ function cleanSceneOrphans() {
 // ============================================================================
 // 3. Главная функция визуализации результатов
 // ============================================================================
-
 function visualizeResults(result) {
     console.log('🚀 Начинаем визуализацию...');
     
@@ -950,7 +930,7 @@ function visualizeResults(result) {
     for (const [uuid, data] of Object.entries(result.nodes)) {
         const nodeObj = STATE.Three_D_objects.find(
             obj => obj.uuid.toLowerCase() === uuid.toLowerCase() && 
-                   (obj.type === 'Node' || obj.type === 'Source' || obj.type === 'Sprinkler')
+                (obj.type === 'Node' || obj.type === 'Source' || obj.type === 'Sprinkler')
         );
 
         if (nodeObj) {
@@ -1197,6 +1177,13 @@ function exportToJSON1() {
     if (typeof Utils !== 'undefined' && Utils.showStatus) {
         Utils.showStatus('JSON-файл экспортирован');
     }
+}
+
+function export_new()
+{
+    const exporter = new ObjectExporter();
+    var t = exporter.parse(scene); // Получаем объект с данными сцены
+    JSON.stringify()
 }
 
 // ============================================================================

@@ -243,19 +243,21 @@
         <button class="btn-ribbon" id="menuNew"><span class="btn-icon">📄</span><span>Новый</span></button>
         <button class="btn-ribbon" id="menuOpen"><span class="btn-icon">📁</span><span>Открыть</span></button>
         <button class="btn-ribbon" id="menuSave"><span class="btn-icon">💾</span><span>Сохранить</span></button>
+        <input type="text" id="save_name_structure">
+        <select id="get_results"></select>
       </div>
 
       <!-- Вкладка: Подбор оросителя -->
       <div class="ribbon-panel" id="tab-sprinkler">
-        <button class="btn-ribbon" id="menuCreateSprinkler"><span class="btn-icon">🚿</span><span>Подобрать ороситель</span></button>
-        <button class="btn-ribbon" id="menuAdjustFlow"><span class="btn-icon">📏</span><span>Настроить расход</span></button>
+        <!-- <button class="btn-ribbon" id="menuCreateSprinkler"><span class="btn-icon">😀</span><span>Подобратьороситель</span></button>
+        <button class="btn-ribbon" id="menuAdjustFlow"><span class="btn-icon">📏</span><span>Настроить расход</span></button> -->
 
         <span class="btn-ribbon">Ороситель</span>
         <select id="get_sprinkler"></select>                
-        <span class="btn-ribbon">Давление у оросителя</span>
+        <span class="btn-ribbon">Давление</span>
         <input type="number" id="pressure_sprinkler" name="pressure" min="0" max="100" step="0.01" value="18">
         <span class="btn-ribbon">Расчеты</span>
-        <select id="get_results"></select>  
+          
 
       </div>
 
@@ -263,7 +265,7 @@
       <div class="ribbon-panel" id="tab-pipeline">
         <button class="btn-ribbon" id="menuCreatePipeline"><span class="btn-icon">🔧</span><span>Создать</span></button>
         <button class="btn-ribbon" id="menuPipeline_Edit"><span class="btn-icon">✏️</span><span>Изменить</span></button>
-        <button class="btn-ribbon" id="menuSplitPipeline"><span class="btn-icon">✂️</span><span>Разбить</span></button>
+        <!-- <button class="btn-ribbon" id="menuSplitPipeline"><span class="btn-icon">✂️</span><span>Разбить</span></button> -->
         <button class="btn-ribbon" id="delete_SplitPipeline"><span class="btn-icon">🗑️</span><span>Удалить</span></button>
       </div>
 
@@ -568,7 +570,7 @@
       </div>
       <div class="step">
         <span>Изменить длину трубопровода</span>
-        <input type="number" id="pipe_edit" value="1" min="0.1" step="1" max="100">
+        <input type="number" id="pipe_edit" min="0.1" step="1">
       </div>      
       <div class="step">
         <button class="confirm" id="splitApplyBtn_Edit">Применить</button>        
@@ -620,6 +622,50 @@
       </div>
     </div>
   </div>
+
+  <div id="info_selected_node">
+    <div class="pipeline-header" id="pipelineDragHandle">
+      <span class="title">Информация об элементе</span>
+    </div>
+    <div class="pipeline-body">
+      <div class="step"><span>Наименование узла:</span><span id="name_selected_node"></span></div>
+      <div class="step"><span>Тип узла:</span><span id="type_selected_node"></span></div>
+      <div class="step">
+        <span>Координаты узла:</span>
+        X<input type="number" id="pbCX_selected_node" value="0" step="0.1" readonly>
+        Y<input type="number" id="pbCY_selected_node" value="0" step="0.1" readonly>
+        Z<input type="number" id="pbCZ_selected_node" value="0" step="0.1" readonly>
+      </div>
+    </div>    
+  </div>
+
+  <div id="info_selected_edge">
+    <div class="pipeline-header" id="pipelineDragHandle">
+      <span class="title">Информация об элементе</span>
+    </div>
+    <div class="pipeline-body">
+      <div class="step"><span>Наименование ребра:</span><span id="name_selected_edge"></span></div>
+      <!-- <div class="step"><span>Тип узла:</span><span id="type_selected_node"></span></div> -->
+      <div class="step">
+        <span>Координаты начального узла:</span>
+        X<input type="number" id="pbCX_selected_start_node" value="0" step="0.1" readonly>
+        Y<input type="number" id="pbCY_selected_start_node" value="0" step="0.1" readonly>
+        Z<input type="number" id="pbCZ_selected_start_node" value="0" step="0.1" readonly>
+      </div>
+      <div class="step">
+        <span>Координаты конечного узла:</span>
+        X<input type="number" id="pbCX_selected_end_node" value="0" step="0.1" readonly>
+        Y<input type="number" id="pbCY_selected_end_node" value="0" step="0.1" readonly>
+        Z<input type="number" id="pbCZ_selected_end_node" value="0" step="0.1" readonly>
+      </div>
+      <div class="step"><span>ГОСТ трубы:</span><span id="ghost_selected_edge"></span></div>
+      <div class="step"><span>Номинальный диаметр:</span><span id="DN_selected_edge"></span></div>
+      <div class="step"><span>Длина:</span><span id="length_selected_edge"></span></div>
+      <div class="step"><span>Коэффициент местного сопротивления:</span><span id="kt_selected_edge"></span></div>
+      <div class="step"><span>Скоростной коэффициент:</span><span id="kvelocity_selected_edge"></span></div>      
+    </div>    
+  </div>
+
 
   <div id="splitPipelineModal" class="edit-modal">
     <div class="modal-content">      

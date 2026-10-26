@@ -374,7 +374,24 @@
       user-select: none;
     } */
 
-
+    #info_selected_node, #info_selected_edge{
+      position: fixed;
+      bottom: 10px; 
+      left: 10%;
+      /* transform: translateX(-50%);       */
+      
+      background: #F3F2F8;
+      padding: 0;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, .3);
+      display: none;
+      z-index: 20;
+      color: #fff;
+      font-size: 16px;
+      min-width: 500px;
+      max-height: 70vh;    /* Окно не займет больше 70% высоты экрана */
+      overflow-y: auto;
+    }
 
 
 
@@ -409,7 +426,8 @@
     }
 
 
-    #pipelineBuilder .pipeline-header, #PipelineModal_Edit .pipeline-header, #createBranchModal .pipeline-header{
+    #pipelineBuilder .pipeline-header, #PipelineModal_Edit .pipeline-header, #createBranchModal .pipeline-header,
+    #info_selected_node .pipeline-header, #info_selected_edge .pipeline-header{
       background:#0F1379;
       padding: 8px 12px;
       cursor: move;
@@ -420,17 +438,20 @@
       user-select: none;
     }
 
-    #pipelineBuilder .pipeline-header .title, #PipelineModal_Edit .pipeline-header .title, #createBranchModal .pipeline-header .title {
+    #pipelineBuilder .pipeline-header .title, #PipelineModal_Edit .pipeline-header .title, #createBranchModal .pipeline-header .title,
+      #info_selected_node .pipeline-header .title, #info_selected_edge .pipeline-header .title{
       font-weight: 600;
       font-size: 14px;
     }
 
-    #pipelineBuilder .pipeline-header .hint, #PipelineModal_Edit .pipeline-header .hint,#createBranchModal .pipeline-header .hint {
+    #pipelineBuilder .pipeline-header .hint, #PipelineModal_Edit .pipeline-header .hint, #createBranchModal .pipeline-header .hint,
+    #info_selected_node .pipeline-header .hint, #info_selected_edge .pipeline-header .hint {
       font-size: 10px;
       opacity: .7;
     }
 
-    #pipelineBuilder .pipeline-body, #PipelineModal_Edit .pipeline-body,#createBranchModal .pipeline-body {
+    #pipelineBuilder .pipeline-body, #PipelineModal_Edit .pipeline-body,#createBranchModal .pipeline-body,
+      #info_selected_node .pipeline-body, #info_selected_edge .pipeline-body {
       color: #0F1379;
       font-weight: bold;
       padding: 12px 16px;
@@ -439,7 +460,8 @@
       gap: 10px;
     }
 
-    #pipelineBuilder .step, #PipelineModal_Edit .step,#createBranchModal .step {
+    #pipelineBuilder .step, #PipelineModal_Edit .step, #createBranchModal .step, #info_selected_node .step,
+    #info_selected_edge .step{
       display: flex;
       align-items: center;
       gap: 6px;
@@ -463,7 +485,8 @@
       color: #fff;
     }
 
-    #pipelineBuilder input[type=number], #PipelineModal_Edit input[type=number],#createBranchModal input[type=number] {
+    #pipelineBuilder input[type=number], #PipelineModal_Edit input[type=number],#createBranchModal input[type=number],
+    #info_selected_node input[type=number], #info_selected_edge input[type=number] {
       width: 60px;
       padding: 6px;
       border: 1px solid #EC0000;
