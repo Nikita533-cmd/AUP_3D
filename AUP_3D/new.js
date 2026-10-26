@@ -11,7 +11,7 @@ document.getElementById("Add_list_object").onclick = () => Add_data_base();
 // Временная проверка координат элементов
 document.getElementById("Check_3D").onclick = () => logPipelineTree();
 // Слушатель для экспорта JSON
-document.getElementById("menuExportJSON").onclick = () => exportToJSON();
+document.getElementById("menuSave").onclick = () => exportToJSON();
 // Проверка существования начального узала
 // Если существует необходимо выбрать узел привязки
 // массив для передачи на бэкэнд
@@ -248,7 +248,9 @@ function check_pipe_tube_Edit(){
     document.getElementById("type_pipe_edit").innerText = Engine.selectedObject.ghost;
     document.getElementById("DN_pipe_edit").innerText = Engine.selectedObject.DN;
     document.getElementById("Length_pipe_edit").innerText = Engine.selectedObject.Length;
-    
+    document.getElementById("pipe_edit").value = Engine.selectedObject.Length; 
+    // document.getElementById("get_tube_pipe_edit").value = Engine.selectedObject.ghost;
+    // document.getElementById("pbDiameter_edit").value = Engine.selectedObject.DN;   
     // console.log("Engine.selectedObject",Engine.selectedObject);
 
     // document.getElementById("splitCancelBtn_Edit").addEventListener("click", () => cancel("PipelineModal_Edit"));

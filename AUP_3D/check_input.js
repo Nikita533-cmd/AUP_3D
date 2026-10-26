@@ -176,11 +176,20 @@ async function exportToJSON() {
     });
     
     const jsonString = JSON.stringify(Data_base, null, 2);
-    var d =  {
-        'name': 'Жопацывы',
-        'data': jsonString
-    };
-    SaveResults(d);
+    const save_name = document.getElementById("save_name_structure").value;
+    console.log("save_name",save_name)
+    if (!save_name || !save_name.trim()) {
+        alert("Заполните наименование сборки");
+        return;
+    }
+    else {
+        var d =  {
+            'name': save_name,
+            'data': jsonString
+        };
+        SaveResults(d);
+    }
+    
 
 }
 

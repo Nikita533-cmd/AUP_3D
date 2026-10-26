@@ -105,6 +105,7 @@ const Engine = {
         }
         this.update_Pipe_tube_coordinate();
         this.update_Pipe_tube();
+        this.info_selected_elevent();
     },
 
     // 3. ФИЛЬТР: Находит первый THREE.Mesh в массиве пересечений
@@ -181,11 +182,44 @@ const Engine = {
             document.getElementById("type_pipe_edit").innerText = selected.ghost;
             document.getElementById("DN_pipe_edit").innerText = selected.DN;
             document.getElementById("Length_pipe_edit").innerText = selected.Length;
+            document.getElementById("pipe_edit").value = selected.Length;
+            // document.getElementById("get_tube_pipe_edit").value = selected.ghost;
+            // document.getElementById("pbDiameter_edit").value = selected.DN; 
         }
     },
-
-
-
+    info_selected_elevent() {
+        const selected = this.selectedObject;
+        if (selected && selected.type === 'Node'||selected && selected.type === 'Source'||selected && selected.type === 'Sprinkler') {
+            document.getElementById("info_selected_node").style.display = 'block';
+            document.getElementById("info_selected_edge").style.display = 'none';
+            document.getElementById("name_selected_node").innerText = `${ selected.name} id: ${selected.id}`;
+            document.getElementById("type_selected_node").innerText = selected.type;
+            document.getElementById("pbCX_selected_node").value = selected.X_gl;
+            document.getElementById("pbCY_selected_node").value = selected.Y_gl;
+            document.getElementById("pbCZ_selected_node").value = selected.Z_gl;
+        }
+        else if (selected && selected.type === 'Edge') {
+            document.getElementById("info_selected_edge").style.display = 'block';
+            document.getElementById("info_selected_node").style.display = 'none';
+            document.getElementById("name_selected_edge").innerText = `${ selected.name} id: ${selected.id}`;
+            // document.getElementById("type_selected_node").innerText = selected.type;
+            document.getElementById("pbCX_selected_start_node").value = selected.start_node.X_gl;
+            document.getElementById("pbCY_selected_start_node").value = selected.start_node.Y_gl;
+            document.getElementById("pbCZ_selected_start_node").value = selected.start_node.Z_gl;
+            document.getElementById("pbCX_selected_end_node").value = selected.end_node.X_gl;
+            document.getElementById("pbCY_selected_end_node").value = selected.end_node.Y_gl;
+            document.getElementById("pbCZ_selected_end_node").value = selected.end_node.Z_gl;
+            document.getElementById("ghost_selected_edge").innerText = selected.ghost;
+            document.getElementById("DN_selected_edge").innerText = selected.DN;
+            document.getElementById("length_selected_edge").innerText = selected.Length;
+            document.getElementById("kt_selected_edge").innerText = selected.k_t;
+            document.getElementById("kvelocity_selected_edge").innerText = selected.kvelocity;
+        }
+        else {
+            document.getElementById("info_selected_node").style.display = 'none';
+            document.getElementById("info_selected_edge").style.display = 'none';
+        }
+    },
 
 
 
