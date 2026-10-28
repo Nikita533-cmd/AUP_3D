@@ -6,6 +6,8 @@ document.getElementById("delete_SplitPipeline").onclick = () => delete_pipe_tube
 document.getElementById("menuPipeline_Edit").onclick = () => check_pipe_tube_Edit();
 // Слушатель для созданяи ветки
 document.getElementById("menuCreateBranch").onclick = () => Check_CreateBranch();
+// Слушатель для изменения узла
+document.getElementById("menuEditNode").onclick = () => Check_Edit_Node();
 // Запуск сбора инфы по объектам
 document.getElementById("Add_list_object").onclick = () => Add_data_base();
 // Временная проверка координат элементов
@@ -259,7 +261,6 @@ function check_pipe_tube_Edit(){
     // document.getElementById("get_tube_pipe_edit").value = Engine.selectedObject.ghost;
     // document.getElementById("pbDiameter_edit").value = Engine.selectedObject.DN;   
     // console.log("Engine.selectedObject",Engine.selectedObject);
-
     // document.getElementById("splitCancelBtn_Edit").addEventListener("click", () => cancel("PipelineModal_Edit"));
     // document.getElementById("splitApplyBtn_Edit").addEventListener("click", () => edit_pipe_tube(Engine.selectedObject));
     document.getElementById("splitCancelBtn_Edit").onclick = () => cancel("PipelineModal_Edit");
@@ -451,41 +452,41 @@ function create_branch(Node) {
         const check_node_end = check_End_Node(pbCX_end, pbCY_end, pbCZ_end);
         if (check_node_end) {
             currentEndNode = check_node_end;
-        } else {            
+        } 
+        else {            
             currentEndNode = new Node_new(Node_Geometry, Node_Material, 'Sprinkler');
             currentEndNode.position.set(pbCX_end, pbCY_end, pbCZ_end);
+            // ==========================================================
+            // ДОБАВЛЕНИЕ СТРЕЛОЧКИ (ОРОСИТЕЛЯ), НАПРАВЛЕННОЙ ВНИЗ
+            // ==========================================================
+            const sprinklerGroup = new THREE.Group();
+            sprinklerGroup.name = 'SprinklerArrow';
+            const nodeRadius = VisualPipelins.d_node_base/2;
+            // 1. Стержень стрелки (цилиндр)
+            const shaftRadius = nodeRadius * 0.1; // Пропорционально размеру узла
+            const shaftHeight = nodeRadius * 2.5;
+            const shaftGeo = new THREE.CylinderGeometry(shaftRadius, shaftRadius, shaftHeight, 16);
+            const shaft = new THREE.Mesh(shaftGeo, Node_Material);
+            // Сдвигаем вниз, чтобы начало было примерно от центра/низа сферы
+            shaft.position.y = -(shaftHeight / 2); 
+            
+            // 2. Наконечник стрелки (конус, направленный вниз)
+            const headRadius = nodeRadius * 1;
+            const headHeight = nodeRadius * 1.5;
+            const headGeo = new THREE.ConeGeometry(headRadius, headHeight, 16);
+            const head = new THREE.Mesh(headGeo, Node_Material);
+            head.rotation.x = Math.PI;
+            head.position.y = -(shaftHeight + headHeight / 2);
+
+            sprinklerGroup.add(shaft);
+            sprinklerGroup.add(head);
+            
+            // Добавляем группу со стрелкой к узлу. 
+            // Теперь стрелка будет двигаться и вращаться вместе с узлом.
+            currentEndNode.add(sprinklerGroup);
+            // ==========================================================
         }
         // Просто создаем новые узлы с типом орсоитель      
-
-        // ==========================================================
-        // ДОБАВЛЕНИЕ СТРЕЛОЧКИ (ОРОСИТЕЛЯ), НАПРАВЛЕННОЙ ВНИЗ
-        // ==========================================================
-        const sprinklerGroup = new THREE.Group();
-        sprinklerGroup.name = 'SprinklerArrow';
-        const nodeRadius = VisualPipelins.d_node_base/2;
-        // 1. Стержень стрелки (цилиндр)
-        const shaftRadius = nodeRadius * 0.1; // Пропорционально размеру узла
-        const shaftHeight = nodeRadius * 2.5;
-        const shaftGeo = new THREE.CylinderGeometry(shaftRadius, shaftRadius, shaftHeight, 16);
-        const shaft = new THREE.Mesh(shaftGeo, Node_Material);
-        // Сдвигаем вниз, чтобы начало было примерно от центра/низа сферы
-        shaft.position.y = -(shaftHeight / 2); 
-        
-        // 2. Наконечник стрелки (конус, направленный вниз)
-        const headRadius = nodeRadius * 1;
-        const headHeight = nodeRadius * 1.5;
-        const headGeo = new THREE.ConeGeometry(headRadius, headHeight, 16);
-        const head = new THREE.Mesh(headGeo, Node_Material);
-        head.rotation.x = Math.PI;
-        head.position.y = -(shaftHeight + headHeight / 2);
-
-        sprinklerGroup.add(shaft);
-        sprinklerGroup.add(head);
-        
-        // Добавляем группу со стрелкой к узлу. 
-        // Теперь стрелка будет двигаться и вращаться вместе с узлом.
-        currentEndNode.add(sprinklerGroup);
-        // ==========================================================
 
         const step_Start_Pos = new THREE.Vector3();
         currentStartNode.getWorldPosition(step_Start_Pos);
@@ -624,6 +625,62 @@ function delete_pipe_tube() {
     
 }
 
+function Check_Edit_Node(){
+    // проверка существования узла
+    // alert("внутри функции разбиения")
+    let Check_node = false;
+    Engine.scene.traverse((child) => {       
+        if (child.type === 'Node') {
+            Check_node = true;
+        }        
+    });    
+    if (Check_node) {    
+        if (!Engine.selectedObject || (Engine.selectedObject.type !== 'Node' && Engine.selectedObject.type !== 'Sprinkler' && Engine.selectedObject.type !== 'Source')) {
+            alert("Выберите узел привязки!");
+            return; 
+        }
+    }
+    else{
+        alert("Создайте и выберите узел!")
+        return;
+    }
+    document.getElementById("Node_Edit").style.display = 'block';
+    document.body.classList.add('builder-active');
+
+    document.getElementById("number_node_edit").innerText = `${ Engine.selectedObject.name} id: ${Engine.selectedObject.id}`;
+    document.getElementById("type_node_edit").innerText = Engine.selectedObject.type;
+    document.getElementById("pbCX_edit_node").value = Engine.selectedObject.X_gl;
+    document.getElementById("pbCY_edit_node").value = Engine.selectedObject.Y_gl;
+    document.getElementById("pbCZ_edit_node").value = Engine.selectedObject.Z_gl;
+    
+    document.getElementById("Node_Edit_confirm").onclick = () => Edit_Node(Engine.selectedObject);
+    document.getElementById("Node_Edit_cancel").onclick = () => cancel("Node_Edit"); 
+}
+
+function Edit_Node(Node) {
+    const new_type = document.getElementById("select_node_edit").value;
+    Node.type=new_type;
+    console.log("материал то обновы",Node.material);
+    Node.material.dispose();
+    let new_Node_Material;        
+    if (new_type === "Node") {        
+        new_Node_Material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+    }
+    else if (new_type === "Sprinkler") {        
+        new_Node_Material = new THREE.MeshBasicMaterial({ color: '#FF0000' });
+    }
+    else if (new_type === "Source") {        
+        new_Node_Material = new THREE.MeshBasicMaterial({ color: 0x800080 });
+    }    
+    Node.material=new_Node_Material;
+    console.log("материал после обновы",Node.material);
+    
+    Node.material.needsUpdate = true;
+    Node.userData.originalColor = Node.material.color.getHex();
+    
+    cancel("Node_Edit");
+    console.log("Engine.scene.children проверка после изменения узла",Engine.scene.children)
+}
 
 async function sendJsonAndVisualize(v) {
     console.log(" Отправка данных на расчет...", v);
@@ -1650,22 +1707,22 @@ function buildTree(collapseAll = false) {
 }
 
 function focusOnItem(object) {
-  if (!Engine || !Engine.camera || !Engine.controls) return;
-  const pos = new THREE.Vector3();
-  if (object.getWorldPosition) object.getWorldPosition(pos);
-  else pos.copy(object.position);
-  
-  Engine.camera.position.set(pos.x + 5, pos.y + 5, pos.z + 5);
-  Engine.controls.target.copy(pos);
-  Engine.controls.update();
+    if (!Engine || !Engine.camera || !Engine.controls) return;
+    const pos = new THREE.Vector3();
+    if (object.getWorldPosition) object.getWorldPosition(pos);
+    else pos.copy(object.position);
+    
+    Engine.camera.position.set(pos.x + 5, pos.y + 5, pos.z + 5);
+    Engine.controls.target.copy(pos);
+    Engine.controls.update();
 }
 
 // Привязка кнопки
 document.addEventListener("DOMContentLoaded", () => {
-  const btn = document.getElementById("floatingTreeBtn");
-  if (btn) {
-    btn.onclick = () => toggleTree();
-  }
+    const btn = document.getElementById("floatingTreeBtn");
+    if (btn) {
+        btn.onclick = () => toggleTree();
+    }
 });
 
 

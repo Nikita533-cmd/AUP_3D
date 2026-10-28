@@ -106,6 +106,7 @@ const Engine = {
         this.update_Pipe_tube_coordinate();
         this.update_Pipe_tube();
         this.info_selected_elevent();
+        this.update_Node_coordinate();
     },
 
     // 3. ФИЛЬТР: Находит первый THREE.Mesh в массиве пересечений
@@ -155,7 +156,7 @@ const Engine = {
         const inputX_branch = document.getElementById("pbCX_branch");
         const inputY_branch = document.getElementById("pbCY_branch");
         const inputZ_branch = document.getElementById("pbCZ_branch");
-        if (selected && selected.type === 'Node'||selected && selected.type === 'Sprinkler') {
+        if (selected && selected.type === 'Node'||selected && selected.type === 'Sprinkler'||selected && selected.type === 'Source') {
             const worldPos = new THREE.Vector3();
             selected.getWorldPosition(worldPos);
             inputX.value = worldPos.x;
@@ -220,7 +221,23 @@ const Engine = {
             document.getElementById("info_selected_edge").style.display = 'none';
         }
     },
-
+    update_Node_coordinate() {
+        const selected = this.selectedObject;
+        const inputX = document.getElementById("pbCX_edit_node");
+        const inputY = document.getElementById("pbCY_edit_node");
+        const inputZ = document.getElementById("pbCZ_edit_node");
+        
+        if (selected && selected.type === 'Node'||selected && selected.type === 'Sprinkler'||selected && selected.type === 'Source') {
+            const worldPos = new THREE.Vector3();
+            selected.getWorldPosition(worldPos);
+            inputX.value = worldPos.x;
+            inputY.value = worldPos.y;
+            inputZ.value = worldPos.z;
+            document.getElementById("type_node_edit").innerText = selected.type;
+            document.getElementById("number_node_edit").innerText = `${ selected.name} id: ${selected.id}`;
+        }
+        
+    },
 
 
 
