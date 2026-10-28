@@ -133,9 +133,6 @@ def run_calculation(builder):
     print("[Этап 2] Подбор давлений источников...")
 
     if core.n_in == 1:
-        # =================================================================
-        # ОДИН ИСТОЧНИК — ищем конкретное давление P
-        # =================================================================
         P_low = 10.0
         P_high = 300.0
         MAX_P = 1000000.0
@@ -153,15 +150,20 @@ def run_calculation(builder):
                 break
 
             if f_low > 0:
+                # Даже при P_low давление слишком высокое — уменьшаем
                 P_low = max(P_low * 0.5, 1.0)
                 f_low = objective(P_low)
+                print(f"  Итерация {i}: P_low={P_low:.1f}, f_low={f_low:.4f}")
             elif f_high < 0:
+                # Даже при P_high давление слишком низкое — увеличиваем
                 P_high *= 2.0
                 if P_high > MAX_P:
+                    print(f"  ВНИМАНИЕ: P_high достиг максимума {MAX_P}")
                     P_high = MAX_P
                     f_high = objective(P_high)
                     break
                 f_high = objective(P_high)
+                print(f"  Итерация {i}: P_high={P_high:.1f}, f_high={f_high:.4f}")
             else:
                 break
 
@@ -169,73 +171,43 @@ def run_calculation(builder):
             P_sources_optimal = brentq(
                 objective, P_low, P_high, xtol=1e-6, maxiter=100
             )
-            print(f"  ✅ Найден корень: P_optimal = {P_sources_optimal:.4f} м")
+            print(f"  Найден корень: P_optimal = {P_sources_optimal:.4f} м")
         else:
-            print(f"  ⚠️ Корень не найден! f_low={f_low:.4f}, f_high={f_high:.4f}")
+            print(f"  ВНИМАНИЕ: корень не найден! f_low={f_low:.4f}, f_high={f_high:.4f}")
+            print(f"  Используем P_high = {P_high}")
             P_sources_optimal = P_high
-
     else:
-        # =================================================================
-        # НЕСКОЛЬКО ИСТОЧНИКОВ — ищем единый коэффициент масштабирования
-        # =================================================================
-        print(f"  Найдено {core.n_in} источников. Используем метод масштабирования.")
+        # Несколько источников — масштабирование
+        scale_low = 0.1
+        scale_high = 3.0
+        MAX_SCALE = 10.0
 
-        # Ищем скаляр scale, при котором objective(P_sources_initial * scale) = 0
-        def objective_scale(scale):
-            return objective(P_sources_initial * scale)
+        f_low = objective(P_sources_initial * scale_low)
+        f_high = objective(P_sources_initial * scale_high)
 
-        scale_low = 0.01
-        scale_high = 10.0
-
-        f_low = objective_scale(scale_low)
-        f_high = objective_scale(scale_high)
-
-        print(f"  f(scale={scale_low}) = {f_low:.4f}")
-        print(f"  f(scale={scale_high}) = {f_high:.4f}")
-
-        # Адаптивный поиск интервала смены знака
         for i in range(50):
             if f_low * f_high < 0:
-                print(f"  Смена знака найдена на итерации {i}: scale ∈ [{scale_low:.4f}, {scale_high:.4f}]")
                 break
+            if f_low > 0:
+                scale_low *= 0.5
+                f_low = objective(P_sources_initial * scale_low)
+            elif f_high < 0:
+                scale_high *= 1.5
+                if scale_high > MAX_SCALE:
+                    scale_high = MAX_SCALE
+                    f_high = objective(P_sources_initial * scale_high)
+                    break
+                f_high = objective(P_sources_initial * scale_high)
 
-            if f_low > 0 and f_high > 0:
-                # Давления слишком высокие — сдвигаем интервал вниз
-                scale_high = scale_low
-                f_high = f_low
-                scale_low = max(scale_low * 0.1, 1e-4)
-                f_low = objective_scale(scale_low)
-            elif f_low < 0 and f_high < 0:
-                # Давления слишком низкие — сдвигаем интервал вверх
-                scale_low = scale_high
-                f_low = f_high
-                scale_high = min(scale_high * 10.0, 1000.0)
-                f_high = objective_scale(scale_high)
-            else:
-                break
-
-        # Точное решение через brentq (как для 1 источника!)
         if f_low * f_high < 0:
-            try:
-                scale_opt = brentq(
-                    objective_scale, scale_low, scale_high, xtol=1e-6, maxiter=100
-                )
-                P_sources_optimal = P_sources_initial * scale_opt
-                print(f"  ✅ Оптимальный масштаб: scale = {scale_opt:.4f}")
-            except ValueError as e:
-                print(f"  ⚠️ brentq не сошёлся: {e}. Используем верхнюю границу.")
-                P_sources_optimal = P_sources_initial * scale_high
+            scale_opt = np.sqrt(scale_low * scale_high)
+            P_sources_optimal = P_sources_initial * scale_opt
         else:
-            print(f"  ⚠️ Интервал смены знака не найден!")
-            print(f"  f({scale_low}) = {f_low:.4f}, f({scale_high}) = {f_high:.4f}")
-            # Берём тот масштаб, который ближе к целевому
-            if abs(f_low) < abs(f_high):
-                P_sources_optimal = P_sources_initial * scale_low
-            else:
-                P_sources_optimal = P_sources_initial * scale_high
+            print(f"  ВНИМАНИЕ: корень не найден для нескольких источников")
+            P_sources_optimal = P_sources_initial * scale_high
 
     t2_time = time.perf_counter() - t2_start
-    
+
     # =================================================================
     # ФИНАЛЬНЫЙ РАСЧЁТ
     # =================================================================

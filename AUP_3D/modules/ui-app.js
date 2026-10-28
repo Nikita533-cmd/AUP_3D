@@ -221,54 +221,19 @@ class UIApp {
   //     this.visuals.toggleDiameters();
   // }
 
+  _bindPipelineBuilderButtons() {
 
-    _bindPipelineBuilderButtons() {
-    // === ОБРАБОТКА ДЛЯ МОДАЛЬНОГО ОКНА СОЗДАНИЯ ВЕТКИ ===
     document.querySelectorAll("#createBranchModal .axis-btn").forEach((b) => {
       b.addEventListener("click", (e) => {
-        // Убираем активный класс у всех кнопок осей в этой модалке
         document
           .querySelectorAll("#createBranchModal .axis-btn")
           .forEach((x) => x.classList.remove("active"));
-        
-        // Делаем активной нажатую кнопку
-        const clickedBtn = e.currentTarget;
-        clickedBtn.classList.add("active");
-        
-        // Записываем ОДНОВРЕМЕННО и ось, и направление в STATE
-        STATE.pipeline.axis = clickedBtn.dataset.axis;
-        STATE.pipeline.direction = clickedBtn.dataset.dir; // Теперь направление берется отсюда!
-        
-        // Обновляем 3D превью
+        e.currentTarget.classList.add("active");
+        STATE.pipeline.axis = e.currentTarget.dataset.axis;
         this.pipeline.updatePreview();
       });
     });
 
-    // === ОБРАБОТКА ДЛЯ ОСНОВНОЙ ПАНЕЛИ КОНСТРУКТОРА (pipelineBuilder) ===
-    document.querySelectorAll("#pipelineBuilder .axis-btn").forEach((b) => {
-      b.addEventListener("click", (e) => {
-        // Убираем активный класс у всех кнопок осей в конструкторе
-        document
-          .querySelectorAll("#pipelineBuilder .axis-btn")
-          .forEach((x) => x.classList.remove("active"));
-        
-        // Делаем активной нажатую кнопку
-        const clickedBtn = e.currentTarget;
-        clickedBtn.classList.add("active");
-        
-        // Записываем ОДНОВРЕМЕННО и ось, и направление в STATE
-        STATE.pipeline.axis = clickedBtn.dataset.axis;
-        STATE.pipeline.direction = clickedBtn.dataset.dir; // Направление берется из дата-атрибута кнопки
-        
-        // Обновляем 3D превью
-        this.pipeline.updatePreview();
-      });
-    });
-
-    // Старые обработчики для .dir-btn можно полностью удалить, 
-    // так как отдельных кнопок направлений у нас больше нет.
-
-    // Вращение (если используете) оставляем как было
     document.querySelectorAll("#createBranchModal .axis-btn-rot").forEach((b) => {
       b.addEventListener("click", (e) => {
         document
@@ -279,6 +244,18 @@ class UIApp {
         this.pipeline.updatePreview();
       });
     });
+
+    document.querySelectorAll("#createBranchModal .dir-btn").forEach((b) => {
+      b.addEventListener("click", (e) => {
+        document
+          .querySelectorAll("#createBranchModal .dir-btn")
+          .forEach((x) => x.classList.remove("active"));
+        e.currentTarget.classList.add("active");
+        STATE.pipeline.direction = e.currentTarget.dataset.dir;
+        this.pipeline.updatePreview();
+      });
+    });
+
 
     document.querySelectorAll("#pipelineBuilder .axis-btn-rot").forEach((b) => {
       b.addEventListener("click", (e) => {
@@ -291,7 +268,29 @@ class UIApp {
       });
     });
 
-    // Инпуты координат, длины и диаметров оставляем без изменений
+
+    document.querySelectorAll("#pipelineBuilder .axis-btn").forEach((b) => {
+      b.addEventListener("click", (e) => {
+        document
+          .querySelectorAll("#pipelineBuilder .axis-btn")
+          .forEach((x) => x.classList.remove("active"));
+        e.currentTarget.classList.add("active");
+        STATE.pipeline.axis = e.currentTarget.dataset.axis;
+        this.pipeline.updatePreview();
+      });
+    });
+
+    document.querySelectorAll("#pipelineBuilder .dir-btn").forEach((b) => {
+      b.addEventListener("click", (e) => {
+        document
+          .querySelectorAll("#pipelineBuilder .dir-btn")
+          .forEach((x) => x.classList.remove("active"));
+        e.currentTarget.classList.add("active");
+        STATE.pipeline.direction = e.currentTarget.dataset.dir;
+        this.pipeline.updatePreview();
+      });
+    });
+
     ["pbCX", "pbCY", "pbCZ", "pbLength"].forEach((id) => {
       document
         .getElementById(id)
@@ -302,100 +301,17 @@ class UIApp {
       STATE.pipeline.diameter = parseInt(e.target.value) || 25;
       this.pipeline.updatePreview();
     });
+
+    // document
+    //   .getElementById("pbConfirm")
+    //   .addEventListener("click", () => this.pipeline.addSegment());
+    // document
+    //   .getElementById("pbFinish")
+    //   .addEventListener("click", () => this.pipeline.finish());
+    // document
+    //   .getElementById("pbCancel")
+    //   .addEventListener("click", () => this.pipeline.cancel());
   }
-
-
-  // _bindPipelineBuilderButtons() {
-
-  //   document.querySelectorAll("#createBranchModal .axis-btn").forEach((b) => {
-  //     b.addEventListener("click", (e) => {
-  //       document
-  //         .querySelectorAll("#createBranchModal .axis-btn")
-  //         .forEach((x) => x.classList.remove("active"));
-  //       e.currentTarget.classList.add("active");
-  //       STATE.pipeline.axis = e.currentTarget.dataset.axis;
-  //       this.pipeline.updatePreview();
-  //     });
-  //   });
-
-  //   document.querySelectorAll("#createBranchModal .axis-btn-rot").forEach((b) => {
-  //     b.addEventListener("click", (e) => {
-  //       document
-  //         .querySelectorAll("#createBranchModal .axis-btn-rot")
-  //         .forEach((x) => x.classList.remove("active"));
-  //       e.currentTarget.classList.add("active");
-  //       STATE.pipeline.axis = e.currentTarget.dataset.axis;
-  //       this.pipeline.updatePreview();
-  //     });
-  //   });
-
-  //   document.querySelectorAll("#createBranchModal .dir-btn").forEach((b) => {
-  //     b.addEventListener("click", (e) => {
-  //       document
-  //         .querySelectorAll("#createBranchModal .dir-btn")
-  //         .forEach((x) => x.classList.remove("active"));
-  //       e.currentTarget.classList.add("active");
-  //       STATE.pipeline.direction = e.currentTarget.dataset.dir;
-  //       this.pipeline.updatePreview();
-  //     });
-  //   });
-
-
-  //   document.querySelectorAll("#pipelineBuilder .axis-btn-rot").forEach((b) => {
-  //     b.addEventListener("click", (e) => {
-  //       document
-  //         .querySelectorAll("#pipelineBuilder .axis-btn-rot")
-  //         .forEach((x) => x.classList.remove("active"));
-  //       e.currentTarget.classList.add("active");
-  //       STATE.pipeline.axis = e.currentTarget.dataset.axis;
-  //       this.pipeline.updatePreview();
-  //     });
-  //   });
-
-
-  //   document.querySelectorAll("#pipelineBuilder .axis-btn").forEach((b) => {
-  //     b.addEventListener("click", (e) => {
-  //       document
-  //         .querySelectorAll("#pipelineBuilder .axis-btn")
-  //         .forEach((x) => x.classList.remove("active"));
-  //       e.currentTarget.classList.add("active");
-  //       STATE.pipeline.axis = e.currentTarget.dataset.axis;
-  //       this.pipeline.updatePreview();
-  //     });
-  //   });
-
-  //   document.querySelectorAll("#pipelineBuilder .dir-btn").forEach((b) => {
-  //     b.addEventListener("click", (e) => {
-  //       document
-  //         .querySelectorAll("#pipelineBuilder .dir-btn")
-  //         .forEach((x) => x.classList.remove("active"));
-  //       e.currentTarget.classList.add("active");
-  //       STATE.pipeline.direction = e.currentTarget.dataset.dir;
-  //       this.pipeline.updatePreview();
-  //     });
-  //   });
-
-  //   ["pbCX", "pbCY", "pbCZ", "pbLength"].forEach((id) => {
-  //     document
-  //       .getElementById(id)
-  //       .addEventListener("input", () => this.pipeline.updatePreview());
-  //   });
-
-  //   document.getElementById("pbDiameter").addEventListener("change", (e) => {
-  //     STATE.pipeline.diameter = parseInt(e.target.value) || 25;
-  //     this.pipeline.updatePreview();
-  //   });
-
-  //   document
-  //     .getElementById("pbConfirm")
-  //     .addEventListener("click", () => this.pipeline.addSegment());
-  //   document
-  //     .getElementById("pbFinish")
-  //     .addEventListener("click", () => this.pipeline.finish());
-  //   document
-  //     .getElementById("pbCancel")
-  //     .addEventListener("click", () => this.pipeline.cancel());
-  // }
 
   _bindModalButtons() {
     document.getElementById("sceneSettingsCancelBtn").onclick = () =>
