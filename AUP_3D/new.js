@@ -6,26 +6,18 @@ document.getElementById("delete_SplitPipeline").onclick = () => delete_pipe_tube
 document.getElementById("menuPipeline_Edit").onclick = () => check_pipe_tube_Edit();
 // Слушатель для созданяи ветки
 document.getElementById("menuCreateBranch").onclick = () => Check_CreateBranch();
-// Слушатель для изменения узла
-document.getElementById("menuEditNode").onclick = () => Check_Edit_Node();
 // Запуск сбора инфы по объектам
 document.getElementById("Add_list_object").onclick = () => Add_data_base();
 // Временная проверка координат элементов
 document.getElementById("Check_3D").onclick = () => logPipelineTree();
 
-// Слушатель для Сохранения проекта с геометрией
-document.getElementById("menuSave").onclick = () => exportToJSON();
-
-// Слушатель для Открытия проекта с геометрией
-document.getElementById("menuOpen").onclick = () => importToJSON();
-
-document.getElementById("menuNew").onclick = refreshPageHard;
+// Слушатель для экспорта JSON
+document.getElementById("menuExportJSON").onclick = () => exportToJSON();
 
 // Проверка существования начального узала
 // Если существует необходимо выбрать узел привязки
 // массив для передачи на бэкэнд
 // Функция для сбора информации из объектов
-// alert("",)
 function Add_data_base () {
     const Data_base = {
         Node: [],
@@ -45,7 +37,6 @@ function Add_data_base () {
             // const properties = child.add_list();            
         }       
     });
-    Data_base.pressure_sprinkler = Number(document.getElementById("pressure_sprinkler").value)
     // Data_base.push(Node);
     // Data_base.push(Edge);
     console.log("Data_base для отправки на бэкэнд", Data_base)
@@ -59,27 +50,48 @@ function Check_nodes_scene() {
         if (child.type === 'Node') {
             Check_Nodes = true;
         }
-    });
-    
+    });    
+    // if (Check_Nodes) {    
+    //     if (!Engine.selectedObject || (Engine.selectedObject.type !== 'Node' && Engine.selectedObject.type !== 'Sprinkler')) {
+    //         alert("Перед созданием трубопровода - выберите существующий узел!");
+    //         return true; 
+    //     }
+    // }
     return Check_Nodes;
 }
 // функция для вклчюения отображения блока созданяи ветки
 function Pipe_Line_visible_block () {
     let Check_Nodes = Check_nodes_scene();
     if (Check_Nodes) {    
-        if (!Engine.selectedObject || (Engine.selectedObject.type !== 'Node' && Engine.selectedObject.type !== 'Sprinkler' && Engine.selectedObject.type !== 'Source')) {
+        if (!Engine.selectedObject || (Engine.selectedObject.type !== 'Node' && Engine.selectedObject.type !== 'Sprinkler')) {
             alert("Перед созданием трубопровода - выберите существующий узел!");
             return; 
         }
     }
     document.getElementById("pipelineBuilder").style.display = 'block';
     document.body.classList.add('builder-active');
-    
+    // логика вызова данных дял определенного DN определенного типа трубопровода    
+    // if (Engine.selectedObject && Engine.selectedObject.type === 'Node'||Engine.selectedObject && Engine.selectedObject.type === 'Sprinkler') { 
+    //     // создаем вектор для записи мировых координат выделенного объекта
+    //     const selected_World_Pos = new THREE.Vector3();
+    //     // Получаем мировые координаты выделенного объекта
+    //     Engine.selectedObject.getWorldPosition(selected_World_Pos);
+    //     // Получаем мировые координаты выделенного меша
+    //     // const selectedPos = Engine.selectedObject.position;        
+    //     // Автоматически заполняем инпуты в HTML координатами выделенного узла
+    //     document.getElementById("pbCX").value = selected_World_Pos.x;
+    //     document.getElementById("pbCY").value = selected_World_Pos.y;
+    //     document.getElementById("pbCZ").value = selected_World_Pos.z;
+    // } else {             
+    //     document.getElementById("pbCX").value = 0;
+    //     document.getElementById("pbCY").value = 0;
+    //     document.getElementById("pbCZ").value = 0;
+    // }    
     document.getElementById("pbConfirm").onclick = () => {
         let Check_Nodes_click = Check_nodes_scene();
         if (Check_Nodes_click) {  
             Check_Nodes = true;
-            if (!Engine.selectedObject || (Engine.selectedObject.type !== 'Node' && Engine.selectedObject.type !== 'Sprinkler' && Engine.selectedObject.type !== 'Source')) {
+            if (!Engine.selectedObject || (Engine.selectedObject.type !== 'Node' && Engine.selectedObject.type !== 'Sprinkler')) {
                 alert("Перед созданием трубопровода - выберите существующий узел!");
                 return; 
             }
@@ -104,7 +116,22 @@ function Pipe_Line_visible_block () {
         const DN_tube = parseFloat(pbDiameter.selectedOptions[0].textContent); ///// сами свойства
         const k_t = parseFloat(pbDiameter.selectedOptions[0].dataset.k_t);
         const kvelocity = parseFloat(pbDiameter.selectedOptions[0].dataset.kvelocity);
-        
+        // console.log("type_tube",type_tube);
+        // console.log("=== ДАННЫЕ ДЛЯ СОЗДАНИЯ ТРУБОПРОВОДА ===");
+        // console.table({
+        //     "Координата X": pbCX,
+        //     "Координата Y": pbCY,
+        //     "Координата Z": pbCZ,
+        //     "Ось направления": activeAxis,
+        //     "Знак направления": activeAxis_direction,
+        //     "Длина участка (м)": pbLength,
+        //     "Ось вращения вокруг": activeAxis_rotation,
+        //     "Угол поворота (град)": rotate_value,
+        //     "Гост на трубы": type_tube,
+        //     "Номинальный ДН трубы": DN_tube,
+        //     "Коэффициент k_t": k_t,
+        //     "Коэффициент kvelocity": kvelocity
+        // });
         CreatePipeline(pbCX, pbCY, pbCZ, activeAxis, activeAxis_direction, pbLength, activeAxis_rotation, rotate_value, type_tube, 
             DN_tube, k_t, kvelocity, Check_Nodes);
     };
@@ -257,10 +284,9 @@ function check_pipe_tube_Edit(){
     document.getElementById("type_pipe_edit").innerText = Engine.selectedObject.ghost;
     document.getElementById("DN_pipe_edit").innerText = Engine.selectedObject.DN;
     document.getElementById("Length_pipe_edit").innerText = Engine.selectedObject.Length;
-    document.getElementById("pipe_edit").value = Engine.selectedObject.Length; 
-    // document.getElementById("get_tube_pipe_edit").value = Engine.selectedObject.ghost;
-    // document.getElementById("pbDiameter_edit").value = Engine.selectedObject.DN;   
+    
     // console.log("Engine.selectedObject",Engine.selectedObject);
+
     // document.getElementById("splitCancelBtn_Edit").addEventListener("click", () => cancel("PipelineModal_Edit"));
     // document.getElementById("splitApplyBtn_Edit").addEventListener("click", () => edit_pipe_tube(Engine.selectedObject));
     document.getElementById("splitCancelBtn_Edit").onclick = () => cancel("PipelineModal_Edit");
@@ -358,7 +384,7 @@ function Check_CreateBranch(){
         }        
     });    
     if (Check_node) {    
-        if (!Engine.selectedObject || (Engine.selectedObject.type !== 'Node' && Engine.selectedObject.type !== 'Sprinkler' && Engine.selectedObject.type !== 'Source')) {
+        if (!Engine.selectedObject || (Engine.selectedObject.type !== 'Node' && Engine.selectedObject.type !== 'Sprinkler')) {
             alert("Выберите узел привязки!");
             return; 
         }
@@ -371,37 +397,19 @@ function Check_CreateBranch(){
     document.getElementById("createBranchModal").style.display = 'block';
     document.body.classList.add('builder-active');
     document.getElementById("createBranchCancelBtn").onclick = () => cancel("createBranchModal");
+
     const sprCountInput = document.getElementById("createBranchSprCount");
     sprCountInput.addEventListener("input", function() {
         let Count = parseFloat(document.getElementById("createBranchSprCount").value);        
-        const tabContent = document.getElementById('myTabContent');
-        const tybe_type = document.getElementById("get_tube_pipe_sprinkler");                
+        const tabContent = document.getElementById('myTabContent');                
         tabContent.innerHTML = html_branch_content(Count);        
         for (let i = 0; i < Count; i++) {
-            // get_load_pipe("get_tube_pipe_sprinkler", `pbDiameter_sprinkler_${i}`);   
-            get_load_pbDiameter(tybe_type.value, `pbDiameter_sprinkler_${i}`);         
+            get_load_pipe("get_tube_pipe_sprinkler", `pbDiameter_sprinkler_${i}`);            
             document.getElementById("get_tube_pipe_sprinkler").addEventListener("change", (event) => {
                 get_load_pbDiameter(event.target.value, `pbDiameter_sprinkler_${i}`);   
             });
         }
     });
-    // const sprCountInput = document.getElementById("createBranchSprCount");
-    // sprCountInput.addEventListener("input", function() {
-    //     let Count = parseFloat(document.getElementById("createBranchSprCount").value);        
-    //     const tabContent = document.getElementById('myTabContent');                
-    //     tabContent.innerHTML = html_branch_content(Count);
-    //     get_load_pipe_for_sprinkler("get_tube_pipe_sprinkler");
-    //     document.getElementById("get_tube_pipe_sprinkler").addEventListener("change", (event) => {
-    //         // get_load_pipe_for_sprinkler("get_tube_pipe_sprinkler");   
-    //     });      
-    //     for (let i = 0; i < Count; i++) {
-    //         // get_load_pipe("get_tube_pipe_sprinkler", `pbDiameter_sprinkler_${i}`);
-    //         // get_load_pbDiameter_for_sprinkler(`pbDiameter_sprinkler_${i}`);            
-    //         // document.getElementById("get_tube_pipe_sprinkler").addEventListener("change", (event) => {
-    //         //     get_load_pbDiameter_for_sprinkler(event.target.value, `pbDiameter_sprinkler_${i}`);   
-    //         // });
-    //     }
-    // });
     sprCountInput.dispatchEvent(new Event('input'));   
     document.getElementById("createBranchApplyBtn").onclick = () => create_branch(Engine.selectedObject);
     // cancel("createBranchModal");
@@ -452,41 +460,41 @@ function create_branch(Node) {
         const check_node_end = check_End_Node(pbCX_end, pbCY_end, pbCZ_end);
         if (check_node_end) {
             currentEndNode = check_node_end;
-        } 
-        else {            
+        } else {            
             currentEndNode = new Node_new(Node_Geometry, Node_Material, 'Sprinkler');
             currentEndNode.position.set(pbCX_end, pbCY_end, pbCZ_end);
-            // ==========================================================
-            // ДОБАВЛЕНИЕ СТРЕЛОЧКИ (ОРОСИТЕЛЯ), НАПРАВЛЕННОЙ ВНИЗ
-            // ==========================================================
-            const sprinklerGroup = new THREE.Group();
-            sprinklerGroup.name = 'SprinklerArrow';
-            const nodeRadius = VisualPipelins.d_node_base/2;
-            // 1. Стержень стрелки (цилиндр)
-            const shaftRadius = nodeRadius * 0.1; // Пропорционально размеру узла
-            const shaftHeight = nodeRadius * 2.5;
-            const shaftGeo = new THREE.CylinderGeometry(shaftRadius, shaftRadius, shaftHeight, 16);
-            const shaft = new THREE.Mesh(shaftGeo, Node_Material);
-            // Сдвигаем вниз, чтобы начало было примерно от центра/низа сферы
-            shaft.position.y = -(shaftHeight / 2); 
-            
-            // 2. Наконечник стрелки (конус, направленный вниз)
-            const headRadius = nodeRadius * 1;
-            const headHeight = nodeRadius * 1.5;
-            const headGeo = new THREE.ConeGeometry(headRadius, headHeight, 16);
-            const head = new THREE.Mesh(headGeo, Node_Material);
-            head.rotation.x = Math.PI;
-            head.position.y = -(shaftHeight + headHeight / 2);
-
-            sprinklerGroup.add(shaft);
-            sprinklerGroup.add(head);
-            
-            // Добавляем группу со стрелкой к узлу. 
-            // Теперь стрелка будет двигаться и вращаться вместе с узлом.
-            currentEndNode.add(sprinklerGroup);
-            // ==========================================================
         }
         // Просто создаем новые узлы с типом орсоитель      
+
+        // ==========================================================
+        // ДОБАВЛЕНИЕ СТРЕЛОЧКИ (ОРОСИТЕЛЯ), НАПРАВЛЕННОЙ ВНИЗ
+        // ==========================================================
+        const sprinklerGroup = new THREE.Group();
+        sprinklerGroup.name = 'SprinklerArrow';
+        const nodeRadius = VisualPipelins.d_node_base/2;
+        // 1. Стержень стрелки (цилиндр)
+        const shaftRadius = nodeRadius * 0.1; // Пропорционально размеру узла
+        const shaftHeight = nodeRadius * 2.5;
+        const shaftGeo = new THREE.CylinderGeometry(shaftRadius, shaftRadius, shaftHeight, 16);
+        const shaft = new THREE.Mesh(shaftGeo, Node_Material);
+        // Сдвигаем вниз, чтобы начало было примерно от центра/низа сферы
+        shaft.position.y = -(shaftHeight / 2); 
+        
+        // 2. Наконечник стрелки (конус, направленный вниз)
+        const headRadius = nodeRadius * 1;
+        const headHeight = nodeRadius * 1.5;
+        const headGeo = new THREE.ConeGeometry(headRadius, headHeight, 16);
+        const head = new THREE.Mesh(headGeo, Node_Material);
+        head.rotation.x = Math.PI;
+        head.position.y = -(shaftHeight + headHeight / 2);
+
+        sprinklerGroup.add(shaft);
+        sprinklerGroup.add(head);
+        
+        // Добавляем группу со стрелкой к узлу. 
+        // Теперь стрелка будет двигаться и вращаться вместе с узлом.
+        currentEndNode.add(sprinklerGroup);
+        // ==========================================================
 
         const step_Start_Pos = new THREE.Vector3();
         currentStartNode.getWorldPosition(step_Start_Pos);
@@ -496,6 +504,7 @@ function create_branch(Node) {
         
         const path = new THREE.LineCurve3(step_Start_Pos, step_End_Pos);
         const Pipe_visible = new THREE.TubeGeometry(path, 64, VisualPipelins.d_pipe_base/2, 12, false);
+
         const Pipe_connection = new Edge_new(Pipe_visible, Edge_Material, currentStartNode, currentEndNode, 'Edge',pbLength_branch,
             new_DN_tube, type_tube, new_k_t, new_kvelocity);
         
@@ -625,63 +634,6 @@ function delete_pipe_tube() {
     
 }
 
-function Check_Edit_Node(){
-    // проверка существования узла
-    // alert("внутри функции разбиения")
-    let Check_node = false;
-    Engine.scene.traverse((child) => {       
-        if (child.type === 'Node') {
-            Check_node = true;
-        }        
-    });    
-    if (Check_node) {    
-        if (!Engine.selectedObject || (Engine.selectedObject.type !== 'Node' && Engine.selectedObject.type !== 'Sprinkler' && Engine.selectedObject.type !== 'Source')) {
-            alert("Выберите узел привязки!");
-            return; 
-        }
-    }
-    else{
-        alert("Создайте и выберите узел!")
-        return;
-    }
-    document.getElementById("Node_Edit").style.display = 'block';
-    document.body.classList.add('builder-active');
-
-    document.getElementById("number_node_edit").innerText = `${ Engine.selectedObject.name} id: ${Engine.selectedObject.id}`;
-    document.getElementById("type_node_edit").innerText = Engine.selectedObject.type;
-    document.getElementById("pbCX_edit_node").value = Engine.selectedObject.X_gl;
-    document.getElementById("pbCY_edit_node").value = Engine.selectedObject.Y_gl;
-    document.getElementById("pbCZ_edit_node").value = Engine.selectedObject.Z_gl;
-    
-    document.getElementById("Node_Edit_confirm").onclick = () => Edit_Node(Engine.selectedObject);
-    document.getElementById("Node_Edit_cancel").onclick = () => cancel("Node_Edit"); 
-}
-
-function Edit_Node(Node) {
-    const new_type = document.getElementById("select_node_edit").value;
-    Node.type=new_type;
-    console.log("материал то обновы",Node.material);
-    Node.material.dispose();
-    let new_Node_Material;        
-    if (new_type === "Node") {        
-        new_Node_Material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    }
-    else if (new_type === "Sprinkler") {        
-        new_Node_Material = new THREE.MeshBasicMaterial({ color: '#FF0000' });
-    }
-    else if (new_type === "Source") {        
-        new_Node_Material = new THREE.MeshBasicMaterial({ color: 0x800080 });
-    }    
-    Node.material=new_Node_Material;
-    console.log("материал после обновы",Node.material);
-    
-    Node.material.needsUpdate = true;
-    Node.userData.originalColor = Node.material.color.getHex();
-    
-    cancel("Node_Edit");
-    console.log("Engine.scene.children проверка после изменения узла",Engine.scene.children)
-}
-
 async function sendJsonAndVisualize(v) {
     console.log(" Отправка данных на расчет...", v);
     
@@ -706,8 +658,8 @@ async function sendJsonAndVisualize(v) {
             // ✅ ДОБАВИТЬ ЭТО: сохраняем данные для графика
             window.lastCalculationResult = {
                 K_system: result.summary.K_system || 0.025,
-                H_max: result.summary.H_max || 0.0,
-                Q_total: result.summary.total_flow_l_s || 0.0,
+                Z_max: result.summary.Z_max || 0.0,
+                Q_total: result.summary.source_flow_l_s || 0.0,
                 H_source: result.summary.source_pressure_m || 0.0
             };
             
@@ -727,11 +679,12 @@ async function sendJsonAndVisualize(v) {
 
 // функция для контроля узлов отработка 
 function logPipelineTree() {
-    console.log("=== ОТЧЕТ ПО ТРУБОПРОВОДНОЙ СЕТИ ===");    
+    console.log("=== ОТЧЕТ ПО ТРУБОПРОВОДНОЙ СЕТИ ===");
+    
     let edgeCount = 0;
+
     // Проходим по всем объектам на сцене Three.js
     Engine.scene.traverse((object) => {
-        console.log("objec689", object)
         // Проверяем, что объект является трубой (Edge)
         // (Здесь используется проверка типа, как у вас в коде 'Edge' или по вашему классу Edge_new)
         if (object.type === 'Edge' || object.name === 'Edge_new') {
@@ -978,6 +931,7 @@ function cleanSceneOrphans() {
 // ============================================================================
 // 3. Главная функция визуализации результатов
 // ============================================================================
+
 function visualizeResults(result) {
     console.log('🚀 Начинаем визуализацию...');
     
@@ -994,7 +948,7 @@ function visualizeResults(result) {
     for (const [uuid, data] of Object.entries(result.nodes)) {
         const nodeObj = STATE.Three_D_objects.find(
             obj => obj.uuid.toLowerCase() === uuid.toLowerCase() && 
-                (obj.type === 'Node' || obj.type === 'Source' || obj.type === 'Sprinkler')
+                   (obj.type === 'Node' || obj.type === 'Source' || obj.type === 'Sprinkler')
         );
 
         if (nodeObj) {
@@ -1084,17 +1038,17 @@ function visualizeResults(result) {
     console.log(`✅ ВИЗУАЛИЗАЦИЯ ЗАВЕРШЕНА! Добавлено меток: узлов=${nodesCount}, труб=${edgesCount}`);
 
     alert(
-    `✅ Расчет успешно завершен!\n` +
-    `Давление насоса: ${result.summary.source_pressure_m.toFixed(3)} м\n` +
-    `Добавлено меток: ${nodesCount + edgesCount}\n\n` +
-    `⏱️ Время расчета (всего): ${result.summary.timing.total_s.toFixed(4)} сек\n` +
-    `  • Этап 1: ${result.summary.timing.stage1_s.toFixed(4)} сек\n` +
-    `  • Поиск источника: ${result.summary.timing.source_search_s.toFixed(4)} сек\n` +
-    `  • Финальное решение: ${result.summary.timing.final_solve_s.toFixed(4)} сек\n\n` +
-    `📊 Невязки:\n` +
-    `  • Норма невязки: ${result.summary.residual_norm.toExponential(4)}\n` +
-    `  • Макс. невязка: ${result.summary.max_residual.toExponential(4)}`
-);
+        `✅ Расчет успешно завершен!\n` +
+        `Давление насоса: ${result.summary.source_pressure_m.toFixed(2)} м\n` +
+        `Добавлено меток: ${nodesCount + edgesCount}\n\n` +
+        `⏱️ Время расчета (всего): ${result.summary.timing.total_s.toFixed(4)} сек\n` +
+        `  • Этап 1: ${result.summary.timing.stage1_s.toFixed(4)} сек\n` +
+        `  • Поиск источника: ${result.summary.timing.source_search_s.toFixed(4)} сек\n` +
+        `  • Финальное решение: ${result.summary.timing.final_solve_s.toFixed(4)} сек\n\n` +
+        `📊 Невязки:\n` +
+        `  • Норма невязки: ${result.summary.residual_norm.toExponential(4)}\n` +
+        `  • Макс. невязка: ${result.summary.max_residual.toExponential(4)}`
+    );
 
 }
 
@@ -1184,367 +1138,64 @@ function createFlowArrow(startWorld, endWorld, isReverse = false, color = '#0064
     return cone;
 }
 
-// // ============================================================================
-// // ЭКСПОРТ ДАННЫХ СЕТИ В JSON
-// // ============================================================================
-// function exportToJSON() {
-//     // Собираем данные из сцены
-//     const Data_base = {
-//         Node: [],
-//         Edge: [],
-//         PRESSURE_TARGET: 19.17  // Целевое давление по умолчанию
-//     };
-    
-//     Engine.scene.traverse((child) => {    
-//         if (typeof child.add_list === 'function') {
-//             if (child.type === 'Edge' || child.isEdgeGroup) {
-//                 // Для групп берем толстую трубу
-//                 const edge = child.isEdgeGroup ? 
-//                     child.children.find(m => m.name === 'thickPipe') : child;
-                
-//                 if (edge && typeof edge.add_list === 'function') {
-//                     Data_base.Edge.push(edge.add_list());
-//                 }
-//             }
-//             else {
-//                 const properties = child.add_list();
-//                 Data_base.Node.push(properties);
-//             }
-//         }       
-//     });
-    
-//     console.log("📦 Данные для экспорта:", Data_base);
-    
-//     // Создаем JSON-строку с форматированием
-//     const jsonString = JSON.stringify(Data_base, null, 2);
-    
-//     // Создаем Blob и ссылку для скачивания
-//     const blob = new Blob([jsonString], { type: 'application/json' });
-//     const url = URL.createObjectURL(blob);
-    
-//     // Создаем временную ссылку
-//     const link = document.createElement('a');
-//     link.href = url;
-//     link.download = `network_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
-    
-//     // Имитируем клик
-//     document.body.appendChild(link);
-//     link.click();
-//     document.body.removeChild(link);
-    
-//     // Освобождаем URL
-//     URL.revokeObjectURL(url);
-    
-//     console.log("✅ JSON-файл успешно экспортирован");
-    
-//     // Показываем уведомление
-//     if (typeof Utils !== 'undefined' && Utils.showStatus) {
-//         Utils.showStatus('JSON-файл экспортирован');
-//     }
-// }
-
-
-
-
-
 // ============================================================================
-// 5. ФУНКЦИИ СОХРАНЕНИЯ И ЗАГРУЗКИ ПРОЕКТА (JSON)
+// ЭКСПОРТ ДАННЫХ СЕТИ В JSON
 // ============================================================================
-
-// 5.1. Улучшенное сохранение (ваша функция, немного доработанная для надежности)
 function exportToJSON() {
+    // Собираем данные из сцены
     const Data_base = {
         Node: [],
         Edge: [],
-        PRESSURE_TARGET: 19.17
+        PRESSURE_TARGET: 19.17  // Целевое давление по умолчанию
     };
     
     Engine.scene.traverse((child) => {    
         if (typeof child.add_list === 'function') {
             if (child.type === 'Edge' || child.isEdgeGroup) {
-                const edge = child.isEdgeGroup ? child.children.find(m => m.name === 'thickPipe') : child;
+                // Для групп берем толстую трубу
+                const edge = child.isEdgeGroup ? 
+                    child.children.find(m => m.name === 'thickPipe') : child;
+                
                 if (edge && typeof edge.add_list === 'function') {
                     Data_base.Edge.push(edge.add_list());
                 }
-            } else {
-                Data_base.Node.push(child.add_list());
+            }
+            else {
+                const properties = child.add_list();
+                Data_base.Node.push(properties);
             }
         }       
     });
     
+    console.log("📦 Данные для экспорта:", Data_base);
+    
+    // Создаем JSON-строку с форматированием
     const jsonString = JSON.stringify(Data_base, null, 2);
+    
+    // Создаем Blob и ссылку для скачивания
     const blob = new Blob([jsonString], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     
+    // Создаем временную ссылку
     const link = document.createElement('a');
     link.href = url;
-    // Имя файла с текущей датой и временем
-    const date = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-    link.download = `AUP_Project_${date}.json`;
+    link.download = `network_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
     
+    // Имитируем клик
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    
+    // Освобождаем URL
     URL.revokeObjectURL(url);
     
+    console.log("✅ JSON-файл успешно экспортирован");
+    
+    // Показываем уведомление
     if (typeof Utils !== 'undefined' && Utils.showStatus) {
-        Utils.showStatus('✅ Проект успешно сохранен');
-    } else {
-        console.log("✅ Проект успешно сохранен");
+        Utils.showStatus('JSON-файл экспортирован');
     }
 }
-
-// 5.2. Функция полной очистки сцены перед загрузкой
-function clearSceneForLoad() {
-    const toRemove = [];
-    Engine.scene.traverse((child) => {
-        // Собираем все узлы и трубы для удаления
-        if (child.type === 'Node' || child.type === 'Source' || child.type === 'Sprinkler' || child.type === 'Edge') {
-            toRemove.push(child);
-        }
-    });
-
-    toRemove.forEach((obj) => {
-        // Открепляем от родителя
-        if (obj.parent) {
-            obj.parent.remove(obj);
-        } else {
-            Engine.scene.remove(obj);
-        }
-        
-        // Очищаем память (Geometry и Material)
-        if (obj.geometry) obj.geometry.dispose();
-        if (obj.material) {
-            if (Array.isArray(obj.material)) {
-                obj.material.forEach(m => m.dispose());
-            } else {
-                obj.material.dispose();
-            }
-        }
-    });
-
-    // Полностью очищаем массив отслеживаемых объектов
-    STATE.Three_D_objects = [];
-    console.log("🧹 Сцена очищена для загрузки нового проекта");
-}
-
-// 5.3. Главная функция загрузки из JSON
-function loadProjectFromJSON(file) {
-    const reader = new FileReader();
-    
-    reader.onload = (e) => {
-        try {
-            const data = JSON.parse(e.target.result);
-            console.log("📦 Данные для загрузки:", data);
-
-            // 1. Очищаем текущую сцену
-            clearSceneForLoad();
-
-            // 2. Словарь для быстрого поиска узлов по их ID (нужен для привязки труб)
-            const nodeMap = new Map();
-
-            // 3. Воссоздаем УЗЛЫ (Node, Source, Sprinkler)
-            if (data.Node && Array.isArray(data.Node)) {
-                data.Node.forEach(n => {
-                    const geom = new THREE.SphereGeometry(VisualPipelins.d_node_base / 2, 32, 32);
-                    
-                    // Выбираем цвет в зависимости от типа
-                    let color = 0x00ff00; // Node
-                    let typeName = 'Node';
-                    if (n.type === 'Source' || (n.name && n.name.toLowerCase().includes('source'))) {
-                        color = 0x800080;
-                        typeName = 'Source';
-                    } else if (n.type === 'Sprinkler' || (n.name && n.name.toLowerCase().includes('sprinkler'))) {
-                        color = 0xff0000;
-                        typeName = 'Sprinkler';
-                    }
-
-                    const mat = new THREE.MeshBasicMaterial({ color: color });
-                    const node = new Node_new(geom, mat, typeName);
-                    
-                    // Восстанавливаем координаты
-                    const x = n.X_gl !== undefined ? n.X_gl : (n.x !== undefined ? n.x : 0);
-                    const y = n.Y_gl !== undefined ? n.Y_gl : (n.y !== undefined ? n.y : 0);
-                    const z = n.Z_gl !== undefined ? n.Z_gl : (n.z !== undefined ? n.z : 0);
-                    
-                    node.position.set(x, y, z);
-                    
-                    // Сохраняем оригинальный ID
-                    const originalId = n.id || n.uuid || `node_${nodeMap.size}`;
-                    node.id = originalId; 
-                    
-                    Engine.scene.add(node);
-                    nodeMap.set(originalId, node);
-                    STATE.Three_D_objects.push(node);
-
-                    // ✅ Восстанавливаем стрелку ТОЛЬКО для оросителей
-                    if (typeName === 'Sprinkler') {
-                        const sprinklerGroup = new THREE.Group();
-                        sprinklerGroup.name = 'SprinklerArrow';
-                        const nodeRadius = VisualPipelins.d_node_base / 2;
-                        
-                        // 1. Стержень стрелки (цилиндр)
-                        const shaftRadius = nodeRadius * 0.1;
-                        const shaftHeight = nodeRadius * 2.5;
-                        const shaftGeo = new THREE.CylinderGeometry(shaftRadius, shaftRadius, shaftHeight, 16);
-                        const shaft = new THREE.Mesh(shaftGeo, mat);
-                        shaft.position.y = -(shaftHeight / 2);
-                        
-                        // 2. Наконечник стрелки (конус, направленный вниз)
-                        const headRadius = nodeRadius * 1;
-                        const headHeight = nodeRadius * 1.5;
-                        const headGeo = new THREE.ConeGeometry(headRadius, headHeight, 16);
-                        const head = new THREE.Mesh(headGeo, mat);
-                        head.rotation.x = Math.PI;
-                        head.position.y = -(shaftHeight + headHeight / 2);
-
-                        sprinklerGroup.add(shaft);
-                        sprinklerGroup.add(head);
-                        
-                        // Добавляем группу со стрелкой к узлу
-                        node.add(sprinklerGroup);
-                    }
-                });
-            }
-
-            // 4. Воссоздаем ТРУБЫ (Edge)
-            if (data.Edge && Array.isArray(data.Edge)) {
-                data.Edge.forEach(ed => {
-                    // Ищем узлы по сохраненным ID
-                    const startNode = nodeMap.get(ed.start_node);
-                    const endNode = nodeMap.get(ed.end_node);
-
-                    if (startNode && endNode) {
-                        const path = new THREE.LineCurve3(
-                            new THREE.Vector3(startNode.position.x, startNode.position.y, startNode.position.z),
-                            new THREE.Vector3(endNode.position.x, endNode.position.y, endNode.position.z)
-                        );
-                        
-                        const pipeGeom = new THREE.TubeGeometry(path, 64, VisualPipelins.d_pipe_base / 2, 12, false);
-                        const pipeMat = new THREE.MeshBasicMaterial({ color: '#0F1379' });
-                        
-                        // Восстанавливаем свойства трубы
-                        const length = ed.Length || 5;
-                        const dn = ed.DN || 50;
-                        const typeTube = ed.type_tube || ed.ghost || "Стальная";
-                        const kt = ed.k_t || 0.01;
-                        const kv = ed.kvelocity || 1.0;
-
-                        const edge = new Edge_new(pipeGeom, pipeMat, startNode, endNode, 'Edge', length, dn, typeTube, kt, kv);
-                        
-                        // Привязываем трубу к узлам (как в CreatePipeline)
-                        startNode.attach(edge);
-                        edge.attach(endNode);
-                        
-                        STATE.Three_D_objects.push(edge);
-                    } else {
-                        console.warn(`⚠️ Не найдены узлы для трубы: start=${ed.start_node}, end=${ed.end_node}`);
-                    }
-                });
-            }
-
-            // 5. Обновляем глобальные координаты и дерево
-            if (typeof update_Node_XYZ === 'function') update_Node_XYZ();
-            if (typeof updateTreeUI === 'function') updateTreeUI();
-
-            console.log("✅ Проект успешно загружен!");
-            if (typeof Utils !== 'undefined' && Utils.showStatus) {
-                Utils.showStatus('✅ Проект успешно загружен');
-            } else {
-                alert("✅ Проект успешно загружен!");
-            }
-
-        } catch (error) {
-            console.error("❌ Ошибка при парсинге JSON:", error);
-            alert("Ошибка при чтении файла. Убедитесь, что это корректный JSON проекта.");
-        }
-    };
-
-    reader.readAsText(file);
-}
-
-// ============================================================================
-// 6. ПРИВЯЗКА СОБЫТИЙ К КНОПКАМ
-// ============================================================================
-document.addEventListener("DOMContentLoaded", () => {
-    // Кнопка Сохранить
-    const btnSave = document.getElementById("menuSave");
-    if (btnSave) {
-        btnSave.onclick = () => exportToJSON();
-    }
-
-    // Кнопка Открыть
-    const btnOpen = document.getElementById("menuOpen");
-    const fileInput = document.getElementById("fileInputJSON");
-
-    if (btnOpen && fileInput) {
-        btnOpen.onclick = () => {
-            fileInput.click(); // Открываем системное окно выбора файла
-        };
-
-        fileInput.onchange = (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                loadProjectFromJSON(file);
-                // Сбрасываем input, чтобы можно было загрузить тот же файл повторно при необходимости
-                fileInput.value = ''; 
-            }
-        };
-    }
-    
-    // Кнопка Экспорт (если она отличается от Сохранить)
-    const btnExport = document.getElementById("menuExportJSON");
-    if (btnExport) {
-        btnExport.onclick = () => exportToJSON();
-    }
-});
-
-
-
-
-// ============================================================================
-// ФУНКЦИЯ ИМПОРТА ПРОЕКТА ИЗ JSON
-// ============================================================================
-function importToJSON() {
-    // 1. Находим или создаем скрытый input для выбора файла
-    let fileInput = document.getElementById("fileInputJSON");
-    if (!fileInput) {
-        fileInput = document.createElement("input");
-        fileInput.type = "file";
-        fileInput.id = "fileInputJSON";
-        fileInput.accept = ".json";
-        fileInput.style.display = "none";
-        document.body.appendChild(fileInput);
-    }
-
-    // 2. Настраиваем обработчик события выбора файла
-    fileInput.onchange = (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            console.log("📂 Выбран файл для загрузки:", file.name);
-            loadProjectFromJSON(file);
-            
-            // Сбрасываем value, чтобы можно было выбрать тот же файл повторно
-            fileInput.value = "";
-        }
-    };
-
-    // 3. Имитируем клик по скрытому input, чтобы открыть системное окно выбора файла
-    fileInput.click();
-}
-
-
-// Функция для жесткого обновления страницы (имитация Ctrl + F5)
-function refreshPageHard() {    
-    window.location.href = window.location.origin + window.location.pathname + '?r=' + Date.now();
-}
-
-
-
-
-
-
-
 
 // ============================================================================
 // УПРАВЛЕНИЕ ДЕРЕВОМ ПОСТРОЕНИЯ
@@ -1707,22 +1358,22 @@ function buildTree(collapseAll = false) {
 }
 
 function focusOnItem(object) {
-    if (!Engine || !Engine.camera || !Engine.controls) return;
-    const pos = new THREE.Vector3();
-    if (object.getWorldPosition) object.getWorldPosition(pos);
-    else pos.copy(object.position);
-    
-    Engine.camera.position.set(pos.x + 5, pos.y + 5, pos.z + 5);
-    Engine.controls.target.copy(pos);
-    Engine.controls.update();
+  if (!Engine || !Engine.camera || !Engine.controls) return;
+  const pos = new THREE.Vector3();
+  if (object.getWorldPosition) object.getWorldPosition(pos);
+  else pos.copy(object.position);
+  
+  Engine.camera.position.set(pos.x + 5, pos.y + 5, pos.z + 5);
+  Engine.controls.target.copy(pos);
+  Engine.controls.update();
 }
 
 // Привязка кнопки
 document.addEventListener("DOMContentLoaded", () => {
-    const btn = document.getElementById("floatingTreeBtn");
-    if (btn) {
-        btn.onclick = () => toggleTree();
-    }
+  const btn = document.getElementById("floatingTreeBtn");
+  if (btn) {
+    btn.onclick = () => toggleTree();
+  }
 });
 
 
@@ -1758,7 +1409,7 @@ window.addEventListener('load', () => {
             }
             
             if (!hasAxes) {
-                const axesHelper = new THREE.AxesHelper(3);
+                const axesHelper = new THREE.AxesHelper(2);
                 Engine.scene.add(axesHelper);
                 console.log("✅ Оси координат добавлены принудительно");
             }
@@ -1775,201 +1426,3 @@ window.addEventListener('load', () => {
         }
     }, 500); // Задержка 500мс дает время на полную инициализацию Engine из других файлов
 });
-
-
-
-
-
-function exportToJSON234() {
-    const Data_base = {
-        Node: [],
-        Edge: [],
-        PRESSURE_TARGET: 19.17
-    };
-    
-    Engine.scene.traverse((child) => {    
-        if (typeof child.add_list === 'function') {
-            if (child.type === 'Edge' || child.isEdgeGroup) {
-                const edge = child.isEdgeGroup ? child.children.find(m => m.name === 'thickPipe') : child;
-                if (edge && typeof edge.add_list === 'function') {
-                    Data_base.Edge.push(edge.add_list());
-                }
-            } else {
-                Data_base.Node.push(child.add_list());
-            }
-        }       
-    });
-    
-    const jsonString = JSON.stringify(Data_base, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
-  
-}
-
-// 5.2. Функция полной очистки сцены перед загрузкой
-function clearSceneForLoad() {
-    const toRemove = [];
-    Engine.scene.traverse((child) => {
-        // Собираем все узлы и трубы для удаления
-        if (child.type === 'Node' || child.type === 'Source' || child.type === 'Sprinkler' || child.type === 'Edge') {
-            toRemove.push(child);
-        }
-    });
-
-    toRemove.forEach((obj) => {
-        // Открепляем от родителя
-        if (obj.parent) {
-            obj.parent.remove(obj);
-        } else {
-            Engine.scene.remove(obj);
-        }
-        
-        // Очищаем память (Geometry и Material)
-        if (obj.geometry) obj.geometry.dispose();
-        if (obj.material) {
-            if (Array.isArray(obj.material)) {
-                obj.material.forEach(m => m.dispose());
-            } else {
-                obj.material.dispose();
-            }
-        }
-    });
-
-    // Полностью очищаем массив отслеживаемых объектов
-    STATE.Three_D_objects = [];
-    console.log("🧹 Сцена очищена для загрузки нового проекта");
-}
-
-
-function loadProjectFromJSOssN(file) {
-    const reader = new FileReader();
-    
-    reader.onload = (e) => {
-        try {
-            const data = JSON.parse(e.target.result);
-            console.log("📦 Данные для загрузки:", data);
-
-            // 1. Очищаем текущую сцену
-            clearSceneForLoad();
-
-            // 2. Словарь для быстрого поиска узлов по их ID (нужен для привязки труб)
-            const nodeMap = new Map();
-
-            // 3. Воссоздаем УЗЛЫ (Node, Source, Sprinkler)
-            if (data.Node && Array.isArray(data.Node)) {
-                data.Node.forEach(n => {
-                    const geom = new THREE.SphereGeometry(VisualPipelins.d_node_base / 2, 32, 32);
-                    
-                    // Выбираем цвет в зависимости от типа
-                    let color = 0x00ff00; // Node
-                    let typeName = 'Node';
-                    if (n.type === 'Source' || (n.name && n.name.toLowerCase().includes('source'))) {
-                        color = 0x800080;
-                        typeName = 'Source';
-                    } else if (n.type === 'Sprinkler' || (n.name && n.name.toLowerCase().includes('sprinkler'))) {
-                        color = 0xff0000;
-                        typeName = 'Sprinkler';
-                    }
-
-                    const mat = new THREE.MeshBasicMaterial({ color: color });
-                    const node = new Node_new(geom, mat, typeName);
-                    
-                    // Восстанавливаем координаты
-                    const x = n.X_gl !== undefined ? n.X_gl : (n.x !== undefined ? n.x : 0);
-                    const y = n.Y_gl !== undefined ? n.Y_gl : (n.y !== undefined ? n.y : 0);
-                    const z = n.Z_gl !== undefined ? n.Z_gl : (n.z !== undefined ? n.z : 0);
-                    
-                    node.position.set(x, y, z);
-                    
-                    // Сохраняем оригинальный ID
-                    const originalId = n.id || n.uuid || `node_${nodeMap.size}`;
-                    node.id = originalId; 
-                    
-                    Engine.scene.add(node);
-                    nodeMap.set(originalId, node);
-                    STATE.Three_D_objects.push(node);
-
-                    // ✅ Восстанавливаем стрелку ТОЛЬКО для оросителей
-                    if (typeName === 'Sprinkler') {
-                        const sprinklerGroup = new THREE.Group();
-                        sprinklerGroup.name = 'SprinklerArrow';
-                        const nodeRadius = VisualPipelins.d_node_base / 2;
-                        
-                        // 1. Стержень стрелки (цилиндр)
-                        const shaftRadius = nodeRadius * 0.1;
-                        const shaftHeight = nodeRadius * 2.5;
-                        const shaftGeo = new THREE.CylinderGeometry(shaftRadius, shaftRadius, shaftHeight, 16);
-                        const shaft = new THREE.Mesh(shaftGeo, mat);
-                        shaft.position.y = -(shaftHeight / 2);
-                        
-                        // 2. Наконечник стрелки (конус, направленный вниз)
-                        const headRadius = nodeRadius * 1;
-                        const headHeight = nodeRadius * 1.5;
-                        const headGeo = new THREE.ConeGeometry(headRadius, headHeight, 16);
-                        const head = new THREE.Mesh(headGeo, mat);
-                        head.rotation.x = Math.PI;
-                        head.position.y = -(shaftHeight + headHeight / 2);
-
-                        sprinklerGroup.add(shaft);
-                        sprinklerGroup.add(head);
-                        
-                        // Добавляем группу со стрелкой к узлу
-                        node.add(sprinklerGroup);
-                    }
-                });
-            }
-
-            // 4. Воссоздаем ТРУБЫ (Edge)
-            if (data.Edge && Array.isArray(data.Edge)) {
-                data.Edge.forEach(ed => {
-                    // Ищем узлы по сохраненным ID
-                    const startNode = nodeMap.get(ed.start_node);
-                    const endNode = nodeMap.get(ed.end_node);
-
-                    if (startNode && endNode) {
-                        const path = new THREE.LineCurve3(
-                            new THREE.Vector3(startNode.position.x, startNode.position.y, startNode.position.z),
-                            new THREE.Vector3(endNode.position.x, endNode.position.y, endNode.position.z)
-                        );
-                        
-                        const pipeGeom = new THREE.TubeGeometry(path, 64, VisualPipelins.d_pipe_base / 2, 12, false);
-                        const pipeMat = new THREE.MeshBasicMaterial({ color: '#0F1379' });
-                        
-                        // Восстанавливаем свойства трубы
-                        const length = ed.Length || 5;
-                        const dn = ed.DN || 50;
-                        const typeTube = ed.type_tube || ed.ghost || "Стальная";
-                        const kt = ed.k_t || 0.01;
-                        const kv = ed.kvelocity || 1.0;
-
-                        const edge = new Edge_new(pipeGeom, pipeMat, startNode, endNode, 'Edge', length, dn, typeTube, kt, kv);
-                        
-                        // Привязываем трубу к узлам (как в CreatePipeline)
-                        startNode.attach(edge);
-                        edge.attach(endNode);
-                        
-                        STATE.Three_D_objects.push(edge);
-                    } else {
-                        console.warn(`⚠️ Не найдены узлы для трубы: start=${ed.start_node}, end=${ed.end_node}`);
-                    }
-                });
-            }
-
-            // 5. Обновляем глобальные координаты и дерево
-            if (typeof update_Node_XYZ === 'function') update_Node_XYZ();
-            if (typeof updateTreeUI === 'function') updateTreeUI();
-
-            console.log("✅ Проект успешно загружен!");
-            if (typeof Utils !== 'undefined' && Utils.showStatus) {
-                Utils.showStatus('✅ Проект успешно загружен');
-            } else {
-                alert("✅ Проект успешно загружен!");
-            }
-
-        } catch (error) {
-            console.error("❌ Ошибка при парсинге JSON:", error);
-            alert("Ошибка при чтении файла. Убедитесь, что это корректный JSON проекта.");
-        }
-    };
-
-    reader.readAsText(file);
-}
