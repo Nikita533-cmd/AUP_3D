@@ -231,6 +231,7 @@
       <button class="ribbon-tab" data-tab="tab-sprinkler">Подбор оросителя</button>
       <button class="ribbon-tab" data-tab="tab-pipeline">Трубопровод</button>
       <button class="ribbon-tab" data-tab="tab-branch">Ветка</button>
+      <button class="ribbon-tab" data-tab="tab-node">Узел</button>
       <button class="ribbon-tab" data-tab="tab-sources">Источники</button>
       <button class="ribbon-tab" data-tab="tab-calc">Расчет</button>
       <button class="ribbon-tab" data-tab="tab-results">Результаты</button>
@@ -273,7 +274,10 @@
       <div class="ribbon-panel" id="tab-branch">
         <button class="btn-ribbon" id="menuCreateBranch"><span class="btn-icon">🌿</span><span>Создать</span></button>
       </div>
-
+      <!-- Вкладка: узел-->
+      <div class="ribbon-panel" id="tab-node">
+        <button class="btn-ribbon" id="menuEditNode"><span class="btn-icon">✏️</span><span>Изменить</span></button>
+      </div>
       <!-- Вкладка: Источники -->
       <div class="ribbon-panel" id="tab-sources">
         <button class="btn-ribbon" id="src_tank"><span class="btn-icon">🛢️</span><span>Резервуар</span></button>
@@ -667,6 +671,33 @@
     </div>    
   </div>
 
+  <div id="Node_Edit">
+    <div class="pipeline-header" id="pipelineDragHandle">
+      <span class="title">Редактирование узла</span>
+    </div>
+    <div class="pipeline-body"> 
+      <div class="step"><span>Наименование узла:</span><span id="number_node_edit"></span></div>
+      <div class="step"><span>Тип узла:</span><span id="type_node_edit"></span></div>
+      <div class="step">
+        <span>Координаты узла:</span>
+        X<input type="number" id="pbCX_edit_node" value="0" step="0.1" readonly>
+        Y<input type="number" id="pbCY_edit_node" value="0" step="0.1" readonly>
+        Z<input type="number" id="pbCZ_edit_node" value="0" step="0.1" readonly>
+      </div>                
+      <div class="step">
+        <span>Изменить тип узла</span>
+        <select id="select_node_edit">
+          <option value="Node">Узел</option>
+          <option value="Sprinkler">Ороситель</option>
+          <option value="Source">Источник</option>
+        </select>                
+      </div>          
+      <div class="step">
+        <button class="confirm" id="Node_Edit_confirm">Применить</button>        
+        <button class="cancel" id="Node_Edit_cancel">Отмена</button>        
+      </div>      
+    </div>
+  </div>
 
   <div id="splitPipelineModal" class="edit-modal">
     <div class="modal-content">      
