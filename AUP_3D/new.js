@@ -12,14 +12,29 @@ document.getElementById("menuEditNode").onclick = () => Check_Edit_Node();
 document.getElementById("Add_list_object").onclick = () => Add_data_base();
 // Временная проверка координат элементов
 document.getElementById("Check_3D").onclick = () => logPipelineTree();
-
 // Слушатель для Сохранения проекта с геометрией
 document.getElementById("menuSave").onclick = () => exportToJSON();
-
 // Слушатель для Открытия проекта с геометрией
 document.getElementById("menuOpen").onclick = () => importToJSON();
-
+// Слушатель для создания Нового проекта с геометрией
 document.getElementById("menuNew").onclick = refreshPageHard;
+
+// Логика переключения кнопок направления (+X, -Y и т.д.)
+document.addEventListener('click', function(e) {
+    // Ищем ближайшего родителя с классом .axis-dir-btn (защищает от клика по тексту/иконке внутри)
+    const btn = e.target.closest('.axis-dir-btn');
+    
+    if (btn) {
+        // 1. Убираем класс 'active' у всех кнопок направления
+        document.querySelectorAll('.axis-dir-btn').forEach(b => b.classList.remove('active'));
+        
+        // 2. Добавляем класс 'active' именно той кнопке, по которой кликнули
+        btn.classList.add('active');
+        
+        // 3. Добавим вывод в консоль для проверки (удалите эту строку, когда всё заработает)
+        console.log("Выбрано направление:", btn.dataset.axis, btn.dataset.dir);
+    }
+});
 
 // Проверка существования начального узала
 // Если существует необходимо выбрать узел привязки
@@ -92,8 +107,13 @@ function Pipe_Line_visible_block () {
         const pbCY = parseFloat(document.getElementById("pbCY").value);
         const pbCZ = parseFloat(document.getElementById("pbCZ").value);        
         
-        const activeAxis = document.querySelector('.axis-btn.active').dataset.axis; // активная ось направления
-        const activeAxis_direction = document.querySelector('.dir-btn.active').dataset.dir; // активное положение направления
+        // const activeAxis = document.querySelector('.axis-btn.active').dataset.axis; // активная ось направления
+        // const activeAxis_direction = document.querySelector('.dir-btn.active').dataset.dir; // активное положение направления
+
+        const activeBtn = document.querySelector('.axis-dir-btn.active');
+        const activeAxis = activeBtn.dataset.axis;             // вернет "x", "y" или "z"
+        const activeAxis_direction = activeBtn.dataset.dir;    // вернет "+" или "-"
+
         const pbLength = parseFloat(document.getElementById("pbLength").value);
         const activeAxis_rotation = document.querySelector('.axis-btn-rot.active').dataset.axis; // активная ось дял порворота
         const rotate_value = parseFloat(document.getElementById("pbAngle").value);
@@ -659,27 +679,65 @@ function Check_Edit_Node(){
 
 function Edit_Node(Node) {
     const new_type = document.getElementById("select_node_edit").value;
-    Node.type=new_type;
-    console.log("материал то обновы",Node.material);
+    Node.type = new_type;
+
+    // 1. Удаляем старую стрелку, если она была (на случай смены с Оросителя на Узел/Источник)
+    const existingArrow = Node.getObjectByName('SprinklerArrow');
+    if (existingArrow) {
+        Node.remove(existingArrow);
+    }
+
+    // 2. Обновляем материал (цвет) узла
     Node.material.dispose();
-    let new_Node_Material;        
+    let new_Node_Material;
     if (new_type === "Node") {        
         new_Node_Material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
     }
     else if (new_type === "Sprinkler") {        
-        new_Node_Material = new THREE.MeshBasicMaterial({ color: '#FF0000' });
+        new_Node_Material = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Используем hex для надежности
     }
     else if (new_type === "Source") {        
         new_Node_Material = new THREE.MeshBasicMaterial({ color: 0x800080 });
     }    
-    Node.material=new_Node_Material;
-    console.log("материал после обновы",Node.material);
     
+    Node.material = new_Node_Material;
     Node.material.needsUpdate = true;
     Node.userData.originalColor = Node.material.color.getHex();
-    
+
+    // 3. ✅ ГЛАВНОЕ ИСПРАВЛЕНИЕ: Если тип стал "Sprinkler", создаем и добавляем стрелку
+    if (new_type === "Sprinkler") {
+        const sprinklerGroup = new THREE.Group();
+        sprinklerGroup.name = 'SprinklerArrow';
+        const nodeRadius = VisualPipelins.d_node_base / 2;
+        
+        // 1. Стержень стрелки (цилиндр)
+        const shaftRadius = nodeRadius * 0.1;
+        const shaftHeight = nodeRadius * 2.5;
+        const shaftGeo = new THREE.CylinderGeometry(shaftRadius, shaftRadius, shaftHeight, 16);
+        const shaft = new THREE.Mesh(shaftGeo, new_Node_Material); // Используем новый красный материал
+        shaft.position.y = -(shaftHeight / 2);
+        
+        // 2. Наконечник стрелки (конус, направленный вниз)
+        const headRadius = nodeRadius * 1;
+        const headHeight = nodeRadius * 1.5;
+        const headGeo = new THREE.ConeGeometry(headRadius, headHeight, 16);
+        const head = new THREE.Mesh(headGeo, new_Node_Material); // Используем новый красный материал
+        head.rotation.x = Math.PI;
+        head.position.y = -(shaftHeight + headHeight / 2);
+
+        sprinklerGroup.add(shaft);
+        sprinklerGroup.add(head);
+        
+        // Добавляем группу со стрелкой к узлу
+        Node.add(sprinklerGroup);
+    }
+
+    // 4. Обновляем дерево построения, чтобы в левой панели тоже обновилась иконка и название
+    if (typeof updateTreeUI === 'function') {
+        updateTreeUI();
+    }
+
     cancel("Node_Edit");
-    console.log("Engine.scene.children проверка после изменения узла",Engine.scene.children)
 }
 
 async function sendJsonAndVisualize(v) {

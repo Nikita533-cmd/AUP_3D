@@ -2396,3 +2396,55 @@ body {
 .chart-modal.is-fullscreen .chart-modal-body {
     height: calc(100% - 120px) !important;
 }
+
+
+
+/* Базовый стиль кнопок направления */
+.axis-dir-btn {
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    background-color: #f5f5f5;
+    color: #333;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s ease; /* Плавная анимация */
+    outline: none;
+}
+
+/* Стиль при наведении мыши */
+.axis-dir-btn:hover {
+    background-color: #e0e0e0;
+    border-color: #bbb;
+}
+
+/* ✅ СТИЛЬ ДЛЯ ВЫБРАННОЙ (АКТИВНОЙ) КНОПКИ */
+.axis-dir-btn.active {
+    background-color: #ff0000; /* Синий цвет (можно заменить на #0F1379 под цвет вашей панели) */
+    color: #ffffff;            /* Белый текст */
+    border-color: #1565c0;
+    box-shadow: 0 2px 4px rgba(25, 118, 210, 0.4); /* Легкая тень для объема */
+}
+
+
+
+
+/* Все поля ввода в модальных окнах создания/редактирования */
+.pipeline-body input[type="number"],
+.pipeline-body input[type="text"] {
+    min-width: 120px !important;
+    height: 36px !important;
+    font-size: 15px !important;
+    padding: 4px 8px !important;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    text-align: center;
+}
+
+/* Поле длины делаем чуть шире */
+#pbLength,
+#pipe_edit {
+    width: 100px !important;
+}
+
