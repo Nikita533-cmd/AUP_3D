@@ -18,8 +18,8 @@ const Engine = {
         this.camera = new THREE.PerspectiveCamera(
             60,
             innerWidth / innerHeight,
-            0.01,
-            1000
+            0.001,
+            10000
         );
         this.camera.position.set(20, 25, 30);
 

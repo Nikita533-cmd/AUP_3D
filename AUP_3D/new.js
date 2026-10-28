@@ -138,32 +138,103 @@ function cancel(name) {
     document.body.classList.remove('builder-active');        
 }
 
-// функция для создания трубопровода, включена поверка начальных условий при выборре узла, и проверка конечной точки при совпадении координат
-function CreatePipeline (pbCX, pbCY, pbCZ, activeAxis, activeAxis_direction, pbLength, activeAxis_rotation, rotate_value, type_tube,
-            pbDiameter, k_t, kvelocity, Check_Nodes) {
-    // create_Pipe_line.style.display = 'block';
-    // console.log("activeAxis_direction1488888",activeAxis_direction);
+// // функция для создания трубопровода, включена поверка начальных условий при выборре узла, и проверка конечной точки при совпадении координат
+// function CreatePipeline (pbCX, pbCY, pbCZ, activeAxis, activeAxis_direction, pbLength, activeAxis_rotation, rotate_value, type_tube,
+//             pbDiameter, k_t, kvelocity, Check_Nodes) {
+//     // create_Pipe_line.style.display = 'block';
+//     // console.log("activeAxis_direction1488888",activeAxis_direction);
+//     const Node_Geometry = new THREE.SphereGeometry(VisualPipelins.d_node_base/2, 32, 32);
+//     const Node_Material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });    
+//     const Edge_Material = new THREE.MeshBasicMaterial({ color: '#0F1379' });
+    
+//     console.log("Check_Nodes_121123",Check_Nodes)
+//     if (Check_Nodes) {
+//         const [pbCX_end, pbCY_end, pbCZ_end] = calculation_end_node(pbCX, pbCY, pbCZ, pbLength, activeAxis, activeAxis_direction,
+//             activeAxis_rotation,rotate_value)
+//         let Node_End; 
+
+//         const check_node_end = check_End_Node(pbCX_end, pbCY_end, pbCZ_end);
+//         console.log("check_node_end",check_node_end);
+//         if(check_node_end) {
+//             Node_End = check_node_end;
+//         }
+//         else{
+//             Node_End = new Node_new(Node_Geometry, Node_Material, 'Node' );
+//             Node_End.position.set(pbCX_end, pbCY_end, pbCZ_end);
+//         }
+            
+//         // console.log("Node_End",Node_End.position);
+//         // Node_Start.add(Node_End);
+//         const Node_Start = Engine.selectedObject;
+
+//         const start_World_Pos = new THREE.Vector3();
+//         Node_Start.getWorldPosition(start_World_Pos);
+
+//         const end_World_pos = new THREE.Vector3();
+//         Node_End.getWorldPosition(end_World_pos);
+
+//         const path = new THREE.LineCurve3(start_World_Pos, end_World_pos);
+//         const Piepe_visible = new THREE.TubeGeometry (path, 64, VisualPipelins.d_pipe_base/2, 12, false);
+//         const Pipe_connection = new Edge_new(Piepe_visible, Edge_Material, Node_Start, Node_End, 'Edge', pbLength, pbDiameter, type_tube, k_t, kvelocity );
+//         Node_Start.attach(Pipe_connection);
+//         if (!check_node_end) {
+//             Pipe_connection.attach(Node_End);
+//         }
+//     }
+//     else {
+//         const Node_Material_start = new THREE.MeshBasicMaterial({ color: 0x800080 });
+//         const Node_Start = new Node_new(Node_Geometry, Node_Material_start, 'Source');
+//         Node_Start.position.set(pbCX, pbCY, pbCZ);
+//         const [pbCX_end, pbCY_end, pbCZ_end] = calculation_end_node(pbCX, pbCY, pbCZ, pbLength, activeAxis, activeAxis_direction,
+//             activeAxis_rotation,rotate_value)
+//         const Node_End = new Node_new(Node_Geometry, Node_Material, 'Node');
+//         Node_End.position.set(pbCX_end, pbCY_end, pbCZ_end);    
+//         // console.log("Node_End",Node_End.position);
+//         // Node_Start.add(Node_End);
+//         const path = new THREE.LineCurve3(Node_Start.position, Node_End.position)
+//         const Piepe_visible = new THREE.TubeGeometry (path, 64, VisualPipelins.d_pipe_base/2, 12, false)
+//         const Pipe_connection = new Edge_new(Piepe_visible, Edge_Material, Node_Start, Node_End, 'Edge', pbLength, pbDiameter, type_tube, k_t, kvelocity);       
+//         Engine.scene.add(Node_Start);
+//         Node_Start.attach(Pipe_connection);
+//         Pipe_connection.attach(Node_End); 
+//         }    
+//     // Engine.scene.add(Node_End);    
+//     // Engine.scene.add(Pipe_connection);
+//     update_Node_XYZ()
+//     console.log("Engine.scene.children",Engine.scene.children);
+//     console.log("STATE.Three_D_objects",STATE.Three_D_objects);
+//     updateTreeUI(); // Обновить дерево построения
+//     // cancel("pipelineBuilder"); 
+// };
+
+
+
+// функция для создания трубопровода
+function CreatePipeline(pbCX, pbCY, pbCZ, activeAxis, activeAxis_direction, pbLength, activeAxis_rotation, rotate_value, type_tube, pbDiameter, k_t, kvelocity, Check_Nodes) {
+    
     const Node_Geometry = new THREE.SphereGeometry(VisualPipelins.d_node_base/2, 32, 32);
+    
+    // Используем стандартные материалы без агрессивных настроек, чтобы объекты не исчезали
     const Node_Material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });    
     const Edge_Material = new THREE.MeshBasicMaterial({ color: '#0F1379' });
-    console.log("Check_Nodes_121123",Check_Nodes)
+
+    let Node_End;             
+
+    console.log("Check_Nodes_121123", Check_Nodes);
+    
     if (Check_Nodes) {
-        const [pbCX_end, pbCY_end, pbCZ_end] = calculation_end_node(pbCX, pbCY, pbCZ, pbLength, activeAxis, activeAxis_direction,
-            activeAxis_rotation,rotate_value)
-        let Node_End; 
+        const [pbCX_end, pbCY_end, pbCZ_end] = calculation_end_node(pbCX, pbCY, pbCZ, pbLength, activeAxis, activeAxis_direction, activeAxis_rotation, rotate_value);
 
         const check_node_end = check_End_Node(pbCX_end, pbCY_end, pbCZ_end);
-        console.log("check_node_end",check_node_end);
-        if(check_node_end) {
-            Node_End = check_node_end;
-        }
-        else{
-            Node_End = new Node_new(Node_Geometry, Node_Material, 'Node' );
+        
+        if (check_node_end) {
+            Node_End = check_node_end; 
+        } else {
+            Node_End = new Node_new(Node_Geometry, Node_Material, 'Node');
             Node_End.position.set(pbCX_end, pbCY_end, pbCZ_end);
+            Engine.scene.add(Node_End);
         }
             
-        // console.log("Node_End",Node_End.position);
-        // Node_Start.add(Node_End);
         const Node_Start = Engine.selectedObject;
 
         const start_World_Pos = new THREE.Vector3();
@@ -173,38 +244,82 @@ function CreatePipeline (pbCX, pbCY, pbCZ, activeAxis, activeAxis_direction, pbL
         Node_End.getWorldPosition(end_World_pos);
 
         const path = new THREE.LineCurve3(start_World_Pos, end_World_pos);
-        const Piepe_visible = new THREE.TubeGeometry (path, 64, VisualPipelins.d_pipe_base/2, 12, false);
-        const Pipe_connection = new Edge_new(Piepe_visible, Edge_Material, Node_Start, Node_End, 'Edge', pbLength, pbDiameter, type_tube, k_t, kvelocity );
+        const Piepe_visible = new THREE.TubeGeometry(path, 64, VisualPipelins.d_pipe_base/2, 12, false);
+        const Pipe_connection = new Edge_new(Piepe_visible, Edge_Material, Node_Start, Node_End, 'Edge', pbLength, pbDiameter, type_tube, k_t, kvelocity);
+        
+        // ✅ Используем .attach() для сохранения мировых координат при смене родителя
         Node_Start.attach(Pipe_connection);
         if (!check_node_end) {
             Pipe_connection.attach(Node_End);
         }
-    }
-    else {
+    } else {
+        // Создание самого первого узла (Источника)
         const Node_Material_start = new THREE.MeshBasicMaterial({ color: 0x800080 });
         const Node_Start = new Node_new(Node_Geometry, Node_Material_start, 'Source');
         Node_Start.position.set(pbCX, pbCY, pbCZ);
-        const [pbCX_end, pbCY_end, pbCZ_end] = calculation_end_node(pbCX, pbCY, pbCZ, pbLength, activeAxis, activeAxis_direction,
-            activeAxis_rotation,rotate_value)
-        const Node_End = new Node_new(Node_Geometry, Node_Material, 'Node');
+        
+        const [pbCX_end, pbCY_end, pbCZ_end] = calculation_end_node(pbCX, pbCY, pbCZ, pbLength, activeAxis, activeAxis_direction, activeAxis_rotation, rotate_value);
+        
+        Node_End = new Node_new(Node_Geometry, Node_Material, 'Node');
         Node_End.position.set(pbCX_end, pbCY_end, pbCZ_end);    
-        // console.log("Node_End",Node_End.position);
-        // Node_Start.add(Node_End);
-        const path = new THREE.LineCurve3(Node_Start.position, Node_End.position)
-        const Piepe_visible = new THREE.TubeGeometry (path, 64, VisualPipelins.d_pipe_base/2, 12, false)
+        
+        const path = new THREE.LineCurve3(Node_Start.position, Node_End.position);
+        const Piepe_visible = new THREE.TubeGeometry(path, 64, VisualPipelins.d_pipe_base/2, 12, false);
         const Pipe_connection = new Edge_new(Piepe_visible, Edge_Material, Node_Start, Node_End, 'Edge', pbLength, pbDiameter, type_tube, k_t, kvelocity);       
+        
         Engine.scene.add(Node_Start);
         Node_Start.attach(Pipe_connection);
         Pipe_connection.attach(Node_End); 
-        }    
-    // Engine.scene.add(Node_End);    
-    // Engine.scene.add(Pipe_connection);
-    update_Node_XYZ()
-    console.log("Engine.scene.children",Engine.scene.children);
-    console.log("STATE.Three_D_objects",STATE.Three_D_objects);
-    updateTreeUI(); // Обновить дерево построения
-    // cancel("pipelineBuilder"); 
-};
+    }    
+    
+    // Обновляем матрицы и интерфейс
+    Engine.scene.updateMatrixWorld(true);
+    update_Node_XYZ();
+    updateTreeUI(); 
+
+    // =========================================================================
+    // ✅ ГАРАНТИРОВАННЫЙ ВЫБОР И ПОДСВЕТКА ПОСЛЕДНЕГО УЗЛА (ЗЕЛЕНЫЙ ЦВЕТ)
+    // =========================================================================
+    if (Node_End) {
+        // 1. Делаем его выбранным объектом в системе
+        Engine.selectedObject = Node_End;
+        
+        // 2. Добавляем в STATE, если это новый узел и его там еще нет
+        if (!STATE.Three_D_objects.includes(Node_End)) {
+            STATE.Three_D_objects.push(Node_End);
+        }
+
+        // 3. Визуальная подсветка: меняем цвет на ЗЕЛЕНЫЙ (как в оригинале)
+        if (!Node_End.userData.originalColor) {
+            Node_End.userData.originalColor = Node_End.material.color.getHex();
+        }
+        Node_End.material.color.setHex(0x00ff00); // ✅ Зеленый цвет выделения
+        Node_End.material.needsUpdate = true;
+
+        // 4. Проверяем галочку "Непрерывное создание"
+        const isContinuous = document.getElementById("continuousPipelineCheck")?.checked || false;
+        
+        if (isContinuous) {
+            // Если галочка стоит: обновляем поля для следующего шага
+            document.getElementById("pbCX").value = Node_End.position.x.toFixed(2);
+            document.getElementById("pbCY").value = Node_End.position.y.toFixed(2);
+            document.getElementById("pbCZ").value = Node_End.position.z.toFixed(2);
+            document.getElementById("pbLength").value = "5"; // Сброс длины по умолчанию
+            
+            if (typeof Utils !== 'undefined') {
+                Utils.showStatus(`Участок создан. Конечный узел выбран и подсвечен. Готов к следующему.`);
+            }
+        } else {
+            // Если галочка НЕ стоит: просто сообщаем об успехе, окно можно закрыть вручную
+            if (typeof Utils !== 'undefined') {
+                Utils.showStatus(`Участок создан. Конечный узел выбран и подсвечен.`);
+            }
+        }
+    }
+}
+
+
+
 // Функция расчета коенчного узла для трубопровода
 function calculation_end_node(pbCX, pbCY, pbCZ, pbLength, activeAxis, activeAxis_direction,
     activeAxis_rotation,rotate_value)

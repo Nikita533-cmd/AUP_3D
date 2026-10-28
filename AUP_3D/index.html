@@ -353,15 +353,12 @@
           Y<input type="number" id="pbCY" value="0" step="0.1" readonly>
           Z<input type="number" id="pbCZ" value="0" step="0.1" readonly>
         </div>
-        <!-- <div class="step">
-          <span>Ось трубопровода</span>
-          <button class="axis-btn" data-axis="x">X</button>
-          <button class="axis-btn active" data-axis="y">Y</button>
-          <button class="axis-btn" data-axis="z">Z</button>
-          <span style="margin-left:10px">Направление вдоль оси</span>
-          <button class="dir-btn active" data-dir="+">+</button>
-          <button class="dir-btn" data-dir="-">-</button>
-        </div>  -->
+        
+        <!-- ✅ ДОБАВЛЕН ЧЕКБОКС НЕПРЕРЫВНОГО СОЗДАНИЯ -->
+        <div class="step" style="display: flex; align-items: center; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee;">
+          <input type="checkbox" id="continuousPipelineCheck" style="width: 18px; height: 18px; cursor: pointer; accent-color: #1976d2;">
+          <label for="continuousPipelineCheck" style="cursor: pointer; font-size: 13px; font-weight: 600; color: #333;">Непрерывное создание</label>
+        </div>
 
         <div class="step">
           <span>Ось:</span>
