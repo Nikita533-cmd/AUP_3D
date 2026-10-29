@@ -11,7 +11,8 @@ document.getElementById("menuEditNode").onclick = () => Check_Edit_Node();
 // Запуск сбора инфы по объектам
 document.getElementById("Add_list_object").onclick = () => Add_data_base();
 // Временная проверка координат элементов
-document.getElementById("Check_3D").onclick = () => logPipelineTree();
+// document.getElementById("Check_3D").onclick = () => logPipelineTree(); // старая рповерка
+// document.getElementById("Check_3D").onclick = () => checkAllPipelines(); // новая проверка коллизии
 
 // Слушатель для Сохранения проекта с геометрией
 document.getElementById("menuSave").onclick = () => exportToJSON();

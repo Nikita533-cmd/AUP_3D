@@ -864,9 +864,20 @@
   <script src="modules/input-handler.js"></script>
   <script src="modules/ui-app.js"></script>
   <script src="api_module.js"></script>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three/build/three.module.js",
+      "three-mesh-bvh": "https://cdn.jsdelivr.net/npm/three-mesh-bvh/src/index.js"
+    }
+  }
+  </script>
+  
   <script src="new.js"></script>
   <script src="check_input.js"></script>
+  <script type="module" src="collision.js"></script>
   <script src="charts.js"></script>
+
   
   <script>
     // Оригинальная инициализация
