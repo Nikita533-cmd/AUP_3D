@@ -1902,6 +1902,56 @@ document.addEventListener("DOMContentLoaded", () => {
 // ============================================================================
 // ПРИНУДИТЕЛЬНОЕ ИСПРАВЛЕНИЕ ВИДИМОСТИ СЦЕНЫ (Гарантия отображения)
 // ============================================================================
+// window.addEventListener('load', () => {
+//     setTimeout(() => {
+//         // 1. Гарантированно скрываем экран загрузки, если он "завис"
+//         const loadingEl = document.getElementById('loading');
+//         if (loadingEl) {
+//             loadingEl.classList.add('hidden');
+//         }
+
+//         // 2. Проверяем, инициализирован ли Engine
+//         if (typeof Engine !== 'undefined' && Engine.scene) {
+//             // Принудительно задаем светлый фон сцены (убирает черноту)
+//             Engine.scene.background = new THREE.Color(0xf5f5f5);
+            
+//             // 3. Проверяем наличие сетки и осей, добавляем их, если нет
+//             let hasGrid = false;
+//             let hasAxes = false;
+            
+//             Engine.scene.traverse((child) => {
+//                 if (child.type === 'GridHelper') hasGrid = true;
+//                 if (child.type === 'AxesHelper') hasAxes = true;
+//             });
+
+//             if (!hasGrid) {
+//                 const gridHelper = new THREE.GridHelper(50, 50, 0xcccccc, 0xe0e0e0);
+//                 Engine.scene.add(gridHelper);
+//                 console.log("✅ Сетка добавлена принудительно");
+//             }
+            
+//             if (!hasAxes) {
+//                 const axesHelper = new THREE.AxesHelper(3);
+//                 Engine.scene.add(axesHelper);
+//                 console.log("✅ Оси координат добавлены принудительно");
+//             }
+
+//             // 4. Принудительно обновляем размеры рендера и камеры (на случай сбоев ресайза)
+//             if (Engine.renderer && Engine.camera) {
+//                 Engine.renderer.setSize(window.innerWidth, window.innerHeight);
+//                 Engine.camera.aspect = window.innerWidth / window.innerHeight;
+//                 Engine.camera.updateProjectionMatrix();
+//                 console.log("✅ Размеры канваса обновлены");
+//             }
+//         } else {
+//             console.warn("⚠️ Объект Engine или Engine.scene не найден при загрузке!");
+//         }
+//     }, 500); // Задержка 500мс дает время на полную инициализацию Engine из других файлов
+// });
+
+// ============================================================================
+// ПРИНУДИТЕЛЬНОЕ ИСПРАВЛЕНИЕ ВИДИМОСТИ СЦЕНЫ (Только загрузка и ресайз)
+// ============================================================================
 window.addEventListener('load', () => {
     setTimeout(() => {
         // 1. Гарантированно скрываем экран загрузки, если он "завис"
@@ -1911,40 +1961,19 @@ window.addEventListener('load', () => {
         }
 
         // 2. Проверяем, инициализирован ли Engine
-        if (typeof Engine !== 'undefined' && Engine.scene) {
-            // Принудительно задаем светлый фон сцены (убирает черноту)
-            Engine.scene.background = new THREE.Color(0xf5f5f5);
+        if (typeof Engine !== 'undefined' && Engine.scene && Engine.renderer && Engine.camera) {
             
-            // 3. Проверяем наличие сетки и осей, добавляем их, если нет
-            let hasGrid = false;
-            let hasAxes = false;
+            // ✅ Мы УДАЛИЛИ отсюда принудительное создание осей и сетки!
+            // Теперь они управляются только через world.js и STATE.showGrid
             
-            Engine.scene.traverse((child) => {
-                if (child.type === 'GridHelper') hasGrid = true;
-                if (child.type === 'AxesHelper') hasAxes = true;
-            });
-
-            if (!hasGrid) {
-                const gridHelper = new THREE.GridHelper(50, 50, 0xcccccc, 0xe0e0e0);
-                Engine.scene.add(gridHelper);
-                console.log("✅ Сетка добавлена принудительно");
-            }
+            // 3. Принудительно обновляем размеры рендера и камеры (на случай сбоев ресайза при загрузке)
+            Engine.renderer.setSize(window.innerWidth, window.innerHeight);
+            Engine.camera.aspect = window.innerWidth / window.innerHeight;
+            Engine.camera.updateProjectionMatrix();
             
-            if (!hasAxes) {
-                const axesHelper = new THREE.AxesHelper(3);
-                Engine.scene.add(axesHelper);
-                console.log("✅ Оси координат добавлены принудительно");
-            }
-
-            // 4. Принудительно обновляем размеры рендера и камеры (на случай сбоев ресайза)
-            if (Engine.renderer && Engine.camera) {
-                Engine.renderer.setSize(window.innerWidth, window.innerHeight);
-                Engine.camera.aspect = window.innerWidth / window.innerHeight;
-                Engine.camera.updateProjectionMatrix();
-                console.log("✅ Размеры канваса обновлены");
-            }
+            console.log("✅ Сцена успешно инициализирована и готова к работе");
         } else {
-            console.warn("⚠️ Объект Engine или Engine.scene не найден при загрузке!");
+            console.warn("⚠️ Объект Engine или сцена не найдены при загрузке!");
         }
     }, 500); // Задержка 500мс дает время на полную инициализацию Engine из других файлов
 });

@@ -27,9 +27,9 @@ const AXES_SETTINGS = {
     LABEL_SIZE_RATIO: .05,
     HEIGHT_OFFSET: .02,
     COLORS: {
-        X: { line: 0xff3333, text: '#ff3333' },
-        Y: { line: 0x33cc33, text: '#33cc33' },
-        Z: { line: 0x3366ff, text: '#3366ff' }
+        X: { line: 0xff0000, text: '#ff0000' }, // Яркий красный
+        Y: { line: 0x00ff00, text: '#00ff00' }, // Яркий зеленый
+        Z: { line: 0x0000ff, text: '#0000ff' }  // Яркий синий
     }
 };
 
@@ -72,9 +72,9 @@ const STATE = {
     highlightedObjects: [],
     expandedFolders: new Set(),
     autoConnections: [],
-    showGrid: true,
+    showGrid: false,
     showConnectionPoints: true,
-    showRealDiameters: true,
+    showRealDiameters: false,
     selectedObjectId: null,
     insertValveMode: false,
     meshes: { ground: null, grid: null, axes: null },

@@ -49,7 +49,7 @@ class SceneManager {
         if (isOrtho) {
             nc = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.01, 2000);
         } else {
-            const f = 200;
+            const f = 20000;
             const a = innerWidth / innerHeight;
             nc = new THREE.OrthographicCamera(-f*a/2, f*a/2, f/2, -f/2, 0.1, 20000);
         }
