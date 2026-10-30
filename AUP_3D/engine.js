@@ -124,42 +124,90 @@ const Engine = {
         this.update_Node_coordinate();
     },
 
-    // 3. ФИЛЬТР: Находит первый THREE.Mesh в массиве пересечений
+    // // 3. ФИЛЬТР: Находит первый THREE.Mesh в массиве пересечений
+    // findValidMesh(intersects) {
+    //     if (intersects.length === 0) return null;
+
+    //     for (let i = 0; i < intersects.length; i++) {
+    //         const obj = intersects[i].object;
+
+    //         // Игнорируем технические объекты и свет, ищем строго геометрию (Mesh)
+    //         if (!obj.isGridHelper && !obj.isLight && obj.isMesh) {
+    //             return obj; // Возвращаем конкретный узел/меш
+    //         }
+    //     }
+    //     return null;
+    // },
+
+     // 3. ФИЛЬТР: Находит наш кастомный объект (Node_new, Edge_new), а не просто внутреннюю геометрию
     findValidMesh(intersects) {
         if (intersects.length === 0) return null;
 
         for (let i = 0; i < intersects.length; i++) {
-            const obj = intersects[i].object;
+            let obj = intersects[i].object;
 
-            // Игнорируем технические объекты и свет, ищем строго геометрию (Mesh)
+            // ✅ ПОДНИМАЕМСЯ по родительской цепочке, чтобы найти экземпляр нашего класса
+            while (obj.parent && obj.parent !== this.scene) {
+                if (obj.type === 'Node' || obj.type === 'Sprinkler' || obj.type === 'Source' || obj.type === 'Edge') {
+                    return obj; // Возвращаем именно Node_new или Edge_new
+                }
+                obj = obj.parent;
+            }
+            
+            // Резервный вариант: если это просто меш
             if (!obj.isGridHelper && !obj.isLight && obj.isMesh) {
-                return obj; // Возвращаем конкретный узел/меш
+                return obj; 
             }
         }
         return null;
     },
 
-    // 4. ВЫДЕЛЕНИЕ ОДНОГО МЕША
+    // // 4. ВЫДЕЛЕНИЕ ОДНОГО МЕША
+    // selectObject(mesh) {
+    //     if (!mesh || !mesh.material) return;
+
+    //     // Если цвет еще не сохраняли
+    //     if (!mesh.userData.originalColor) {
+    //         // Клонируем материал, чтобы изменение цвета не затронуло другие такие же меши на сцене
+    //         mesh.material = mesh.material.clone();
+    //         // Запоминаем родной цвет
+    //         mesh.userData.originalColor = mesh.material.color.getHex();
+    //     }
+
+    //     mesh.material.color.setStyle('#FFFF00'); // Красим строго этот меш в 
+    // },
+
+    // 4. ВЫДЕЛЕНИЕ ОБЪЕКТА (делает его желтым)
     selectObject(mesh) {
         if (!mesh || !mesh.material) return;
 
-        // Если цвет еще не сохраняли
-        if (!mesh.userData.originalColor) {
-            // Клонируем материал, чтобы изменение цвета не затронуло другие такие же меши на сцене
-            mesh.material = mesh.material.clone();
-            // Запоминаем родной цвет
+        // Сохраняем исходный цвет, если еще не сохранен
+        if (mesh.userData.originalColor === undefined) {
             mesh.userData.originalColor = mesh.material.color.getHex();
         }
 
-        mesh.material.color.setStyle('#FFFF00'); // Красим строго этот меш в красный
+        // Красим в желтый при выделении (для ЛЮБОГО объекта: узел, труба, ороситель)
+        mesh.material.color.setHex(0xFFFF00);
+        mesh.material.needsUpdate = true;
     },
 
-    // 5. СНЯТИЕ ВЫДЕЛЕНИЯ С ОДНОГО МЕША
+    // // 5. СНЯТИЕ ВЫДЕЛЕНИЯ С ОДНОГО МЕША
+    // deselectObject(mesh) {
+    //     if (!mesh || !mesh.material) return;
+
+    //     if (mesh.userData.originalColor !== undefined) {
+    //         mesh.material.color.setHex(mesh.userData.originalColor); // Возвращаем родной цвет
+    //     }
+    // },
+
+    // 5. СНЯТИЕ ВЫДЕЛЕНИЯ (возвращает исходный цвет)
     deselectObject(mesh) {
         if (!mesh || !mesh.material) return;
 
+        // Возвращаем сохраненный исходный цвет
         if (mesh.userData.originalColor !== undefined) {
-            mesh.material.color.setHex(mesh.userData.originalColor); // Возвращаем родной цвет
+            mesh.material.color.setHex(mesh.userData.originalColor);
+            mesh.material.needsUpdate = true;
         }
     },
 
