@@ -265,7 +265,7 @@ function CreatePipeline(pbCX, pbCY, pbCZ, activeAxis, activeAxis_direction, pbLe
         }
     } else {
         // Создание самого первого узла (Источника)
-        const Node_Material_start = new THREE.MeshBasicMaterial({ color: 0x800080 });
+        const Node_Material_start = new THREE.MeshBasicMaterial({ color: '#800080' });
         const Node_Start = new Node_new(Node_Geometry, Node_Material_start, 'Source');
         Node_Start.position.set(pbCX, pbCY, pbCZ);
         
@@ -282,17 +282,7 @@ function CreatePipeline(pbCX, pbCY, pbCZ, activeAxis, activeAxis_direction, pbLe
         Node_Start.attach(Pipe_connection);
         Pipe_connection.attach(Node_End); 
         }    
-    // Engine.scene.add(Node_End);    
-    // Engine.scene.add(Pipe_connection);
-    // update_Node_XYZ()
-    // console.log("Engine.scene.children",Engine.scene.children);
-    // console.log("STATE.Three_D_objects",STATE.Three_D_objects);
-    // updateTreeUI(); // Обновить дерево построения
-    // checkAllPipelines(); // функция для проверки коллизии
-    // cancel("pipelineBuilder"); 
     
-// };
-//     }    
     
     // Обновляем матрицы и интерфейс
     Engine.scene.updateMatrixWorld(true);
@@ -304,29 +294,30 @@ function CreatePipeline(pbCX, pbCY, pbCZ, activeAxis, activeAxis_direction, pbLe
     // =========================================================================
     if (Node_End) {
         // 1. Делаем его выбранным объектом в системе
-        Engine.selectedObject = Node_End;
+        
         
         // 2. Добавляем в STATE, если это новый узел и его там еще нет
         if (!STATE.Three_D_objects.includes(Node_End)) {
             STATE.Three_D_objects.push(Node_End);
         }
 
-        // 3. Визуальная подсветка: меняем цвет на ЗЕЛЕНЫЙ (как в оригинале)
-        if (!Node_End.userData.originalColor) {
-            Node_End.userData.originalColor = Node_End.material.color.getHex();
-        }
-        Node_End.material.color.setHex(0x00ff00); // ✅ Зеленый цвет выделения
-        Node_End.material.needsUpdate = true;
+        // // 3. Визуальная подсветка: меняем цвет на ЗЕЛЕНЫЙ (как в оригинале)
+        // if (!Node_End.userData.originalColor) {
+        //     Node_End.userData.originalColor = Node_End.material.color.getHex();
+        // }
+        // Node_End.material.color.setHex(0x00ff00); // ✅ Зеленый цвет выделения
+        // Node_End.material.needsUpdate = true;
 
         // 4. Проверяем галочку "Непрерывное создание"
         const isContinuous = document.getElementById("continuousPipelineCheck")?.checked || false;
         
         if (isContinuous) {
+            Engine.selectedObject = Node_End;
             // Если галочка стоит: обновляем поля для следующего шага
             document.getElementById("pbCX").value = Node_End.position.x.toFixed(2);
             document.getElementById("pbCY").value = Node_End.position.y.toFixed(2);
             document.getElementById("pbCZ").value = Node_End.position.z.toFixed(2);
-            document.getElementById("pbLength").value = "5"; // Сброс длины по умолчанию
+            // document.getElementById("pbLength").value = "5"; // Сброс длины по умолчанию
             
             if (typeof Utils !== 'undefined') {
                 Utils.showStatus(`Участок создан. Конечный узел выбран и подсвечен. Готов к следующему.`);
