@@ -2448,3 +2448,92 @@ body {
     width: 100px !important;
 }
 
+
+
+/*окно редактиорвать
+
+/* Базовый стиль плавающего окна */
+.floating-edit-window {
+    position: absolute;
+    top: 100px;
+    left: 100px;
+    width: 280px;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    z-index: 9999;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    border: 1px solid #ddd;
+    overflow: hidden;
+}
+
+/* Заголовок (за него таскаем) */
+.window-header {
+    background: #2c3e50;
+    color: white;
+    padding: 10px 15px;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: grab; /* Курсор "рука" */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+}
+
+.window-header:active {
+    cursor: grabbing; /* Курсор "сжатая рука" при перетаскивании */
+}
+
+/* Кнопка закрытия */
+.window-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    line-height: 1;
+}
+.window-close:hover { color: #ff6b6b; }
+
+/* Тело окна */
+.window-body {
+    padding: 15px;
+}
+
+/* Строки формы */
+.form-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.form-row label {
+    font-size: 13px;
+    color: #555;
+    flex: 1;
+}
+
+.form-row input, .form-row select {
+    flex: 1.5;
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+/* Кнопка применения */
+.btn-apply {
+    width: 100%;
+    padding: 10px;
+    background: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background 0.2s;
+}
+.btn-apply:hover { background: #219150; }

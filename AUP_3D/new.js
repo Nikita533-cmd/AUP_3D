@@ -2175,3 +2175,51 @@ function loadProjectFromJSOssN(file) {
 
     reader.readAsText(file);
 }
+
+// ============================================================================
+// УНИВЕРСАЛЬНАЯ ФУНКЦИЯ ПЕРЕТАСКИВАНИЯ ОКОН
+// ============================================================================
+function makeDraggable(windowId, headerId) {
+    const win = document.getElementById(windowId);
+    const header = document.getElementById(headerId);
+    
+    let isDragging = false;
+    let startX, startY, initialLeft, initialTop;
+
+    header.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        
+        const rect = win.getBoundingClientRect();
+        initialLeft = rect.left;
+        initialTop = rect.top;
+        
+        e.preventDefault(); // Запрет выделения текста
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        
+        win.style.left = `${initialLeft + dx}px`;
+        win.style.top = `${initialTop + dy}px`;
+    });
+
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+    });
+}
+
+// Инициализация перетаскивания при загрузке страницы
+document.addEventListener('DOMContentLoaded', () => {
+    makeDraggable('floatNodeEdit', 'nodeEditHeader');
+    makeDraggable('floatPipeEdit', 'pipeEditHeader');
+});
+
+// Функция закрытия
+function closeFloatWindow(windowId) {
+    document.getElementById(windowId).style.display = 'none';
+}

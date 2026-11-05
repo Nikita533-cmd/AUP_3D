@@ -962,5 +962,67 @@
     </div>
   </div>
 
+
+
+
+
+  <!-- ========================================== -->
+<!-- ПЛАВАЮЩЕЕ ОКНО: РЕДАКТИРОВАНИЕ УЗЛА        -->
+<!-- ========================================== -->
+<div id="floatNodeEdit" class="floating-edit-window" style="display: none;">
+    <div class="window-header" id="nodeEditHeader">
+        <span>⚙️ Редактирование узла</span>
+        <button class="window-close" onclick="closeFloatWindow('floatNodeEdit')">&times;</button>
+    </div>
+    <div class="window-body">
+        <div class="form-row">
+            <label>Тип узла:</label>
+            <select id="editNodeType">
+                <option value="Node">Обычный узел</option>
+                <option value="Sprinkler">Ороситель</option>
+                <option value="Source">Источник</option>
+            </select>
+        </div>
+        <div class="form-row">
+            <label>X:</label> <input type="number" id="editNodeX" step="0.1">
+        </div>
+        <div class="form-row">
+            <label>Y:</label> <input type="number" id="editNodeY" step="0.1">
+        </div>
+        <div class="form-row">
+            <label>Z:</label> <input type="number" id="editNodeZ" step="0.1">
+        </div>
+        <button class="btn-apply" id="applyNodeEditBtn">✅ Применить изменения</button>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- ПЛАВАЮЩЕЕ ОКНО: РЕДАКТИРОВАНИЕ ТРУБЫ       -->
+<!-- ========================================== -->
+<div id="floatPipeEdit" class="floating-edit-window" style="display: none;">
+    <div class="window-header" id="pipeEditHeader">
+        <span>🔧 Редактирование участка</span>
+        <button class="window-close" onclick="closeFloatWindow('floatPipeEdit')">&times;</button>
+    </div>
+    <div class="window-body">
+        <div class="form-row">
+            <label>Длина (м):</label>
+            <input type="number" id="editPipeLength" step="0.1" min="0.1">
+        </div>
+        <div class="form-row">
+            <label>Диаметр (DN):</label>
+            <input type="number" id="editPipeDN" step="1" min="15">
+        </div>
+        <div class="form-row">
+            <label>Тип трубы:</label>
+            <input type="text" id="editPipeType" readonly style="background: #f0f0f0;">
+        </div>
+        <button class="btn-apply" id="applyPipeEditBtn">✅ Применить изменения</button>
+    </div>
+</div>
+
+
+
+
 </body>
 </html>
