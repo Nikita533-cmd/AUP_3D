@@ -288,7 +288,7 @@ function CreatePipeline(pbCX, pbCY, pbCZ, activeAxis, activeAxis_direction, pbLe
     // console.log("Engine.scene.children",Engine.scene.children);
     // console.log("STATE.Three_D_objects",STATE.Three_D_objects);
     // updateTreeUI(); // Обновить дерево построения
-    checkAllPipelines(); // функция для проверки коллизии
+    // checkAllPipelines(); // функция для проверки коллизии
     // cancel("pipelineBuilder"); 
     
 // };

@@ -105,23 +105,23 @@ export function checkAllPipelines() {
         const pipeA = collision.objectA;
         const pipeB = collision.objectB;
         let new_edge_Material = new THREE.MeshBasicMaterial({ color: '#FF0000' });
-        let new_edge_Material_1 = new THREE.MeshBasicMaterial({ color: '#FF0000' });
+        // let new_edge_Material_1 = new THREE.MeshBasicMaterial({ color: '#FF0000' });
         
         console.log("collision.sharedNode",collision.sharedNode);
         // if (collision.sharedNode === false || collision.type != "superimposition") {
         //     pipeA.material=new_edge_Material_2;
         //     pipeB.material=new_edge_Material_2;
         // }
-        if (collision.sharedNode === false) {
+        if (collision.sharedNode === false|| collision.type === "superimposition" ) {
             alert("Выявлено пересечение геометрии трубопроводов! Проверьте корректность построения и устраните коллизию (подсвечены красным).")
             pipeA.material=new_edge_Material;
             pipeB.material=new_edge_Material;
         }
-        else if (collision.type === "superimposition") {
-            alert("Выявлено пересечение геометрии трубопроводов! Проверьте корректность построения и устраните коллизию (подсвечены красным).")
-            pipeA.material=new_edge_Material;
-            pipeB.material=new_edge_Material_1;
-        }
+        // else if (collision.type === "superimposition") {
+        //     alert("Выявлено пересечение геометрии трубопроводов! Проверьте корректность построения и устраните коллизию (подсвечены красным).")
+        //     pipeA.material=new_edge_Material;
+        //     pipeB.material=new_edge_Material_1;
+        // }
         
     });   
     return collisions;
