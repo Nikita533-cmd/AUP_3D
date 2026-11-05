@@ -1,5 +1,11 @@
 // modules/visual-effects.js
-class VisualEffects {
+
+import { Engine } from "../engine.js";
+import { STATE, Utils } from "../state.js";
+
+// import { Engine } from '../engine.js';
+
+export class VisualEffects {
     toggleDiameters() {
         STATE.showRealDiameters = !STATE.showRealDiameters;
         this.updatePipeThickness();
@@ -32,6 +38,8 @@ class VisualEffects {
             });
         });
     }
+
+
 
     toggleConnectionPoints() {
         STATE.showConnectionPoints = !STATE.showConnectionPoints;

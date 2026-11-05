@@ -2,14 +2,19 @@
 // factory.js — Фабрика для создания 3D-объектов (трубы, ветки, рядки, узлы)
 // Зависимости: THREE (глобальный), CONFIG, AXES_SETTINGS, genNodeId (из state.js)
 // ============================================================
-class Node_new extends THREE.Mesh
+// import * as THREE from 'three';
+import * as THREE from 'three';
+import { AXES_SETTINGS, CONFIG, STATE } from './state.js';
+
+
+export class Node_new extends THREE.Mesh
 {
     constructor( geometry, material, type) 
         {
           super( geometry, material);
           this.type=type;
           this.name='Node_new';
-          this.X_gl=0;
+          this.X_gl=10;
           this.Y_gl=0;
           this.Z_gl=0;
           this.K = Number(STATE.sprinkler_kv);
@@ -40,7 +45,7 @@ class Node_new extends THREE.Mesh
       
 }
 
-class Edge_new extends THREE.Mesh
+export class Edge_new extends THREE.Mesh
 {
     constructor( geometry, material, start_node, end_node, type, Length, DN, ghost, k_t, kvelocity) 
       {
@@ -87,7 +92,7 @@ class Edge_new extends THREE.Mesh
 
 
 
-const Factory = {
+export const Factory = {
   createOrientedCylinder(s, e, r, m, n) {
     const l = s.distanceTo(e);
     if (l < 0.001) return null;
@@ -211,7 +216,7 @@ const Factory = {
       // Вычисляем размер сферы на основе радиуса трубы
       const cs = Math.max(CONFIG.QUALITY.CONNECTION_POINT_SIZE, radius * 3);
       const sphereGeometry = new THREE.SphereGeometry(cs, 16, 16);
-
+      
       // 2. УЗЕЛ В НАЧАЛЕ СЕГМЕНТА
       const startConn = new THREE.Mesh(sphereGeometry, connectionMat);
       startConn.position.copy(seg.start);

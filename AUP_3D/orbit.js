@@ -1,4 +1,6 @@
-( function () {
+import * as THREE from 'three';
+// import { STATE } from './state';
+// ( function () {
 
 	// Unlike TrackballControls, it maintains the "up" direction object.up (+Y by default).
 	//
@@ -15,7 +17,7 @@
 	const _endEvent = {
 		type: 'end'
 	};
-
+	// STATE
 	class OrbitControls extends THREE.EventDispatcher {
 
 		constructor( object, domElement ) {
@@ -1103,8 +1105,8 @@
 		}
 
 	}
+	export { OrbitControls, MapControls };
+	// THREE.MapControls = MapControls;
+	// THREE.OrbitControls = OrbitControls;
 
-	THREE.MapControls = MapControls;
-	THREE.OrbitControls = OrbitControls;
-
-} )();
+// } )();

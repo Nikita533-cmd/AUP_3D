@@ -1,5 +1,11 @@
 // modules/scene-manager.js
-class SceneManager {
+
+import { Engine } from "../engine.js";
+import { World } from "../world.js";
+
+// import { Engine } from '../engine.js';
+
+export class SceneManager {
     resetView() {
         Engine.camera.position.set(20, 25, 30);
         Engine.controls.target.set(0, 5, 0);

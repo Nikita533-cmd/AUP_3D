@@ -3,7 +3,12 @@
 // Зависимости: STATE, UI, Engine
 // ============================================================
 
-const Tree = {
+import { Engine } from "./engine.js";
+import { STATE } from "./state.js";
+
+// import { Engine } from './engine.js';
+
+export const Tree = {
     container: null,
     
     init() {

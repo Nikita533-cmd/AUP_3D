@@ -6,11 +6,22 @@
   <title>Модуль построения конфигурации АУП в 3D</title>
 
   <link rel="icon" type="image/x-icon" href="ico/muu_sa.ico">
-  <script src="new_three.js"></script>
-  <script src="orbit.js"></script>
-
+  
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./node_modules/three/src/Three.js",
+        "three/addons/": "./node_modules/three/examples/jsm/",
+        "three-mesh-bvh": "./node_modules/three-mesh-bvh/src/index.js"
+      }
+    }
+  </script>
+  <!-- <script type="module" src="main.js"></script> -->
+  <!-- <script src="./node_modules/three-mesh-bvh/build/index.umd.cjs"></script> -->
+  <!-- <script src="orbit.js"></script> -->
+  
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> -->
   <link rel="stylesheet" href="styles.css">
 
 
@@ -650,6 +661,7 @@
     </div>
     <div class="pipeline-body">
       <div class="step"><span>Наименование ребра:</span><span id="name_selected_edge"></span></div>
+      <div class="step"><span>uuid:</span><span id="name_selected_edge_uuid"></span></div>
       <!-- <div class="step"><span>Тип узла:</span><span id="type_selected_node"></span></div> -->
       <div class="step">
         <span>Координаты начального узла:</span>
@@ -848,96 +860,94 @@
   <div id="status"></div>
 
   <!-- Все оригинальные скрипты проекта -->
-  <script src="state.js"></script>
-  <script src="engine.js"></script>
-  <script src="factory.js"></script>
-  <script src="world.js"></script>
-  <script src="tree.js"></script>
-  <script src="modules/project-manager.js"></script>
-  <script src="modules/scene-manager.js"></script>
-  <script src="modules/pipeline-builder.js"></script>
-  <script src="modules/object-editor.js"></script>
-  <script src="modules/split-manager.js"></script>
-  <script src="modules/network-graph.js"></script>
-  <script src="modules/visual-effects.js"></script>
-  <script src="modules/armature.js"></script>
-  <script src="modules/input-handler.js"></script>
-  <script src="modules/ui-app.js"></script>
-  <script src="api_module.js"></script>
-  <script type="importmap">
-  {
-    "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three/build/three.module.js",
-      "three-mesh-bvh": "https://cdn.jsdelivr.net/npm/three-mesh-bvh/src/index.js"
-    }
-  }
-  </script>
+  <script type="module" src="state.js"></script>
+  <script type="module" src="engine.js"></script>
+  <script type="module" src="factory.js"></script>
+  <script type="module" src="world.js"></script>
+  <script type="module" src="tree.js"></script>
+  <script type="module" src="modules/project-manager.js"></script>
+  <script type="module" src="modules/scene-manager.js"></script>
+  <script type="module" src="modules/pipeline-builder.js"></script>
+  <script type="module" src="modules/object-editor.js"></script>
+  <script type="module" src="modules/split-manager.js"></script>
+  <script type="module" src="modules/network-graph.js"></script>
+  <script type="module" src="modules/visual-effects.js"></script>
+  <script type="module" src="modules/armature.js"></script>
+  <script type="module" src="modules/input-handler.js"></script>
+  <script type="module" src="modules/ui-app.js"></script>
+  <script type="module" src="api_module.js"></script>
   
-  <script src="new.js"></script>
-  <script src="check_input.js"></script>
+  <script type="module" src="orbit.js"></script>
+  
+  
+  <script type="module" src="new.js"></script>
+  <script type="module" src="check_input.js"></script>
+  
   <script type="module" src="collision.js"></script>
-  <script src="charts.js"></script>
+ 
+  <script type="module" src="charts.js"></script>
 
-  
-  <script>
-    // Оригинальная инициализация
-    addEventListener('load', () => {
-      if (typeof THREE === 'undefined') return;
-      setTimeout(() => {
-          if (typeof UI !== 'undefined' && UI.init) UI.init(); 
-          if (typeof Engine !== 'undefined' && Engine.animate) Engine.animate();
-          const loadingEl = document.getElementById('loading');
-          if (loadingEl) loadingEl.classList.add('hidden');
-          if (typeof Utils !== 'undefined') Utils.showStatus('Готов');
-      }, 200);
-    });
 
-    // ===================================================================
-    // ЛОГИКА НОВОГО ИНТЕРФЕЙСА (Вкладки + Оригинальное Дерево)
-    // ===================================================================
+  <script type="module" src="app.js">
     
-    // 1. Переключение вкладок Ribbon
-    const ribbonTabs = document.querySelectorAll('.ribbon-tab');
-    const ribbonPanels = document.querySelectorAll('.ribbon-panel');
+    // Оригинальная инициализация
+    // addEventListener('load', () => {
+    //   if (typeof THREE === 'undefined') return;
+    //   setTimeout(() => {
+    //       if (typeof UI !== 'undefined' && UI.init) UI.init(); 
+    //       if (typeof Engine !== 'undefined' && Engine.animate) Engine.animate();
+    //       const loadingEl = document.getElementById('loading');
+    //       if (loadingEl) loadingEl.classList.add('hidden');
+    //       if (typeof Utils !== 'undefined') Utils.showStatus('Готов');
+    //   }, 200);
+    // });
 
-    ribbonTabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        ribbonTabs.forEach(t => t.classList.remove('active'));
-        ribbonPanels.forEach(p => p.classList.remove('active'));
+    // // ===================================================================
+    // // ЛОГИКА НОВОГО ИНТЕРФЕЙСА (Вкладки + Оригинальное Дерево)
+    // // ===================================================================
+    
+    // // 1. Переключение вкладок Ribbon
+    // const ribbonTabs = document.querySelectorAll('.ribbon-tab');
+    // const ribbonPanels = document.querySelectorAll('.ribbon-panel');
+
+    // ribbonTabs.forEach(tab => {
+    //   tab.addEventListener('click', () => {
+    //     ribbonTabs.forEach(t => t.classList.remove('active'));
+    //     ribbonPanels.forEach(p => p.classList.remove('active'));
         
-        tab.classList.add('active');
-        const targetPanel = document.getElementById(tab.dataset.tab);
-        if (targetPanel) targetPanel.classList.add('active');
-      });
-    });
+    //     tab.classList.add('active');
+    //     const targetPanel = document.getElementById(tab.dataset.tab);
+    //     if (targetPanel) targetPanel.classList.add('active');
+    //   });
+    // });
 
-    // 2. Логика ОРИГИНАЛЬНОЙ кнопки дерева
-    const floatingTreeBtn = document.getElementById('floatingTreeBtn');
-    const treePanel = document.getElementById('treePanel');
-    const treeTitle = document.getElementById('treeTitle');
-    let isTreeVisible = false;
+    // // 2. Логика ОРИГИНАЛЬНОЙ кнопки дерева
+    // const floatingTreeBtn = document.getElementById('floatingTreeBtn');
+    // const treePanel = document.getElementById('treePanel');
+    // const treeTitle = document.getElementById('treeTitle');
+    // let isTreeVisible = false;
 
-    if (floatingTreeBtn) {
-      floatingTreeBtn.addEventListener('click', () => {
-        isTreeVisible = !isTreeVisible;
-        if (isTreeVisible) {
-          treePanel.classList.remove('hidden');
-          floatingTreeBtn.classList.add('active');
-          treeTitle.classList.add('visible');
+    // if (floatingTreeBtn) {
+    //   floatingTreeBtn.addEventListener('click', () => {
+    //     isTreeVisible = !isTreeVisible;
+    //     if (isTreeVisible) {
+    //       treePanel.classList.remove('hidden');
+    //       floatingTreeBtn.classList.add('active');
+    //       treeTitle.classList.add('visible');
           
-          // Вызываем вашу СУЩЕСТВУЮЩУЮ функцию обновления дерева из tree.js / new.js
-          if (typeof updateTreeUI === 'function') {
-            updateTreeUI();
-          } else if (typeof buildTree === 'function') {
-            buildTree(true);
-          }
-        } else {
-          treePanel.classList.add('hidden');
-          floatingTreeBtn.classList.remove('active');
-          treeTitle.classList.remove('visible');
-        }
-      });
-    }
+    //       // Вызываем вашу СУЩЕСТВУЮЩУЮ функцию обновления дерева из tree.js / new.js
+    //       if (typeof updateTreeUI === 'function') {
+    //         updateTreeUI();
+    //       } else if (typeof buildTree === 'function') {
+    //         buildTree(true);
+    //       }
+    //     } else {
+    //       treePanel.classList.add('hidden');
+    //       floatingTreeBtn.classList.remove('active');
+    //       treeTitle.classList.remove('visible');
+    //     }
+    //   });
+    // }
   </script> 
 
   <!-- Затемняющий фон для модального окна -->

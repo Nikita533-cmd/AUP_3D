@@ -1,5 +1,13 @@
 // modules/input-handler.js
-class InputHandler {
+
+import { Engine } from "../engine.js";
+import { STATE, Utils } from "../state.js";
+import { UI } from "./ui-app.js";
+
+
+// import { Engine } from '../engine.js';
+
+export class InputHandler {
     constructor() {
         this._bindCanvasEvents();
         this._bindKeyboardEvents();

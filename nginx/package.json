@@ -1,0 +1,12 @@
+{
+  "name": "foodgram-project-react",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "three": "^0.160.0",
+    "three-mesh-bvh": "^0.6.2"
+  },
+  "scripts": {
+    "build": "echo 'Сборка не требуется: файлы отдаются как есть'"
+  }
+}

@@ -2,16 +2,22 @@
 // engine.js — инициализация 3D-сцены Three.js
 // Зависимости: THREE (глобальный), подключается ПОСЛЕ state.js
 // ============================================================
+// import * as THREE from 'three';
+import * as THREE from 'three';
+import { OrbitControls } from './orbit.js';
 
-const Engine = {
+// import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+export const Engine = {
     scene: null,
     camera: null,
     renderer: null,
     controls: null,
     raycaster: null,
     mouse: new THREE.Vector2(),
+    
 
     init() {
+        // console.log("точка в начале енджина");
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0xf5f6fa);
 
@@ -29,8 +35,8 @@ const Engine = {
         });
         this.renderer.setSize(innerWidth, innerHeight);
         this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-
-        this.controls = new THREE.OrbitControls(
+        // console.log("точка в середине енджина");
+        this.controls = new OrbitControls(
             this.camera,
             this.renderer.domElement
         );
@@ -52,6 +58,7 @@ const Engine = {
 
         this.renderer.domElement.addEventListener('pointerdown', (e) => this.onPointerDown(e));
         this.renderer.domElement.addEventListener('pointermove', (e) => this.onPointerMove(e));
+        console.log("точка в ините енджина");
     },
 
     // Вспомогательный метод для перевода пикселей экрана в 3D-координаты [-1, 1]
@@ -203,6 +210,7 @@ const Engine = {
             document.getElementById("info_selected_edge").style.display = 'block';
             document.getElementById("info_selected_node").style.display = 'none';
             document.getElementById("name_selected_edge").innerText = `${ selected.name} id: ${selected.id}`;
+            document.getElementById("name_selected_edge_uuid").innerText = selected.uuid;
             // document.getElementById("type_selected_node").innerText = selected.type;
             document.getElementById("pbCX_selected_start_node").value = selected.start_node.X_gl;
             document.getElementById("pbCY_selected_start_node").value = selected.start_node.Y_gl;
