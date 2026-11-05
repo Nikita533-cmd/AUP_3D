@@ -1,5 +1,13 @@
 // modules/network-graph.js
-class NetworkGraph {
+
+import { Engine } from "../engine.js";
+import { STATE, Utils } from "../state.js";
+import { VisualEffects } from "./visual-effects.js";
+
+
+// import { Engine } from '../engine.js';
+
+export class NetworkGraph {
     build() {
         const nodes = [];
         const edges = [];

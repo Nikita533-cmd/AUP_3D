@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 // ============================================================
 // state.js — константы, состояние приложения и базовые утилиты
 // ВАЖНО: подключается ПОСЛЕ three.min.js (использует THREE.Vector3)
@@ -13,13 +14,13 @@
 //     d_node_base: 0.1
 // }
 
-
-
+// import * as THREE from 'three';
+// THREE = 'three';
 let Tube_data = {}; // массив данных для храенения списков ДУ труб
 
 
 
-const AXES_SETTINGS = {
+export const AXES_SETTINGS = {
     AUTO_SIZE: { ENABLED: false, RELATIVE_RATIO: .25, MIN_SIZE: .5, MAX_SIZE: 10 },
     FIXED_SIZE: 1,
     HEAD_LENGTH_RATIO: .25,
@@ -33,7 +34,7 @@ const AXES_SETTINGS = {
     }
 };
 
-const CONFIG = {
+export const CONFIG = {
     DEFAULTS: { LENGTH: 2, DN: 50, SPRINKLER_DN: 15 },
     LIMITS: { MIN_LEN: .1, MAX_LEN: 100, MIN_SPR: 0, MAX_SPR: 50 },
     AVAILABLE_DN: [15, 20, 25, 32, 40, 50, 65, 80, 100, 125, 150, 200, 250, 300, 350, 400],
@@ -51,7 +52,7 @@ const CONFIG = {
     }
 };
 
-const STATE = {
+export const STATE = {
     Three_D_objects: [],    
     objects: [],
     objectCounter: 0,
@@ -101,7 +102,7 @@ const STATE = {
 };
 
 
-const VisualPipelins = {
+export const VisualPipelins = {
     d_pipe_base: 0.05,
     d_node_base: 0.25
 }
@@ -117,7 +118,7 @@ function findNodeAtPos(pos, nodeRegistry) {
     return null;
 }
 
-const Utils = {
+export const Utils = {
     clamp: (v, mn, mx) => Math.max(mn, Math.min(mx, v)),
     formatVector: v => `${v.x.toFixed(1)}, ${v.y.toFixed(1)}, ${v.z.toFixed(1)}`,
     getDnOptions: s => CONFIG.AVAILABLE_DN.map(d =>

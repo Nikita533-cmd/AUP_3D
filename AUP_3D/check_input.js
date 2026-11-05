@@ -1,3 +1,18 @@
+// import { STATE } from './state.js';
+// import { Engine } from './engine.js';
+// import { clearSceneForLoad } from './new.js';
+// import { getTubeTypes, GetSprinkler, GetResults, getTube } from './api_module.js';
+import * as THREE from 'three';
+import { GetResults, GetSprinkler, getTube, getTubeTypes } from "./api_module.js";
+import { Engine } from "./engine.js";
+import { VisualEffects } from "./modules/visual-effects.js";
+import { clearSceneForLoad } from "./new.js";
+import { STATE, Utils, VisualPipelins } from "./state.js";
+import { Edge_new, Node_new } from './factory.js';
+
+// getTubeTypes
+
+
 // слушатель для обработки ячейки ввода длины при создании трубопровода
 document.getElementById("pbLength").addEventListener("blur", (event) => {
     let value = parseFloat(event.target.value);
@@ -29,6 +44,7 @@ async function get_load_pipe(type_tube, dn_tube) {
     // console.log("tubeTypes массив данных", tubeTypes);
     selectPipeTube.innerHTML = "";
     tubeTypes.forEach((tube) => {
+        // console.log("tube47",tube)
         const option = document.createElement("option");
         option.value = tube.id;
         option.textContent = tube.name;
@@ -40,7 +56,7 @@ get_load_pipe("get_tube_pipe", "pbDiameter");
 get_load_pipe("get_tube_pipe_sprinkler", "pbDiameter_sprinkler_0");
 get_load_pipe("get_tube_pipe_edit", "pbDiameter_edit");
 // функция заполнения ДУ для типа труб и сохранени ег освйоств
-async function get_load_pbDiameter(TubeTypeValue, dn_tube) {
+export async function get_load_pbDiameter(TubeTypeValue, dn_tube) {
     const tube_DN = await getTube(TubeTypeValue);
     console.log("tube_DN массив данных",tube_DN);
     let pdDN = document.getElementById(dn_tube);
@@ -157,6 +173,7 @@ async function get__Results() {
         sprinkler_select.appendChild(option);
     });
 }
+
 async function exportToJSON() {
     const Data_base = {
         Node: [],
@@ -222,7 +239,7 @@ function loadProjectFromJSON(data1) {
                     
                     // Сохраняем оригинальный ID
                     const originalId = n.id || n.uuid || `node_${nodeMap.size}`;
-                    node.id = originalId; 
+                    // node.id = originalId; 
                     
                     Engine.scene.add(node);
                     nodeMap.set(originalId, node);

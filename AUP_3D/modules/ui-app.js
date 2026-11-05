@@ -1,5 +1,19 @@
-// modules/ui-app.js
-class UIApp {
+import { Engine } from "../engine.js";
+import { Factory } from "../factory.js";
+import { STATE, Utils } from "../state.js";
+import { Tree } from "../tree.js";
+import { World } from "../world.js";
+import { Armature } from "./armature.js";
+import { InputHandler } from "./input-handler.js";
+import { NetworkGraph } from "./network-graph.js";
+import { ObjectEditor } from "./object-editor.js";
+import { PipelineBuilder } from "./pipeline-builder.js";
+import { ProjectManager } from "./project-manager.js";
+import { SceneManager } from "./scene-manager.js";
+import { SplitManager } from "./split-manager.js";
+import { VisualEffects } from "./visual-effects.js";
+
+export class UIApp {
   constructor() {
     this.project = new ProjectManager();
     this.scene = new SceneManager();
@@ -20,8 +34,10 @@ class UIApp {
 
   init() {
     // Сначала инициализируем Engine
+    // Engine.init();
+    // console.log("точка в начале инита UIAPP");
     Engine.init();
-
+    // console.log("точка псоле енджин инит");
     // Теперь создаем InputHandler (ему нужен Engine.renderer)
     this.input = new InputHandler();
 
@@ -177,7 +193,7 @@ class UIApp {
     //   };
     // });
 
-
+    
     ["src_tank", "src_city", "src_pump"].forEach((id) => {
       document.getElementById(id).onclick = () =>
         Utils.showStatus("Функция добавления источника находится в разработке");
@@ -901,4 +917,4 @@ class UIApp {
 
 
 }
-const UI = new UIApp();
+export const UI = new UIApp();

@@ -1,5 +1,13 @@
 // modules/pipeline-builder.js
-class PipelineBuilder {
+
+import { Engine } from "../engine.js";
+import { Factory } from "../factory.js";
+import { STATE, Utils } from "../state.js";
+import { Tree } from "../tree.js";
+
+// import { Engine } from '../engine.js';
+
+export class PipelineBuilder {
     start() {
         if (STATE.pipeline.active) {
             this.cancel();

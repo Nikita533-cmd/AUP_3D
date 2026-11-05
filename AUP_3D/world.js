@@ -2,8 +2,13 @@
 // world.js — управление сценой (основание, сетка, оси)
 // Зависимости: Utils, STATE, Engine, CONFIG, AXES_SETTINGS, Factory
 // ============================================================
-
-const World = {
+import * as THREE from 'three';
+import { Engine } from "./engine.js";
+import { Factory } from "./factory.js";
+import { AXES_SETTINGS, CONFIG, STATE, Utils } from "./state.js";
+// CONFIG
+// import { Engine } from './engine.js';
+export const World = {
     updateGroundSize(w, d) {
         w = Utils.clamp(parseFloat(w) || 10, 2, 200000);
         d = Utils.clamp(parseFloat(d) || 10, 2, 200000);
@@ -11,7 +16,7 @@ const World = {
         document.getElementById('planeDepth').value = d;
         
         ['ground', 'grid', 'axes'].forEach(k => {
-            if (STATE.meshes[k]) {
+            if (STATE.meshes[k]) {                
                 Engine.scene.remove(STATE.meshes[k]);
                 if (STATE.meshes[k].geometry) STATE.meshes[k].geometry.dispose();
             }
@@ -29,7 +34,7 @@ const World = {
         STATE.meshes.grid.position.y = .01;
         STATE.meshes.grid.visible = STATE.showGrid;
         Engine.scene.add(STATE.meshes.grid);
-
+        
         let as = AXES_SETTINGS.FIXED_SIZE;
         if (AXES_SETTINGS.AUTO_SIZE.ENABLED) {
             as = Utils.clamp(
@@ -47,6 +52,7 @@ const World = {
     updateAxesSize(s) {
         s = Utils.clamp(parseFloat(s) || 2, .1, 100);
         if (STATE.meshes.axes) Engine.scene.remove(STATE.meshes.axes);
+        
         STATE.meshes.axes = Factory.createCustomAxes(s);
         STATE.meshes.axes.position.set(0, AXES_SETTINGS.HEIGHT_OFFSET, 0);
         Engine.scene.add(STATE.meshes.axes);

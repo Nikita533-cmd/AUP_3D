@@ -1,5 +1,13 @@
 // modules/object-editor.js
-class ObjectEditor {
+
+import { Engine } from "../engine.js";
+import { Factory } from "../factory.js";
+import { STATE, Utils } from "../state.js";
+import { Tree } from "../tree.js";
+
+// import { Engine } from '../engine.js';
+
+export class ObjectEditor {
     // ==========================================
     // ДУБЛИРОВАНИЕ
     // ==========================================

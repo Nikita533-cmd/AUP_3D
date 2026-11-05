@@ -1,5 +1,13 @@
 // modules/armature.js
-class Armature {
+
+import { Engine } from "../engine.js";
+import { Factory } from "../factory.js";
+import { STATE, Utils } from "../state.js";
+import { Tree } from "../tree.js";
+
+// import { Engine } from '../engine.js';
+
+export class Armature {
     constructor() {
         this.types = {
             valve: { name: 'Узел управления', length: 1.0, color: 0xff6600 },

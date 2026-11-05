@@ -1,6 +1,16 @@
 // modules/project-manager.js
-class ProjectManager {
-   
+
+import { Engine } from "../engine.js";
+import { Factory } from "../factory.js";
+import { STATE, Utils } from "../state.js";
+import { Tree } from "../tree.js";
+import { World } from "../world.js";
+import { NetworkGraph } from "./network-graph.js";
+
+// import { Engine } from '../engine.js';
+
+export class ProjectManager {
+
     constructor() {
         this._currentProject = null;
     }
@@ -29,7 +39,7 @@ class ProjectManager {
             }
         }
     }
-
+    
     async save() {
         if (!this._currentProject) {
             alert('Сначала создайте новый проект через меню "Новый проект..."');

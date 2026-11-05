@@ -27976,7 +27976,7 @@ console.warn(
     (t.WebGLRenderTarget = ie),
     (t.WebGLRenderer = pa),
     (t.WebGLUtils = ia),
-    (t.WireframeGeometry = ql),
+    (t.WireframeGeometry = ql), 
     (t.WrapAroundEnding = at),
     (t.ZeroCurvatureEnding = rt),
     (t.ZeroFactor = 200),

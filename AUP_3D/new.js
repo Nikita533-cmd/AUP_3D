@@ -1,3 +1,12 @@
+import * as THREE from 'three';
+// import { Engine } from './engine.js';
+
+import { Engine } from "./engine.js";
+import { Edge_new, Node_new } from "./factory.js";
+import { STATE, Utils, VisualPipelins } from "./state.js";
+import { get_load_pbDiameter } from './check_input.js';
+import { checkAllPipelines } from './collision.js';
+
 // Блок для отображения создания трубопровода.////////////////////////////////////////////////////////////////////////////////////////
 document.getElementById("menuCreatePipeline").onclick = () => Pipe_Line_visible_block();
 // Слушатель для удаления трубопровода
@@ -11,7 +20,9 @@ document.getElementById("menuEditNode").onclick = () => Check_Edit_Node();
 // Запуск сбора инфы по объектам
 document.getElementById("Add_list_object").onclick = () => Add_data_base();
 // Временная проверка координат элементов
-document.getElementById("Check_3D").onclick = () => logPipelineTree();
+// document.getElementById("Check_3D").onclick = () => logPipelineTree(); // старая рповерка
+// document.getElementById("Check_3D").onclick = () => checkAllPipelines(); // новая проверка коллизии
+
 // Слушатель для Сохранения проекта с геометрией
 document.getElementById("menuSave").onclick = () => exportToJSON();
 // Слушатель для Открытия проекта с геометрией
@@ -270,13 +281,24 @@ function CreatePipeline(pbCX, pbCY, pbCZ, activeAxis, activeAxis_direction, pbLe
         Engine.scene.add(Node_Start);
         Node_Start.attach(Pipe_connection);
         Pipe_connection.attach(Node_End); 
-    }    
+        }    
+    // Engine.scene.add(Node_End);    
+    // Engine.scene.add(Pipe_connection);
+    // update_Node_XYZ()
+    // console.log("Engine.scene.children",Engine.scene.children);
+    // console.log("STATE.Three_D_objects",STATE.Three_D_objects);
+    // updateTreeUI(); // Обновить дерево построения
+    // checkAllPipelines(); // функция для проверки коллизии
+    // cancel("pipelineBuilder"); 
+    
+// };
+//     }    
     
     // Обновляем матрицы и интерфейс
     Engine.scene.updateMatrixWorld(true);
     update_Node_XYZ();
     updateTreeUI(); 
-
+    checkAllPipelines(); // функция для проверки коллизии
     // =========================================================================
     // ✅ ГАРАНТИРОВАННЫЙ ВЫБОР И ПОДСВЕТКА ПОСЛЕДНЕГО УЗЛА (ЗЕЛЕНЫЙ ЦВЕТ)
     // =========================================================================
@@ -467,6 +489,7 @@ function edit_pipe_tube(Edge) {
     console.log("Engine.scene.children_EDIT",Engine.scene.children);
     // check_position_node_for_edge(Edge.end_node);
     check_position_node_for_edge();
+    checkAllPipelines(); // функция для проверки коллизии
 
 }
 
@@ -648,6 +671,7 @@ function create_branch(Node) {
     updateTreeUI(); //Обновляем дерево построения
     cancel("createBranchModal");
     update_Node_XYZ();
+    checkAllPipelines(); // функция для проверки коллизии
 }
 
 
@@ -756,6 +780,7 @@ function delete_pipe_tube() {
         });
     Engine.scene.updateMatrixWorld(true);
     updateTreeUI();
+    checkAllPipelines(); // функция для проверки коллизии
     console.log("Engine.scene.children проверка после удаления",Engine.scene.children);
     
 }
@@ -1468,7 +1493,7 @@ function exportToJSON() {
 }
 
 // 5.2. Функция полной очистки сцены перед загрузкой
-function clearSceneForLoad() {
+export function clearSceneForLoad() {
     const toRemove = [];
     Engine.scene.traverse((child) => {
         // Собираем все узлы и трубы для удаления
@@ -1746,7 +1771,7 @@ function toggleTree() {
   }
 }
 
-function updateTreeUI() {
+export function updateTreeUI() {
   const btn = document.getElementById('floatingTreeBtn');
   if (btn) {
     btn.classList.add('active');
@@ -2008,38 +2033,38 @@ function exportToJSON234() {
 }
 
 // 5.2. Функция полной очистки сцены перед загрузкой
-function clearSceneForLoad() {
-    const toRemove = [];
-    Engine.scene.traverse((child) => {
-        // Собираем все узлы и трубы для удаления
-        if (child.type === 'Node' || child.type === 'Source' || child.type === 'Sprinkler' || child.type === 'Edge') {
-            toRemove.push(child);
-        }
-    });
+// function clearSceneForLoad() {
+//     const toRemove = [];
+//     Engine.scene.traverse((child) => {
+//         // Собираем все узлы и трубы для удаления
+//         if (child.type === 'Node' || child.type === 'Source' || child.type === 'Sprinkler' || child.type === 'Edge') {
+//             toRemove.push(child);
+//         }
+//     });
 
-    toRemove.forEach((obj) => {
-        // Открепляем от родителя
-        if (obj.parent) {
-            obj.parent.remove(obj);
-        } else {
-            Engine.scene.remove(obj);
-        }
+//     toRemove.forEach((obj) => {
+//         // Открепляем от родителя
+//         if (obj.parent) {
+//             obj.parent.remove(obj);
+//         } else {
+//             Engine.scene.remove(obj);
+//         }
         
-        // Очищаем память (Geometry и Material)
-        if (obj.geometry) obj.geometry.dispose();
-        if (obj.material) {
-            if (Array.isArray(obj.material)) {
-                obj.material.forEach(m => m.dispose());
-            } else {
-                obj.material.dispose();
-            }
-        }
-    });
+//         // Очищаем память (Geometry и Material)
+//         if (obj.geometry) obj.geometry.dispose();
+//         if (obj.material) {
+//             if (Array.isArray(obj.material)) {
+//                 obj.material.forEach(m => m.dispose());
+//             } else {
+//                 obj.material.dispose();
+//             }
+//         }
+//     });
 
-    // Полностью очищаем массив отслеживаемых объектов
-    STATE.Three_D_objects = [];
-    console.log("🧹 Сцена очищена для загрузки нового проекта");
-}
+//     // Полностью очищаем массив отслеживаемых объектов
+//     STATE.Three_D_objects = [];
+//     console.log("🧹 Сцена очищена для загрузки нового проекта");
+// }
 
 
 function loadProjectFromJSOssN(file) {

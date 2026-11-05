@@ -1,5 +1,13 @@
 // modules/split-manager.js
-class SplitManager {
+
+import { Engine } from "../engine.js";
+import { Factory } from "../factory.js";
+import { STATE, Utils } from "../state.js";
+import { Tree } from "../tree.js";
+
+// import { Engine } from '../engine.js';
+
+export class SplitManager {
     startSegmentMode() {
         STATE.pendingSplitSegment = true;
         Utils.showStatus('Кликните по сегменту');

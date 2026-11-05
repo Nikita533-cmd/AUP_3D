@@ -1,4 +1,7 @@
-async function getTubeTypes() {
+import { STATE } from "./state.js";
+
+
+export async function getTubeTypes() {
   const response = await fetch('/api/tubes/types/', {
     headers: {
       'Accept': 'application/json',
@@ -16,12 +19,12 @@ async function getTubeTypes() {
 }
 
 
-async function getTube(TubeTypeValue) {
+export async function getTube(TubeTypeValue) {
   if (STATE.pipe_array[`${TubeTypeValue}`])
   {
     return STATE.pipe_array[`${TubeTypeValue}`]; 
   }
-  const response = await fetch(`/api/tubes/list/?type_id=${TubeTypeValue}`, {
+  const response = await fetch(`/api/tubes/list/${Number(TubeTypeValue)}/`, {
     headers: {
       'Accept': 'application/json',
     },
@@ -39,7 +42,7 @@ async function getTube(TubeTypeValue) {
 }
 
 
-async function GetSprinkler() {
+export async function GetSprinkler() {
   const response = await fetch('/api/sprinkler/', {
     headers: {
       'Accept': 'application/json',
@@ -56,7 +59,7 @@ async function GetSprinkler() {
   return data;                        // это и есть «возвращаемые данные», но внутри Promise
 }
 
-async function GetResults() {
+export async function GetResults() {
   const response = await fetch('/api/results/', {
     headers: {
       'Accept': 'application/json',
