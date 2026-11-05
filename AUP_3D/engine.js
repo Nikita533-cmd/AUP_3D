@@ -201,25 +201,25 @@ export const Engine = {
         
     // },
 
-    // // 5. СНЯТИЕ ВЫДЕЛЕНИЯ С ОДНОГО МЕША
-    // deselectObject(mesh) {
-    //     if (!mesh || !mesh.material) return;
-
-    //     if (mesh.userData.originalColor !== undefined) {
-    //         mesh.material.color.setHex(mesh.userData.originalColor); // Возвращаем родной цвет
-    //     }
-    // },
-
-    // 5. СНЯТИЕ ВЫДЕЛЕНИЯ (возвращает исходный цвет)
+    // 5. СНЯТИЕ ВЫДЕЛЕНИЯ С ОДНОГО МЕША
     deselectObject(mesh) {
         if (!mesh || !mesh.material) return;
 
-        // Возвращаем сохраненный исходный цвет
         if (mesh.userData.originalColor !== undefined) {
-            mesh.material.color.setHex(mesh.userData.originalColor);
-            mesh.material.needsUpdate = true;
+            mesh.material.color.setHex(mesh.userData.originalColor); // Возвращаем родной цвет
         }
     },
+
+    // // 5. СНЯТИЕ ВЫДЕЛЕНИЯ (возвращает исходный цвет)
+    // deselectObject(mesh) {
+    //     if (!mesh || !mesh.material) return;
+
+    //     // Возвращаем сохраненный исходный цвет
+    //     if (mesh.userData.originalColor !== undefined) {
+    //         mesh.material.color.setHex(mesh.userData.originalColor);
+    //         mesh.material.needsUpdate = true;
+    //     }
+    // },
 
     update_Pipe_tube_coordinate() {
         const selected = this.selectedObject;

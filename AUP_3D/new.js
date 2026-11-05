@@ -314,9 +314,9 @@ function CreatePipeline(pbCX, pbCY, pbCZ, activeAxis, activeAxis_direction, pbLe
         if (isContinuous) {
             Engine.selectedObject = Node_End;
             // Если галочка стоит: обновляем поля для следующего шага
-            // document.getElementById("pbCX").value = Node_End.position.x.toFixed(2);
-            // document.getElementById("pbCY").value = Node_End.position.y.toFixed(2);
-            // document.getElementById("pbCZ").value = Node_End.position.z.toFixed(2);
+            document.getElementById("pbCX").value = Node_End.position.x.toFixed(2);
+            document.getElementById("pbCY").value = Node_End.position.y.toFixed(2);
+            document.getElementById("pbCZ").value = Node_End.position.z.toFixed(2);
             // document.getElementById("pbLength").value = "5"; // Сброс длины по умолчанию
             
             if (typeof Utils !== 'undefined') {
