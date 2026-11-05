@@ -18,16 +18,28 @@ export const Engine = {
 
     init() {
         // console.log("точка в начале енджина");
+        // init() {
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0xf5f6fa);
 
-        this.camera = new THREE.PerspectiveCamera(
-            60,
-            innerWidth / innerHeight,
-            0.01,
-            1000
+        // 1. Базовый размер фрустума. 20000 гарантирует, что при панорамировании 
+        // (перетаскивании мышью) объекты не обрежутся по краям.
+        const f = 20000; 
+        const aspect = window.innerWidth / window.innerHeight;
+        
+        this.camera = new THREE.OrthographicCamera(
+            -f * aspect / 2, f * aspect / 2,
+            f / 2, -f / 2,
+            0.1, 10000
         );
-        this.camera.position.set(20, 25, 30);
+        
+        // Стандартная изометрическая позиция
+        this.camera.position.set(30, 30, 30);
+        this.camera.lookAt(0, 0, 0);
+
+        // 2.Визуально приближаем камеру на старте
+        this.camera.zoom = 1000; // Объекты будут выглядеть в 4 раза крупнее (ближе)
+        this.camera.updateProjectionMatrix(); // ОБЯЗАТЕЛЬНО применяем изменения!
 
         this.renderer = new THREE.WebGLRenderer({
             canvas: document.getElementById('renderCanvas'),
@@ -42,9 +54,13 @@ export const Engine = {
         );
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.05;
-        this.controls.minDistance = 1;
-        this.controls.maxDistance = 500;
+        
+        // 3. Ограничиваем зум, чтобы защитить от обрезания
+        this.controls.minZoom = 1;   // Запрещает отдалить камеру дальше, чем базовый f=500
+        this.controls.maxZoom = 10000;  // Позволяет приблизить еще сильнее, если нужно
+        this.controls.maxDistance = 5000;
         this.controls.maxPolarAngle = Math.PI / 2.1;
+        this.controls.zoomSpeed = 2.0; // Делаем колесико мыши отзывчивым
 
         this.raycaster = new THREE.Raycaster();
 
@@ -54,7 +70,7 @@ export const Engine = {
         dl.position.set(20, 30, 20);
         this.scene.add(dl);
 
-        addEventListener('resize', () => this.onResize());
+        window.addEventListener('resize', () => this.onResize());
 
         this.renderer.domElement.addEventListener('pointerdown', (e) => this.onPointerDown(e));
         this.renderer.domElement.addEventListener('pointermove', (e) => this.onPointerMove(e));
@@ -116,42 +132,90 @@ export const Engine = {
         this.update_Node_coordinate();
     },
 
-    // 3. ФИЛЬТР: Находит первый THREE.Mesh в массиве пересечений
+    // // 3. ФИЛЬТР: Находит первый THREE.Mesh в массиве пересечений
+    // findValidMesh(intersects) {
+    //     if (intersects.length === 0) return null;
+
+    //     for (let i = 0; i < intersects.length; i++) {
+    //         const obj = intersects[i].object;
+
+    //         // Игнорируем технические объекты и свет, ищем строго геометрию (Mesh)
+    //         if (!obj.isGridHelper && !obj.isLight && obj.isMesh) {
+    //             return obj; // Возвращаем конкретный узел/меш
+    //         }
+    //     }
+    //     return null;
+    // },
+
+     // 3. ФИЛЬТР: Находит наш кастомный объект (Node_new, Edge_new), а не просто внутреннюю геометрию
     findValidMesh(intersects) {
         if (intersects.length === 0) return null;
 
         for (let i = 0; i < intersects.length; i++) {
-            const obj = intersects[i].object;
+            let obj = intersects[i].object;
 
-            // Игнорируем технические объекты и свет, ищем строго геометрию (Mesh)
+            // ✅ ПОДНИМАЕМСЯ по родительской цепочке, чтобы найти экземпляр нашего класса
+            while (obj.parent && obj.parent !== this.scene) {
+                if (obj.type === 'Node' || obj.type === 'Sprinkler' || obj.type === 'Source' || obj.type === 'Edge') {
+                    return obj; // Возвращаем именно Node_new или Edge_new
+                }
+                obj = obj.parent;
+            }
+            
+            // Резервный вариант: если это просто меш
             if (!obj.isGridHelper && !obj.isLight && obj.isMesh) {
-                return obj; // Возвращаем конкретный узел/меш
+                return obj; 
             }
         }
         return null;
     },
 
-    // 4. ВЫДЕЛЕНИЕ ОДНОГО МЕША
+    // // 4. ВЫДЕЛЕНИЕ ОДНОГО МЕША
+    // selectObject(mesh) {
+    //     if (!mesh || !mesh.material) return;
+
+    //     // Если цвет еще не сохраняли
+    //     if (!mesh.userData.originalColor) {
+    //         // Клонируем материал, чтобы изменение цвета не затронуло другие такие же меши на сцене
+    //         mesh.material = mesh.material.clone();
+    //         // Запоминаем родной цвет
+    //         mesh.userData.originalColor = mesh.material.color.getHex();
+    //     }
+
+    //     mesh.material.color.setStyle('#FFFF00'); // Красим строго этот меш в 
+    // },
+
+    // 4. ВЫДЕЛЕНИЕ ОБЪЕКТА (делает его желтым)
     selectObject(mesh) {
         if (!mesh || !mesh.material) return;
 
-        // Если цвет еще не сохраняли
-        if (!mesh.userData.originalColor) {
-            // Клонируем материал, чтобы изменение цвета не затронуло другие такие же меши на сцене
-            mesh.material = mesh.material.clone();
-            // Запоминаем родной цвет
+        // Сохраняем исходный цвет, если еще не сохранен
+        if (mesh.userData.originalColor === undefined) {
             mesh.userData.originalColor = mesh.material.color.getHex();
         }
 
-        mesh.material.color.setStyle('#FFFF00'); // Красим строго этот меш в красный
+        // Красим в желтый при выделении (для ЛЮБОГО объекта: узел, труба, ороситель)
+        mesh.material.color.setHex(0xFFFF00);
+        mesh.material.needsUpdate = true;
     },
 
-    // 5. СНЯТИЕ ВЫДЕЛЕНИЯ С ОДНОГО МЕША
+    // // 5. СНЯТИЕ ВЫДЕЛЕНИЯ С ОДНОГО МЕША
+    // deselectObject(mesh) {
+    //     if (!mesh || !mesh.material) return;
+
+    //     if (mesh.userData.originalColor !== undefined) {
+    //         mesh.material.color.setHex(mesh.userData.originalColor); // Возвращаем родной цвет
+    //     }
+    // },
+
+    // 5. СНЯТИЕ ВЫДЕЛЕНИЯ (возвращает исходный цвет)
     deselectObject(mesh) {
         if (!mesh || !mesh.material) return;
 
+        // Возвращаем сохраненный исходный цвет
         if (mesh.userData.originalColor !== undefined) {
-            mesh.material.color.setHex(mesh.userData.originalColor); // Возвращаем родной цвет
+            mesh.material.color.setHex(mesh.userData.originalColor);
+            mesh.material.needsUpdate = true;
         }
     },
 
@@ -248,29 +312,23 @@ export const Engine = {
     },
 
 
-
-
-
-
-
-
-
-
-
-
     onResize() {
-        const a = innerWidth / innerHeight;
+        const a = window.innerWidth / window.innerHeight;
+        
         if (Engine.camera.type === 'PerspectiveCamera') {
             Engine.camera.aspect = a;
         } else {
-            const f = 200;
+            
+            const f = 20000; // 
+            
             Engine.camera.left = -f * a / 2;
             Engine.camera.right = f * a / 2;
             Engine.camera.top = f / 2;
             Engine.camera.bottom = -f / 2;
         }
+        
         Engine.camera.updateProjectionMatrix();
-        Engine.renderer.setSize(innerWidth, innerHeight);
+        Engine.renderer.setSize(window.innerWidth, window.innerHeight);
     },
 
     animate() {

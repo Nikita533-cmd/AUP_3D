@@ -25,11 +25,27 @@ document.getElementById("Add_list_object").onclick = () => Add_data_base();
 
 // Слушатель для Сохранения проекта с геометрией
 document.getElementById("menuSave").onclick = () => exportToJSON();
-
 // Слушатель для Открытия проекта с геометрией
 document.getElementById("menuOpen").onclick = () => importToJSON();
-
+// Слушатель для создания Нового проекта с геометрией
 document.getElementById("menuNew").onclick = refreshPageHard;
+
+// Логика переключения кнопок направления (+X, -Y и т.д.)
+document.addEventListener('click', function(e) {
+    // Ищем ближайшего родителя с классом .axis-dir-btn (защищает от клика по тексту/иконке внутри)
+    const btn = e.target.closest('.axis-dir-btn');
+    
+    if (btn) {
+        // 1. Убираем класс 'active' у всех кнопок направления
+        document.querySelectorAll('.axis-dir-btn').forEach(b => b.classList.remove('active'));
+        
+        // 2. Добавляем класс 'active' именно той кнопке, по которой кликнули
+        btn.classList.add('active');
+        
+        // 3. Добавим вывод в консоль для проверки (удалите эту строку, когда всё заработает)
+        console.log("Выбрано направление:", btn.dataset.axis, btn.dataset.dir);
+    }
+});
 
 // Проверка существования начального узала
 // Если существует необходимо выбрать узел привязки
@@ -102,8 +118,13 @@ function Pipe_Line_visible_block () {
         const pbCY = parseFloat(document.getElementById("pbCY").value);
         const pbCZ = parseFloat(document.getElementById("pbCZ").value);        
         
-        const activeAxis = document.querySelector('.axis-btn.active').dataset.axis; // активная ось направления
-        const activeAxis_direction = document.querySelector('.dir-btn.active').dataset.dir; // активное положение направления
+        // const activeAxis = document.querySelector('.axis-btn.active').dataset.axis; // активная ось направления
+        // const activeAxis_direction = document.querySelector('.dir-btn.active').dataset.dir; // активное положение направления
+
+        const activeBtn = document.querySelector('.axis-dir-btn.active');
+        const activeAxis = activeBtn.dataset.axis;             // вернет "x", "y" или "z"
+        const activeAxis_direction = activeBtn.dataset.dir;    // вернет "+" или "-"
+
         const pbLength = parseFloat(document.getElementById("pbLength").value);
         const activeAxis_rotation = document.querySelector('.axis-btn-rot.active').dataset.axis; // активная ось дял порворота
         const rotate_value = parseFloat(document.getElementById("pbAngle").value);
@@ -128,32 +149,103 @@ function cancel(name) {
     document.body.classList.remove('builder-active');        
 }
 
-// функция для создания трубопровода, включена поверка начальных условий при выборре узла, и проверка конечной точки при совпадении координат
-function CreatePipeline (pbCX, pbCY, pbCZ, activeAxis, activeAxis_direction, pbLength, activeAxis_rotation, rotate_value, type_tube,
-            pbDiameter, k_t, kvelocity, Check_Nodes) {
-    // create_Pipe_line.style.display = 'block';
-    // console.log("activeAxis_direction1488888",activeAxis_direction);
+// // функция для создания трубопровода, включена поверка начальных условий при выборре узла, и проверка конечной точки при совпадении координат
+// function CreatePipeline (pbCX, pbCY, pbCZ, activeAxis, activeAxis_direction, pbLength, activeAxis_rotation, rotate_value, type_tube,
+//             pbDiameter, k_t, kvelocity, Check_Nodes) {
+//     // create_Pipe_line.style.display = 'block';
+//     // console.log("activeAxis_direction1488888",activeAxis_direction);
+//     const Node_Geometry = new THREE.SphereGeometry(VisualPipelins.d_node_base/2, 32, 32);
+//     const Node_Material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });    
+//     const Edge_Material = new THREE.MeshBasicMaterial({ color: '#0F1379' });
+    
+//     console.log("Check_Nodes_121123",Check_Nodes)
+//     if (Check_Nodes) {
+//         const [pbCX_end, pbCY_end, pbCZ_end] = calculation_end_node(pbCX, pbCY, pbCZ, pbLength, activeAxis, activeAxis_direction,
+//             activeAxis_rotation,rotate_value)
+//         let Node_End; 
+
+//         const check_node_end = check_End_Node(pbCX_end, pbCY_end, pbCZ_end);
+//         console.log("check_node_end",check_node_end);
+//         if(check_node_end) {
+//             Node_End = check_node_end;
+//         }
+//         else{
+//             Node_End = new Node_new(Node_Geometry, Node_Material, 'Node' );
+//             Node_End.position.set(pbCX_end, pbCY_end, pbCZ_end);
+//         }
+            
+//         // console.log("Node_End",Node_End.position);
+//         // Node_Start.add(Node_End);
+//         const Node_Start = Engine.selectedObject;
+
+//         const start_World_Pos = new THREE.Vector3();
+//         Node_Start.getWorldPosition(start_World_Pos);
+
+//         const end_World_pos = new THREE.Vector3();
+//         Node_End.getWorldPosition(end_World_pos);
+
+//         const path = new THREE.LineCurve3(start_World_Pos, end_World_pos);
+//         const Piepe_visible = new THREE.TubeGeometry (path, 64, VisualPipelins.d_pipe_base/2, 12, false);
+//         const Pipe_connection = new Edge_new(Piepe_visible, Edge_Material, Node_Start, Node_End, 'Edge', pbLength, pbDiameter, type_tube, k_t, kvelocity );
+//         Node_Start.attach(Pipe_connection);
+//         if (!check_node_end) {
+//             Pipe_connection.attach(Node_End);
+//         }
+//     }
+//     else {
+//         const Node_Material_start = new THREE.MeshBasicMaterial({ color: 0x800080 });
+//         const Node_Start = new Node_new(Node_Geometry, Node_Material_start, 'Source');
+//         Node_Start.position.set(pbCX, pbCY, pbCZ);
+//         const [pbCX_end, pbCY_end, pbCZ_end] = calculation_end_node(pbCX, pbCY, pbCZ, pbLength, activeAxis, activeAxis_direction,
+//             activeAxis_rotation,rotate_value)
+//         const Node_End = new Node_new(Node_Geometry, Node_Material, 'Node');
+//         Node_End.position.set(pbCX_end, pbCY_end, pbCZ_end);    
+//         // console.log("Node_End",Node_End.position);
+//         // Node_Start.add(Node_End);
+//         const path = new THREE.LineCurve3(Node_Start.position, Node_End.position)
+//         const Piepe_visible = new THREE.TubeGeometry (path, 64, VisualPipelins.d_pipe_base/2, 12, false)
+//         const Pipe_connection = new Edge_new(Piepe_visible, Edge_Material, Node_Start, Node_End, 'Edge', pbLength, pbDiameter, type_tube, k_t, kvelocity);       
+//         Engine.scene.add(Node_Start);
+//         Node_Start.attach(Pipe_connection);
+//         Pipe_connection.attach(Node_End); 
+//         }    
+//     // Engine.scene.add(Node_End);    
+//     // Engine.scene.add(Pipe_connection);
+//     update_Node_XYZ()
+//     console.log("Engine.scene.children",Engine.scene.children);
+//     console.log("STATE.Three_D_objects",STATE.Three_D_objects);
+//     updateTreeUI(); // Обновить дерево построения
+//     // cancel("pipelineBuilder"); 
+// };
+
+
+
+// функция для создания трубопровода
+function CreatePipeline(pbCX, pbCY, pbCZ, activeAxis, activeAxis_direction, pbLength, activeAxis_rotation, rotate_value, type_tube, pbDiameter, k_t, kvelocity, Check_Nodes) {
+    
     const Node_Geometry = new THREE.SphereGeometry(VisualPipelins.d_node_base/2, 32, 32);
+    
+    // Используем стандартные материалы без агрессивных настроек, чтобы объекты не исчезали
     const Node_Material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });    
     const Edge_Material = new THREE.MeshBasicMaterial({ color: '#0F1379' });
-    console.log("Check_Nodes_121123",Check_Nodes)
+
+    let Node_End;             
+
+    console.log("Check_Nodes_121123", Check_Nodes);
+    
     if (Check_Nodes) {
-        const [pbCX_end, pbCY_end, pbCZ_end] = calculation_end_node(pbCX, pbCY, pbCZ, pbLength, activeAxis, activeAxis_direction,
-            activeAxis_rotation,rotate_value)
-        let Node_End; 
+        const [pbCX_end, pbCY_end, pbCZ_end] = calculation_end_node(pbCX, pbCY, pbCZ, pbLength, activeAxis, activeAxis_direction, activeAxis_rotation, rotate_value);
 
         const check_node_end = check_End_Node(pbCX_end, pbCY_end, pbCZ_end);
-        console.log("check_node_end",check_node_end);
-        if(check_node_end) {
-            Node_End = check_node_end;
-        }
-        else{
-            Node_End = new Node_new(Node_Geometry, Node_Material, 'Node' );
+        
+        if (check_node_end) {
+            Node_End = check_node_end; 
+        } else {
+            Node_End = new Node_new(Node_Geometry, Node_Material, 'Node');
             Node_End.position.set(pbCX_end, pbCY_end, pbCZ_end);
+            Engine.scene.add(Node_End);
         }
             
-        // console.log("Node_End",Node_End.position);
-        // Node_Start.add(Node_End);
         const Node_Start = Engine.selectedObject;
 
         const start_World_Pos = new THREE.Vector3();
@@ -163,40 +255,93 @@ function CreatePipeline (pbCX, pbCY, pbCZ, activeAxis, activeAxis_direction, pbL
         Node_End.getWorldPosition(end_World_pos);
 
         const path = new THREE.LineCurve3(start_World_Pos, end_World_pos);
-        const Piepe_visible = new THREE.TubeGeometry (path, 64, VisualPipelins.d_pipe_base/2, 12, false);
-        const Pipe_connection = new Edge_new(Piepe_visible, Edge_Material, Node_Start, Node_End, 'Edge', pbLength, pbDiameter, type_tube, k_t, kvelocity );
+        const Piepe_visible = new THREE.TubeGeometry(path, 64, VisualPipelins.d_pipe_base/2, 12, false);
+        const Pipe_connection = new Edge_new(Piepe_visible, Edge_Material, Node_Start, Node_End, 'Edge', pbLength, pbDiameter, type_tube, k_t, kvelocity);
+        
+        // ✅ Используем .attach() для сохранения мировых координат при смене родителя
         Node_Start.attach(Pipe_connection);
         if (!check_node_end) {
             Pipe_connection.attach(Node_End);
         }
-    }
-    else {
+    } else {
+        // Создание самого первого узла (Источника)
         const Node_Material_start = new THREE.MeshBasicMaterial({ color: 0x800080 });
         const Node_Start = new Node_new(Node_Geometry, Node_Material_start, 'Source');
         Node_Start.position.set(pbCX, pbCY, pbCZ);
-        const [pbCX_end, pbCY_end, pbCZ_end] = calculation_end_node(pbCX, pbCY, pbCZ, pbLength, activeAxis, activeAxis_direction,
-            activeAxis_rotation,rotate_value)
-        const Node_End = new Node_new(Node_Geometry, Node_Material, 'Node');
+        
+        const [pbCX_end, pbCY_end, pbCZ_end] = calculation_end_node(pbCX, pbCY, pbCZ, pbLength, activeAxis, activeAxis_direction, activeAxis_rotation, rotate_value);
+        
+        Node_End = new Node_new(Node_Geometry, Node_Material, 'Node');
         Node_End.position.set(pbCX_end, pbCY_end, pbCZ_end);    
-        // console.log("Node_End",Node_End.position);
-        // Node_Start.add(Node_End);
-        const path = new THREE.LineCurve3(Node_Start.position, Node_End.position)
-        const Piepe_visible = new THREE.TubeGeometry (path, 64, VisualPipelins.d_pipe_base/2, 12, false)
+        
+        const path = new THREE.LineCurve3(Node_Start.position, Node_End.position);
+        const Piepe_visible = new THREE.TubeGeometry(path, 64, VisualPipelins.d_pipe_base/2, 12, false);
         const Pipe_connection = new Edge_new(Piepe_visible, Edge_Material, Node_Start, Node_End, 'Edge', pbLength, pbDiameter, type_tube, k_t, kvelocity);       
+        
         Engine.scene.add(Node_Start);
         Node_Start.attach(Pipe_connection);
         Pipe_connection.attach(Node_End); 
         }    
     // Engine.scene.add(Node_End);    
     // Engine.scene.add(Pipe_connection);
-    update_Node_XYZ()
-    console.log("Engine.scene.children",Engine.scene.children);
-    console.log("STATE.Three_D_objects",STATE.Three_D_objects);
-    updateTreeUI(); // Обновить дерево построения
+    // update_Node_XYZ()
+    // console.log("Engine.scene.children",Engine.scene.children);
+    // console.log("STATE.Three_D_objects",STATE.Three_D_objects);
+    // updateTreeUI(); // Обновить дерево построения
     checkAllPipelines(); // функция для проверки коллизии
     // cancel("pipelineBuilder"); 
     
-};
+// };
+//     }    
+    
+    // Обновляем матрицы и интерфейс
+    Engine.scene.updateMatrixWorld(true);
+    update_Node_XYZ();
+    updateTreeUI(); 
+    checkAllPipelines(); // функция для проверки коллизии
+    // =========================================================================
+    // ✅ ГАРАНТИРОВАННЫЙ ВЫБОР И ПОДСВЕТКА ПОСЛЕДНЕГО УЗЛА (ЗЕЛЕНЫЙ ЦВЕТ)
+    // =========================================================================
+    if (Node_End) {
+        // 1. Делаем его выбранным объектом в системе
+        Engine.selectedObject = Node_End;
+        
+        // 2. Добавляем в STATE, если это новый узел и его там еще нет
+        if (!STATE.Three_D_objects.includes(Node_End)) {
+            STATE.Three_D_objects.push(Node_End);
+        }
+
+        // 3. Визуальная подсветка: меняем цвет на ЗЕЛЕНЫЙ (как в оригинале)
+        if (!Node_End.userData.originalColor) {
+            Node_End.userData.originalColor = Node_End.material.color.getHex();
+        }
+        Node_End.material.color.setHex(0x00ff00); // ✅ Зеленый цвет выделения
+        Node_End.material.needsUpdate = true;
+
+        // 4. Проверяем галочку "Непрерывное создание"
+        const isContinuous = document.getElementById("continuousPipelineCheck")?.checked || false;
+        
+        if (isContinuous) {
+            // Если галочка стоит: обновляем поля для следующего шага
+            document.getElementById("pbCX").value = Node_End.position.x.toFixed(2);
+            document.getElementById("pbCY").value = Node_End.position.y.toFixed(2);
+            document.getElementById("pbCZ").value = Node_End.position.z.toFixed(2);
+            document.getElementById("pbLength").value = "5"; // Сброс длины по умолчанию
+            
+            if (typeof Utils !== 'undefined') {
+                Utils.showStatus(`Участок создан. Конечный узел выбран и подсвечен. Готов к следующему.`);
+            }
+        } else {
+            // Если галочка НЕ стоит: просто сообщаем об успехе, окно можно закрыть вручную
+            if (typeof Utils !== 'undefined') {
+                Utils.showStatus(`Участок создан. Конечный узел выбран и подсвечен.`);
+            }
+        }
+    }
+}
+
+
+
 // Функция расчета коенчного узла для трубопровода
 function calculation_end_node(pbCX, pbCY, pbCZ, pbLength, activeAxis, activeAxis_direction,
     activeAxis_rotation,rotate_value)
@@ -674,27 +819,65 @@ function Check_Edit_Node(){
 
 function Edit_Node(Node) {
     const new_type = document.getElementById("select_node_edit").value;
-    Node.type=new_type;
-    console.log("материал то обновы",Node.material);
+    Node.type = new_type;
+
+    // 1. Удаляем старую стрелку, если она была (на случай смены с Оросителя на Узел/Источник)
+    const existingArrow = Node.getObjectByName('SprinklerArrow');
+    if (existingArrow) {
+        Node.remove(existingArrow);
+    }
+
+    // 2. Обновляем материал (цвет) узла
     Node.material.dispose();
-    let new_Node_Material;        
+    let new_Node_Material;
     if (new_type === "Node") {        
         new_Node_Material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
     }
     else if (new_type === "Sprinkler") {        
-        new_Node_Material = new THREE.MeshBasicMaterial({ color: '#FF0000' });
+        new_Node_Material = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Используем hex для надежности
     }
     else if (new_type === "Source") {        
         new_Node_Material = new THREE.MeshBasicMaterial({ color: 0x800080 });
     }    
-    Node.material=new_Node_Material;
-    console.log("материал после обновы",Node.material);
     
+    Node.material = new_Node_Material;
     Node.material.needsUpdate = true;
     Node.userData.originalColor = Node.material.color.getHex();
-    
+
+    // 3. ✅ ГЛАВНОЕ ИСПРАВЛЕНИЕ: Если тип стал "Sprinkler", создаем и добавляем стрелку
+    if (new_type === "Sprinkler") {
+        const sprinklerGroup = new THREE.Group();
+        sprinklerGroup.name = 'SprinklerArrow';
+        const nodeRadius = VisualPipelins.d_node_base / 2;
+        
+        // 1. Стержень стрелки (цилиндр)
+        const shaftRadius = nodeRadius * 0.1;
+        const shaftHeight = nodeRadius * 2.5;
+        const shaftGeo = new THREE.CylinderGeometry(shaftRadius, shaftRadius, shaftHeight, 16);
+        const shaft = new THREE.Mesh(shaftGeo, new_Node_Material); // Используем новый красный материал
+        shaft.position.y = -(shaftHeight / 2);
+        
+        // 2. Наконечник стрелки (конус, направленный вниз)
+        const headRadius = nodeRadius * 1;
+        const headHeight = nodeRadius * 1.5;
+        const headGeo = new THREE.ConeGeometry(headRadius, headHeight, 16);
+        const head = new THREE.Mesh(headGeo, new_Node_Material); // Используем новый красный материал
+        head.rotation.x = Math.PI;
+        head.position.y = -(shaftHeight + headHeight / 2);
+
+        sprinklerGroup.add(shaft);
+        sprinklerGroup.add(head);
+        
+        // Добавляем группу со стрелкой к узлу
+        Node.add(sprinklerGroup);
+    }
+
+    // 4. Обновляем дерево построения, чтобы в левой панели тоже обновилась иконка и название
+    if (typeof updateTreeUI === 'function') {
+        updateTreeUI();
+    }
+
     cancel("Node_Edit");
-    console.log("Engine.scene.children проверка после изменения узла",Engine.scene.children)
 }
 
 async function sendJsonAndVisualize(v) {
@@ -1744,6 +1927,56 @@ document.addEventListener("DOMContentLoaded", () => {
 // ============================================================================
 // ПРИНУДИТЕЛЬНОЕ ИСПРАВЛЕНИЕ ВИДИМОСТИ СЦЕНЫ (Гарантия отображения)
 // ============================================================================
+// window.addEventListener('load', () => {
+//     setTimeout(() => {
+//         // 1. Гарантированно скрываем экран загрузки, если он "завис"
+//         const loadingEl = document.getElementById('loading');
+//         if (loadingEl) {
+//             loadingEl.classList.add('hidden');
+//         }
+
+//         // 2. Проверяем, инициализирован ли Engine
+//         if (typeof Engine !== 'undefined' && Engine.scene) {
+//             // Принудительно задаем светлый фон сцены (убирает черноту)
+//             Engine.scene.background = new THREE.Color(0xf5f5f5);
+            
+//             // 3. Проверяем наличие сетки и осей, добавляем их, если нет
+//             let hasGrid = false;
+//             let hasAxes = false;
+            
+//             Engine.scene.traverse((child) => {
+//                 if (child.type === 'GridHelper') hasGrid = true;
+//                 if (child.type === 'AxesHelper') hasAxes = true;
+//             });
+
+//             if (!hasGrid) {
+//                 const gridHelper = new THREE.GridHelper(50, 50, 0xcccccc, 0xe0e0e0);
+//                 Engine.scene.add(gridHelper);
+//                 console.log("✅ Сетка добавлена принудительно");
+//             }
+            
+//             if (!hasAxes) {
+//                 const axesHelper = new THREE.AxesHelper(3);
+//                 Engine.scene.add(axesHelper);
+//                 console.log("✅ Оси координат добавлены принудительно");
+//             }
+
+//             // 4. Принудительно обновляем размеры рендера и камеры (на случай сбоев ресайза)
+//             if (Engine.renderer && Engine.camera) {
+//                 Engine.renderer.setSize(window.innerWidth, window.innerHeight);
+//                 Engine.camera.aspect = window.innerWidth / window.innerHeight;
+//                 Engine.camera.updateProjectionMatrix();
+//                 console.log("✅ Размеры канваса обновлены");
+//             }
+//         } else {
+//             console.warn("⚠️ Объект Engine или Engine.scene не найден при загрузке!");
+//         }
+//     }, 500); // Задержка 500мс дает время на полную инициализацию Engine из других файлов
+// });
+
+// ============================================================================
+// ПРИНУДИТЕЛЬНОЕ ИСПРАВЛЕНИЕ ВИДИМОСТИ СЦЕНЫ (Только загрузка и ресайз)
+// ============================================================================
 window.addEventListener('load', () => {
     setTimeout(() => {
         // 1. Гарантированно скрываем экран загрузки, если он "завис"
@@ -1753,40 +1986,19 @@ window.addEventListener('load', () => {
         }
 
         // 2. Проверяем, инициализирован ли Engine
-        if (typeof Engine !== 'undefined' && Engine.scene) {
-            // Принудительно задаем светлый фон сцены (убирает черноту)
-            Engine.scene.background = new THREE.Color(0xf5f5f5);
+        if (typeof Engine !== 'undefined' && Engine.scene && Engine.renderer && Engine.camera) {
             
-            // 3. Проверяем наличие сетки и осей, добавляем их, если нет
-            let hasGrid = false;
-            let hasAxes = false;
+            // ✅ Мы УДАЛИЛИ отсюда принудительное создание осей и сетки!
+            // Теперь они управляются только через world.js и STATE.showGrid
             
-            Engine.scene.traverse((child) => {
-                if (child.type === 'GridHelper') hasGrid = true;
-                if (child.type === 'AxesHelper') hasAxes = true;
-            });
-
-            if (!hasGrid) {
-                const gridHelper = new THREE.GridHelper(50, 50, 0xcccccc, 0xe0e0e0);
-                Engine.scene.add(gridHelper);
-                console.log("✅ Сетка добавлена принудительно");
-            }
+            // 3. Принудительно обновляем размеры рендера и камеры (на случай сбоев ресайза при загрузке)
+            Engine.renderer.setSize(window.innerWidth, window.innerHeight);
+            Engine.camera.aspect = window.innerWidth / window.innerHeight;
+            Engine.camera.updateProjectionMatrix();
             
-            if (!hasAxes) {
-                const axesHelper = new THREE.AxesHelper(3);
-                Engine.scene.add(axesHelper);
-                console.log("✅ Оси координат добавлены принудительно");
-            }
-
-            // 4. Принудительно обновляем размеры рендера и камеры (на случай сбоев ресайза)
-            if (Engine.renderer && Engine.camera) {
-                Engine.renderer.setSize(window.innerWidth, window.innerHeight);
-                Engine.camera.aspect = window.innerWidth / window.innerHeight;
-                Engine.camera.updateProjectionMatrix();
-                console.log("✅ Размеры канваса обновлены");
-            }
+            console.log("✅ Сцена успешно инициализирована и готова к работе");
         } else {
-            console.warn("⚠️ Объект Engine или Engine.scene не найден при загрузке!");
+            console.warn("⚠️ Объект Engine или сцена не найдены при загрузке!");
         }
     }, 500); // Задержка 500мс дает время на полную инициализацию Engine из других файлов
 });

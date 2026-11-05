@@ -10,8 +10,8 @@ import { AXES_SETTINGS, CONFIG, STATE, Utils } from "./state.js";
 // import { Engine } from './engine.js';
 export const World = {
     updateGroundSize(w, d) {
-        w = Utils.clamp(parseFloat(w) || 10, 2, 2000);
-        d = Utils.clamp(parseFloat(d) || 10, 2, 2000);
+        w = Utils.clamp(parseFloat(w) || 10, 2, 200000);
+        d = Utils.clamp(parseFloat(d) || 10, 2, 200000);
         document.getElementById('planeWidth').value = w;
         document.getElementById('planeDepth').value = d;
         
