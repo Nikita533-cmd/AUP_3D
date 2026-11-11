@@ -277,6 +277,13 @@
       <!-- Вкладка: Трубопровод -->
       <div class="ribbon-panel" id="tab-pipeline">
         <button class="btn-ribbon" id="menuCreatePipeline"><span class="btn-icon">🔧</span><span>Создать</span></button>
+        <button id="btnBuildPipeline" class="btn-ribbon"><span class="btn-icon">✥</span><span>Построить трубопровод</span></button>
+        <!-- Подсказка, которая появляется при построении -->
+        <!-- <div id="buildPipelineHint" style="display:none; position:fixed; top:160px; left:50%; transform:translateX(-50%); 
+            background:rgba(15,19,121,0.9); color:white; padding:12px 24px; border-radius:8px; z-index:200;
+            font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.5); pointer-events: none;">
+            🔧 Режим построения: длина сегмента <b>0.00 м</b> | Esc — завершить
+        </div> -->
         <button class="btn-ribbon" id="menuPipeline_Edit"><span class="btn-icon">✏️</span><span>Изменить участок</span></button>
         <button class="btn-ribbon" id="btnToggleLengthEdit"><span class="btn-icon">📏</span><span>Изменить длины</span></button>
         <!-- <button class="btn-ribbon" id="menuSplitPipeline"><span class="btn-icon">✂️</span><span>Разбить</span></button> -->
@@ -301,7 +308,7 @@
 
       <!-- Вкладка: Аннотация -->
       <div class="ribbon-panel" id="tab-anatation">
-        <button class="btn-ribbon" id="src_tank"><span class="btn-icon">DN</span><span>Диаметр</span></button>
+        <button class="btn-ribbon" id="btnAddEdgeAnnotation"><span class="btn-icon">DN</span><span>Диаметр</span></button>
         <button class="btn-ribbon" id="src_city"><span class="btn-icon">L</span><span>Длина</span></button>
         <button class="btn-ribbon" id="src_city"><span class="btn-icon">H</span><span>Высотные отметки</span></button>
         <button class="btn-ribbon" id="src_pump"><span class="btn-icon">🚰</span><span>Насос</span></button>

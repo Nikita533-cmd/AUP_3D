@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Test TransformControls с поворотами</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #f5f5f5; }
+        canvas { display: block; }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            z-index: 100;
+        }
+        #info b { color: #ffff00; }
+        .btn-group { margin-top: 10px; display: flex; gap: 5px; }
+        button {
+            padding: 8px 16px;
+            background: #1976d2;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover { background: #1565c0; }
+        button.active { background: #ff9800; }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <b>TransformControls с поворотами</b><br>
+        <div>Позиция: X: <span id="valX">0.00</span> | Y: <span id="valY">0.00</span> | Z: <span id="valZ">0.00</span></div>
+        <div>Поворот: X: <span id="rotX">0°</span> | Y: <span id="rotY">0°</span> | Z: <span id="rotZ">0°</span></div>
+        <div class="btn-group">
+            <button id="btnTranslate" class="active">Перемещение</button>
+            <button id="btnRotate">Поворот</button>
+            <button id="btnBoth">Оба режима</button>
+        </div>
+        <button id="btnReset" style="margin-top:10px;">Сбросить</button>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { TransformControls } from 'three/addons/controls/TransformControls.js';
+
+        // ============================================================
+        // 1. СЦЕНА, КАМЕРА, РЕНДЕРЕР
+        // ============================================================
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xf5f5f5);
+
+        const frustumSize = 50;
+        const aspect = window.innerWidth / window.innerHeight;
+        const camera = new THREE.OrthographicCamera(
+            -frustumSize * aspect / 2, frustumSize * aspect / 2,
+            frustumSize / 2, -frustumSize / 2,
+            0.1, 10000
+        );
+        camera.position.set(30, 30, 30);
+        camera.lookAt(0, 0, 0);
+        camera.zoom = 20;
+        camera.updateProjectionMatrix();
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        const orbitControls = new OrbitControls(camera, renderer.domElement);
+        orbitControls.enableDamping = true;
+
+        // ============================================================
+        // 2. СЕТКА И ОСИ
+        // ============================================================
+        const gridHelper = new THREE.GridHelper(50, 50, 0x888888, 0xcccccc);
+        scene.add(gridHelper);
+
+        const axesHelper = new THREE.AxesHelper(10);
+        scene.add(axesHelper);
+
+        // ============================================================
+        // 3. СОЗДАЕМ ОБЪЕКТ (куб для наглядности поворотов)
+        // ============================================================
+        const geometry = new THREE.BoxGeometry(3, 3, 3);
+        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        const targetObject = new THREE.Mesh(geometry, material);
+        targetObject.position.set(0, 0, 0);
+        scene.add(targetObject);
+
+        // ============================================================
+        // 4. TransformControls — КОМБИНИРОВАННЫЙ РЕЖИМ
+        // ============================================================
+        const transformControls = new TransformControls(camera, renderer.domElement);
+        transformControls.setSize(1);
+        
+        // ✅ КОМБИНИРОВАННЫЙ РЕЖИМ: стрелки + дуги
+        transformControls.setMode('translate|rotate');
+        transformControls.attach(targetObject);
+        scene.add(transformControls);
+
+        transformControls.addEventListener('dragging-changed', (event) => {
+            orbitControls.enabled = !event.value;
+        });
+
+        // ============================================================
+        // 5. ТРИ ЛИНИИ (X, Y, Z)
+        // ============================================================
+        function createLine(color) {
+            const material = new THREE.LineBasicMaterial({ color: color, linewidth: 2 });
+            const geometry = new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(0, 0, 0),
+                new THREE.Vector3(0, 0, 0)
+            ]);
+            const line = new THREE.Line(geometry, material);
+            scene.add(line);
+            return line;
+        }
+
+        const lineX = createLine(0xff0000);
+        const lineY = createLine(0x00ff00);
+        const lineZ = createLine(0x0000ff);
+
+        function updateLines() {
+            const pos = targetObject.position;
+
+            lineX.geometry.setFromPoints([
+                new THREE.Vector3(0, 0, 0),
+                new THREE.Vector3(pos.x, 0, 0)
+            ]);
+
+            lineY.geometry.setFromPoints([
+                new THREE.Vector3(0, 0, 0),
+                new THREE.Vector3(0, pos.y, 0)
+            ]);
+
+            lineZ.geometry.setFromPoints([
+                new THREE.Vector3(0, 0, 0),
+                new THREE.Vector3(0, 0, pos.z)
+            ]);
+
+            // Обновляем UI
+            document.getElementById('valX').textContent = pos.x.toFixed(2);
+            document.getElementById('valY').textContent = pos.y.toFixed(2);
+            document.getElementById('valZ').textContent = pos.z.toFixed(2);
+
+            // Обновляем углы поворота
+            const rotX = THREE.MathUtils.radToDeg(targetObject.rotation.x);
+            const rotY = THREE.MathUtils.radToDeg(targetObject.rotation.y);
+            const rotZ = THREE.MathUtils.radToDeg(targetObject.rotation.z);
+            document.getElementById('rotX').textContent = rotX.toFixed(1) + '°';
+            document.getElementById('rotY').textContent = rotY.toFixed(1) + '°';
+            document.getElementById('rotZ').textContent = rotZ.toFixed(1) + '°';
+        }
+
+        transformControls.addEventListener('objectChange', updateLines);
+        updateLines();
+
+        // ============================================================
+        // 6. КНОПКИ ПЕРЕКЛЮЧЕНИЯ РЕЖИМОВ
+        // ============================================================
+        const btnTranslate = document.getElementById('btnTranslate');
+        const btnRotate = document.getElementById('btnRotate');
+        const btnBoth = document.getElementById('btnBoth');
+
+        btnTranslate.addEventListener('click', () => {
+            transformControls.setMode('translate');
+            btnTranslate.classList.add('active');
+            btnRotate.classList.remove('active');
+            btnBoth.classList.remove('active');
+        });
+
+        btnRotate.addEventListener('click', () => {
+            transformControls.setMode('rotate');
+            btnTranslate.classList.remove('active');
+            btnRotate.classList.add('active');
+            btnBoth.classList.remove('active');
+        });
+
+        btnBoth.addEventListener('click', () => {
+            transformControls.setMode('translate|rotate');
+            btnTranslate.classList.remove('active');
+            btnRotate.classList.remove('active');
+            btnBoth.classList.add('active');
+        });
+
+        document.getElementById('btnReset').addEventListener('click', () => {
+            targetObject.position.set(0, 0, 0);
+            targetObject.rotation.set(0, 0, 0);
+            updateLines();
+        });
+
+        // ============================================================
+        // 7. РЕСАЙЗ
+        // ============================================================
+        window.addEventListener('resize', () => {
+            const aspect = window.innerWidth / window.innerHeight;
+            camera.left = -frustumSize * aspect / 2;
+            camera.right = frustumSize * aspect / 2;
+            camera.top = frustumSize / 2;
+            camera.bottom = -frustumSize / 2;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // ============================================================
+        // 8. АНИМАЦИЯ
+        // ============================================================
+        function animate() {
+            requestAnimationFrame(animate);
+            orbitControls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        console.log("✅ Test манипулятор с поворотами запущен!");
+        console.log("Режим: translate|rotate (стрелки + дуги)");
+    </script>
+</body>
+</html>

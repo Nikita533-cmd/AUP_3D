@@ -2990,3 +2990,85 @@ window.applyNewLengthToEdge = function(edge, newLength) {
     
     console.log("✅ Длина трубы обновлена:", edge.Length);
 };
+
+
+
+
+
+document.getElementById("btnBuildPipeline").onclick = () => {
+    console.log("🔘 Кнопка 'Построить трубопровод' нажата");
+    
+    // Считываем настройки из UI с проверками
+    const diameterSelect = document.getElementById("pbDiameter");
+    const tubeTypeSelect = document.getElementById("get_tube_pipe");
+    const activeAxisBtn = document.querySelector('.axis-dir-btn.active');
+    
+    console.log("diameterSelect:", diameterSelect);
+    console.log("tubeTypeSelect:", tubeTypeSelect);
+    console.log("activeAxisBtn:", activeAxisBtn);
+    
+    // ✅ Безопасное получение значений с дефолтными fallback
+    const config = {
+        activeAxis: activeAxisBtn ? activeAxisBtn.dataset.axis : 'x',
+        DN: diameterSelect && diameterSelect.selectedOptions && diameterSelect.selectedOptions[0] 
+            ? parseFloat(diameterSelect.selectedOptions[0].textContent) 
+            : 50,
+        type: tubeTypeSelect && tubeTypeSelect.selectedOptions && tubeTypeSelect.selectedOptions[0] 
+            ? tubeTypeSelect.selectedOptions[0].textContent 
+            : "Стальная",
+        k_t: diameterSelect && diameterSelect.selectedOptions && diameterSelect.selectedOptions[0] && diameterSelect.selectedOptions[0].dataset.k_t
+            ? parseFloat(diameterSelect.selectedOptions[0].dataset.k_t) 
+            : 0.01,
+        kvelocity: diameterSelect && diameterSelect.selectedOptions && diameterSelect.selectedOptions[0] && diameterSelect.selectedOptions[0].dataset.kvelocity
+            ? parseFloat(diameterSelect.selectedOptions[0].dataset.kvelocity) 
+            : 1.0
+    };
+    
+    console.log("📦 Конфигурация построения:", config);
+    
+    // ✅ Запускаем режим построения
+    Engine.startPipelineBuilding(config);
+    
+    console.log("🚀 Режим построения запущен! Манипулятор должен появиться в (0,0,0)");
+};
+
+// Когда пользователь меняет длину в модальном окне
+document.getElementById('pbLength').addEventListener('change', () => {
+    if (Engine.isPipelineBuilding) {
+        Engine.applyUIValuesToManipulator();
+    }
+});
+
+
+
+// Аннотация к выбранному узлу
+document.getElementById("btnAddNodeAnnotation").onclick = () => {
+    if (!Engine.selectedObject) {
+        alert("Выберите узел!");
+        return;
+    }
+    Engine.createNodeAnnotation(Engine.selectedObject, 3);
+};
+
+// Аннотация к выбранной трубе
+document.getElementById("btnAddEdgeAnnotation").onclick = () => {
+    if (!Engine.selectedObject || Engine.selectedObject.type !== 'Edge') {
+        alert("Выберите трубу!");
+        return;
+    }
+    Engine.createEdgeAnnotation(Engine.selectedObject, 1.5);
+};
+
+// Очистить все аннотации
+document.getElementById("btnClearAnnotations").onclick = () => {
+    Engine.clearAnnotations();
+};
+
+// Аннотация ко всем узлам (массовая)
+document.getElementById("btnAnnotateAllNodes").onclick = () => {
+    STATE.Three_D_objects.forEach(obj => {
+        if (obj.type === 'Node' || obj.type === 'Sprinkler' || obj.type === 'Source') {
+            Engine.createNodeAnnotation(obj, 3);
+        }
+    });
+};

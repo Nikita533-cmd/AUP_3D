@@ -2,9 +2,8 @@
 // factory.js — Фабрика для создания 3D-объектов (трубы, ветки, рядки, узлы)
 // Зависимости: THREE (глобальный), CONFIG, AXES_SETTINGS, genNodeId (из state.js)
 // ============================================================
-// import * as THREE from 'three';
+
 import * as THREE from "three";
-// import { AXES_SETTINGS, CONFIG, STATE } from "./state.js";
 import { CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
 import { AXES_SETTINGS, CONFIG, STATE, VisualPipelins } from "./state.js";
 
