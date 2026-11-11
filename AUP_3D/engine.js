@@ -5,8 +5,8 @@
 // import * as THREE from 'three';
 import * as THREE from 'three';
 import { OrbitControls } from './orbit.js';
+import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 
-// import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 export const Engine = {
     scene: null,
     camera: null,
@@ -45,7 +45,31 @@ export const Engine = {
             canvas: document.getElementById('renderCanvas'),
             antialias: true
         });
-        this.renderer.setSize(innerWidth, innerHeight);
+
+        // ✅ СОЗДАНИЕ CSS2DRenderer
+        this.labelRenderer = new CSS2DRenderer();
+        this.labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        
+        // ✅ КРИТИЧЕСКИ ВАЖНЫЕ СТИЛИ:
+        this.labelRenderer.domElement.style.position = 'absolute';
+        this.labelRenderer.domElement.style.top = '0px';
+        this.labelRenderer.domElement.style.left = '0px';
+        this.labelRenderer.domElement.style.pointerEvents = 'none';
+        this.labelRenderer.domElement.style.zIndex = '1000';
+        
+        // ✅ ОБЯЗАТЕЛЬНО: добавляем в DOM
+        // Внутри Engine.init() найдите и поменяйте:
+        const canvas = document.getElementById('renderCanvas');
+        if (canvas && canvas.parentElement) {
+            // Вставляем слой интерфейса в тот же блок, где лежит сам холст, чтобы их координаты совпали на 100%
+            canvas.parentElement.appendChild(this.labelRenderer.domElement);
+        } else {
+            document.body.appendChild(this.labelRenderer.domElement);
+        }
+
+
+
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
         // console.log("точка в середине енджина");
         this.controls = new OrbitControls(
@@ -63,6 +87,10 @@ export const Engine = {
         this.controls.zoomSpeed = 2.0; // Делаем колесико мыши отзывчивым
 
         this.raycaster = new THREE.Raycaster();
+
+        this.selectedObjects = [];
+        this.selectedObject = null;
+
 
         // Освещение
         this.scene.add(new THREE.HemisphereLight(0xffffff, 0x888899, 0.7));
@@ -102,30 +130,71 @@ export const Engine = {
     },
 
     // 2. КЛИК МЫШИ (выделение конкретного Меша)
-    onPointerDown(event) {
-        this.updateMouseCoordinates(event);
+    // onPointerDown(event) {
+    //     this.updateMouseCoordinates(event);
 
+    //     this.raycaster.setFromCamera(this.mouse, this.camera);
+    //     const intersects = this.raycaster.intersectObjects(this.scene.children, true);
+
+    //     const hitMesh = this.findValidMesh(intersects);
+
+    //     if (hitMesh) {
+    //         // Если кликнули по новому объекту — сбрасываем старый
+    //         if (this.selectedObject && this.selectedObject !== hitMesh) {
+    //             this.deselectObject(this.selectedObject);
+    //         }
+
+    //         // Запоминаем и выделяем конкретный нажатый узел
+    //         this.selectedObject = hitMesh;
+    //         this.selectObject(hitMesh);
+    //     } else {
+    //         // Клик в пустоту — сброс
+    //         if (this.selectedObject) {
+    //             this.deselectObject(this.selectedObject);
+    //             this.selectedObject = null;
+    //         }
+    //     }
+    //     this.update_Pipe_tube_coordinate();
+    //     this.update_Pipe_tube();
+    //     this.info_selected_elevent();
+    //     this.update_Node_coordinate();
+    // },
+
+        onPointerDown(event) {
+        this.updateMouseCoordinates(event);
         this.raycaster.setFromCamera(this.mouse, this.camera);
         const intersects = this.raycaster.intersectObjects(this.scene.children, true);
-
         const hitMesh = this.findValidMesh(intersects);
 
         if (hitMesh) {
-            // Если кликнули по новому объекту — сбрасываем старый
-            if (this.selectedObject && this.selectedObject !== hitMesh) {
-                this.deselectObject(this.selectedObject);
+            // Проверяем, зажат ли Ctrl (или Cmd на Mac)
+            if (event.ctrlKey || event.metaKey) {
+                const index = this.selectedObjects.indexOf(hitMesh);
+                if (index > -1) {
+                    // Если уже выделен - снимаем выделение
+                    this.selectedObjects.splice(index, 1);
+                    this.deselectObject(hitMesh);
+                } else {
+                    // Если не выделен - добавляем в массив и выделяем
+                    this.selectedObjects.push(hitMesh);
+                    this.selectObject(hitMesh);
+                }
+            } else {
+                // Если Ctrl НЕ зажат - сбрасываем старое выделение и выделяем только новый объект
+                this.selectedObjects.forEach(obj => this.deselectObject(obj));
+                this.selectedObjects = [hitMesh];
+                this.selectObject(hitMesh);
             }
-
-            // Запоминаем и выделяем конкретный нажатый узел
-            this.selectedObject = hitMesh;
-            this.selectObject(hitMesh);
+            
+            // Для обратной совместимости с остальным кодом
+            this.selectedObject = this.selectedObjects.length > 0 ? this.selectedObjects[this.selectedObjects.length - 1] : null;
         } else {
-            // Клик в пустоту — сброс
-            if (this.selectedObject) {
-                this.deselectObject(this.selectedObject);
-                this.selectedObject = null;
-            }
+            // Клик в пустоту - сбрасываем всё
+            this.selectedObjects.forEach(obj => this.deselectObject(obj));
+            this.selectedObjects = [];
+            this.selectedObject = null;
         }
+
         this.update_Pipe_tube_coordinate();
         this.update_Pipe_tube();
         this.info_selected_elevent();
@@ -147,23 +216,53 @@ export const Engine = {
     //     return null;
     // },
 
-     // 3. ФИЛЬТР: Находит наш кастомный объект (Node_new, Edge_new), а не просто внутреннюю геометрию
+    //  // 3. ФИЛЬТР: Находит наш кастомный объект (Node_new, Edge_new), а не просто внутреннюю геометрию
+    // findValidMesh(intersects) {
+    //     if (intersects.length === 0) return null;
+
+    //     for (let i = 0; i < intersects.length; i++) {
+    //         let obj = intersects[i].object;
+
+    //         // ✅ ПОДНИМАЕМСЯ по родительской цепочке, чтобы найти экземпляр нашего класса
+    //         while (obj.parent && obj.parent !== this.scene) {
+    //             if (obj.type === 'Node' || obj.type === 'Sprinkler' || obj.type === 'Source' || obj.type === 'Edge') {
+    //                 return obj; // Возвращаем именно Node_new или Edge_new
+    //             }
+    //             obj = obj.parent;
+    //         }
+            
+    //         // Резервный вариант: если это просто меш
+    //         if (!obj.isGridHelper && !obj.isLight && obj.isMesh) {
+    //             return obj; 
+    //         }
+    //     }
+    //     return null;
+    // },
+
+        // 3. ФИЛЬТР: Находит наш кастомный объект, игнорируя UI
     findValidMesh(intersects) {
         if (intersects.length === 0) return null;
 
         for (let i = 0; i < intersects.length; i++) {
             let obj = intersects[i].object;
 
-            // ✅ ПОДНИМАЕМСЯ по родительской цепочке, чтобы найти экземпляр нашего класса
+            // 🛡️ ЖЕСТКАЯ ЗАЩИТА: Игнорируем элементы интерфейса при обходе
+            if (obj.name === 'EdgeUI' || (obj.parent && obj.parent.name === 'EdgeUI')) {
+                continue;
+            }
+
+            // Поднимаемся по родительской цепочке
             while (obj.parent && obj.parent !== this.scene) {
+                if (obj.parent.name === 'EdgeUI') break; // Если наткнулись на UI - стоп
+                
                 if (obj.type === 'Node' || obj.type === 'Sprinkler' || obj.type === 'Source' || obj.type === 'Edge') {
-                    return obj; // Возвращаем именно Node_new или Edge_new
+                    return obj; 
                 }
                 obj = obj.parent;
             }
             
-            // Резервный вариант: если это просто меш
-            if (!obj.isGridHelper && !obj.isLight && obj.isMesh) {
+            // Резервный вариант
+            if (!obj.isGridHelper && !obj.isLight && obj.isMesh && obj.name !== 'EdgeUI') {
                 return obj; 
             }
         }
@@ -172,18 +271,31 @@ export const Engine = {
 
     // 4. ВЫДЕЛЕНИЕ ОДНОГО МЕША
     selectObject(mesh) {
-        if (!mesh || !mesh.material) return;
+        // 🛡️ ЗАЩИТА: Не даем выделить или покрасить саму группу UI
+        if (!mesh || !mesh.material || mesh.name === 'EdgeUI') return;
 
-        // Если цвет еще не сохраняли
         if (!mesh.userData.originalColor) {
-            // Клонируем материал, чтобы изменение цвета не затронуло другие такие же меши на сцене
             mesh.material = mesh.material.clone();
-            // Запоминаем родной цвет
             mesh.userData.originalColor = mesh.material.color.getHex();
         }
 
-        mesh.material.color.setStyle('#FFFF00'); // Красим строго этот меш в 
+        mesh.material.color.setStyle('#FFFF00'); 
     },
+
+    // // 4. ВЫДЕЛЕНИЕ ОДНОГО МЕША
+    // selectObject(mesh) {
+    //     if (!mesh || !mesh.material) return;
+
+    //     // Если цвет еще не сохраняли
+    //     if (!mesh.userData.originalColor) {
+    //         // Клонируем материал, чтобы изменение цвета не затронуло другие такие же меши на сцене
+    //         mesh.material = mesh.material.clone();
+    //         // Запоминаем родной цвет
+    //         mesh.userData.originalColor = mesh.material.color.getHex();
+    //     }
+
+    //     mesh.material.color.setStyle('#FFFF00'); // Красим строго этот меш в 
+    // },
 
     // // 4. ВЫДЕЛЕНИЕ ОБЪЕКТА (делает его желтым)
     // selectObject(mesh) {
@@ -331,11 +443,23 @@ export const Engine = {
         
         Engine.camera.updateProjectionMatrix();
         Engine.renderer.setSize(window.innerWidth, window.innerHeight);
+
+        if (this.labelRenderer) {
+            this.labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        }
     },
 
     animate() {
         requestAnimationFrame(() => this.animate());
         this.controls.update();
         this.renderer.render(this.scene, this.camera);
+
+        if (this.labelRenderer) {
+            this.labelRenderer.render(this.scene, this.camera);
+        }
     }
 };
+
+// В конце файла engine.js:
+window.Engine = Engine; 
+

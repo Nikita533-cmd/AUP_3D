@@ -1393,6 +1393,7 @@ body {
   transform: rotate(-90deg);
 }
 
+
 .tree-toggle::before {
   content: '▼';
   font-size: 8px;
@@ -2448,3 +2449,196 @@ body {
     width: 100px !important;
 }
 
+/* Базовый стиль кнопок в ленте (Ribbon) */
+.btn-ribbon {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    background: #f5f5f5;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px; /* Отступ между иконкой и текстом */
+}
+
+.btn-ribbon:hover {
+    background: #e0e0e0;
+}
+
+/* Активное состояние (когда данные показаны) */
+.btn-ribbon.active {
+    background: #f30707 !important; /* Ваш красный цвет */
+    color: white !important;
+    border-color: #f30707 !important;
+    font-weight: bold;
+}
+
+/* Чтобы иконка внутри тоже становилась белой при активации */
+.btn-ribbon.active .btn-icon {
+    color: white !important;
+}
+
+
+
+
+/* ===================================================================
+   КОНТЕЙНЕРЫ ДЛЯ МЕТОК НА УЗЛАХ (ДЛЯ ИДЕАЛЬНОГО ПОЗИЦИОНИРОВАНИЯ)
+   =================================================================== */
+.node-label-pressure-container,
+.node-label-flow-container {
+    pointer-events: none !important; /* ✅ Клики проходят сквозь */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: max-content !important;
+    z-index: 1 !important; /* ✅ ИЗМЕНЕНО: было без z-index, стало 10 */
+}
+
+/* ===================================================================
+   ЕДИНЫЙ СТИЛЬ ДЛЯ ВСЕХ ТЕКСТОВЫХ МЕТОК РЕЗУЛЬТАТОВ (УЗЛЫ И ТРУБЫ)
+   =================================================================== */
+
+/* 1. БАЗОВЫЙ СТИЛЬ: Прозрачный фон, жирный шрифт, белая обводка */
+.edge-ui-label,
+.node-pressure-label,
+.node-flow-label {
+    pointer-events: none !important; /* ✅ Клики проходят сквозь */
+    background: transparent !important;
+    padding: 2px 6px !important;
+    border-radius: 4px !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
+    white-space: nowrap !important;
+    z-index: 10 !important; /* ✅ ИЗМЕНЕНО: было 9998, стало 10 */
+    
+    text-shadow: 
+        -1px -1px 0 #ffffff,  
+         1px -1px 0 #ffffff,
+        -1px  1px 0 #ffffff,
+         1px  1px 0 #ffffff,
+         0 0 4px rgba(255, 255, 255, 0.8);
+}
+
+/* 2. ЦВЕТА ДЛЯ РАЗНЫХ ТИПОВ ДАННЫХ */
+.node-pressure-label {
+    color: #000000 !important;
+}
+
+.flow-label,
+.node-flow-label {
+    color: #000000 !important;
+}
+
+.velocity-label {
+    color: #000000 !important; /* ✅ ИСПРАВЛЕНО: был зеленый, стал красный */
+}
+
+/* 3. СТИЛЬ ДЛЯ ИНПУТА ДЛИНЫ (оставляем с фоном, так как это поле ввода) */
+.edge-ui-input {
+    pointer-events: auto !important; /* ✅ Инпут кликабельный */
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 2px solid #2196f3 !important;
+    border-radius: 6px !important;
+    padding: 4px 8px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
+    z-index: 1 !important; /* ✅ ИЗМЕНЕНО: было 50, стало 10 */
+    
+    display: flex;
+    align-items: center !important;
+}
+
+.edge-ui-input input {
+    width: 70px !important;
+    border: none !important;
+    background: transparent !important;
+    text-align: center !important;
+    font-size: 14px !important;
+    font-weight: bold !important;
+    color: #333 !important;
+    outline: none !important;
+    pointer-events: auto !important; /* ✅ Поле ввода кликабельно */
+}
+
+.edge-ui-input input:focus {
+    background: rgba(33, 150, 243, 0.1) !important;
+    border-radius: 4px !important;
+}
+
+.edge-ui-label-prefix {
+    font-weight: bold !important;
+    color: #333 !important;
+    margin-right: 4px !important;
+}
+
+/* Принудительное скрытие через CSS (для страховки) */
+.edge-ui-input[style*="display: none"],
+.edge-ui-label[style*="display: none"],
+.node-labels-container[style*="display: none"] {
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+
+
+
+
+
+
+/* ===================================================================
+   ИЕРАРХИЯ Z-INDEX: ПАНЕЛИ > МОДАЛКИ > МЕТКИ
+   =================================================================== */
+
+/* 1. CSS2DRenderer контейнер - создаётся Three.js динамически */
+/* Если класс .CSS2DRenderer не работает, попробуйте .css2drenderer или найдите ID в DevTools */
+.CSS2DRenderer,
+.css2drenderer,
+div[class*="CSS2D"] {
+    pointer-events: none !important;
+    z-index: 1 !important;
+}
+
+/* 2. Метки и инпуты - САМЫЙ НИЗКИЙ УРОВЕНЬ */
+.node-label-pressure-container,
+.node-label-flow-container,
+.edge-ui-label,
+.node-pressure-label,
+.node-flow-label,
+.edge-ui-input {
+    z-index: 1 !important;
+}
+
+/* 3. Ribbon (верхняя панель) */
+.ribbon-wrapper {
+    z-index: 9999 !important;
+}
+
+/* 4. Дерево построения */
+#treePanel {
+    z-index: 9999 !important;
+}
+
+.tree-header-wrapper {
+    z-index: 9999 !important;
+}
+
+/* 5. Модальные окна создания/редактирования */
+#pipelineBuilder,
+#PipelineModal_Edit,
+#createBranchModal,
+#Node_Edit,
+#info_selected_node,
+#info_selected_edge {
+    z-index: 9999 !important;
+}
+
+/* 6. Модальное окно графика */
+.chart-modal {
+    z-index: 9999 !important;
+}
+
+.chart-modal-overlay {
+    z-index: 9998 !important;
+}

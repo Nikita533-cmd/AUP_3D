@@ -244,6 +244,7 @@
       <button class="ribbon-tab" data-tab="tab-branch">Ветка</button>
       <button class="ribbon-tab" data-tab="tab-node">Узел</button>
       <button class="ribbon-tab" data-tab="tab-sources">Источники</button>
+      <button class="ribbon-tab" data-tab="tab-anatation">Аннотация</button>
       <button class="ribbon-tab" data-tab="tab-calc">Расчет</button>
       <button class="ribbon-tab" data-tab="tab-results">Результаты</button>
       <button class="ribbon-tab" data-tab="tab-view">Вид</button>
@@ -276,7 +277,8 @@
       <!-- Вкладка: Трубопровод -->
       <div class="ribbon-panel" id="tab-pipeline">
         <button class="btn-ribbon" id="menuCreatePipeline"><span class="btn-icon">🔧</span><span>Создать</span></button>
-        <button class="btn-ribbon" id="menuPipeline_Edit"><span class="btn-icon">✏️</span><span>Изменить</span></button>
+        <button class="btn-ribbon" id="menuPipeline_Edit"><span class="btn-icon">✏️</span><span>Изменить участок</span></button>
+        <button class="btn-ribbon" id="btnToggleLengthEdit"><span class="btn-icon">📏</span><span>Изменить длины</span></button>
         <!-- <button class="btn-ribbon" id="menuSplitPipeline"><span class="btn-icon">✂️</span><span>Разбить</span></button> -->
         <button class="btn-ribbon" id="delete_SplitPipeline"><span class="btn-icon">🗑️</span><span>Удалить</span></button>
       </div>
@@ -296,6 +298,15 @@
         <button class="btn-ribbon" id="src_pump"><span class="btn-icon">🚰</span><span>Насос</span></button>
       </div>
 
+
+      <!-- Вкладка: Аннотация -->
+      <div class="ribbon-panel" id="tab-anatation">
+        <button class="btn-ribbon" id="src_tank"><span class="btn-icon">DN</span><span>Диаметр</span></button>
+        <button class="btn-ribbon" id="src_city"><span class="btn-icon">L</span><span>Длина</span></button>
+        <button class="btn-ribbon" id="src_city"><span class="btn-icon">H</span><span>Высотные отметки</span></button>
+        <button class="btn-ribbon" id="src_pump"><span class="btn-icon">🚰</span><span>Насос</span></button>
+      </div>
+
       <!-- Вкладка: Расчет -->
       <div class="ribbon-panel" id="tab-calc">
         <button class="btn-ribbon" id="Add_list_object"><span class="btn-icon">▶️</span><span>Расчет</span></button>
@@ -305,11 +316,17 @@
 
       <!-- Вкладка: Результаты -->
       <div class="ribbon-panel" id="tab-results">
+        <button class="btn-ribbon" id="btnTogglePressure"><span class="btn-icon">P</span><span>Давление</span></button>
+        <button class="btn-ribbon" id="btnToggleFlow"><span class="btn-icon">Q</span><span>Расход</span></button>
+        <button class="btn-ribbon" id="btnToggleVelocity"><span class="btn-icon">V</span><span>Скорость</span></button>
+
+        <button class="btn-ribbon" id="menuShowGraph"><span class="btn-icon">DN</span><span>Диаметр</span></button>
+        <button class="btn-ribbon" id="menuShowGraph"><span class="btn-icon">L</span><span>Длина</span></button>
+        <!-- <button class="btn-ribbon" id="btnToggleLengthEdit"><span class="btn-icon">📏</span><span>Редактировать длины</span></button> -->
         <button class="btn-ribbon" id="menuShowGraph"><span class="btn-icon">🕸️</span><span>Граф сети</span></button>
         <button class="btn-ribbon" id="menuShowAutoConnections"><span class="btn-icon">📈</span><span>Характеристика H(Q)</span></button>
         <button class="btn-ribbon" id="menuShowSystemCurve" style="color: #ff9800;"><span class="btn-icon">📊</span><span>Характеристика H(Q)</span></button>
-        <button class="btn-ribbon" id="menuExportJSON"><span class="btn-icon">💾</span><span>Экспорт JSON</span></button>
-        
+        <button class="btn-ribbon" id="menuExportJSON"><span class="btn-icon">💾</span><span>Экспорт JSON</span></button>        
       </div>
 
       <!-- Вкладка: Вид -->
@@ -982,6 +999,10 @@
       <!-- <button class="btn-cancel" id="closeChartFooterBtn">Закрыть</button> -->
     </div>
   </div>
+
+
+<!-- Контейнер для плавающих инпутов длин
+<div id="lengthInputsContainer" class="length-inputs-container" style="display: none;"></div> -->
 
 </body>
 </html>
