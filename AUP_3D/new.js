@@ -42,6 +42,12 @@ document.getElementById("btnToggleVelocity").onclick = toggleVelocityLabels;
 //Слушатель для редактирования длин
 document.getElementById("btnToggleLengthEdit").onclick = toggleLengthEditMode;
 
+document.getElementById("Node_Edit_close").onclick = () => {
+  document.getElementById("Node_Edit").style.display = "none";
+  // Если при нажатии на "Отмена" вызывается специальная функция, например Close_Node_Edit(), вызовите её здесь
+};
+
+
 
 
 // ============================================================================

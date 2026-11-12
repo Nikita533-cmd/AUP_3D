@@ -596,7 +596,7 @@
     </div>
   </div>
 
-  <div id="PipelineModal_Edit">
+  <!-- <div id="PipelineModal_Edit">
     <div class="pipeline-header" id="pipelineDragHandle">
       <span class="title">Редактирование трубопровода</span>
     </div>
@@ -622,7 +622,88 @@
         <button class="cancel" id="splitCancelBtn_Edit">Отмена</button>        
       </div>      
     </div>
+  </div> -->
+
+  <div id="PipelineModal_Edit" style="width: 350px; max-width: 90vw;">
+  <div class="pipeline-header" id="pipelineDragHandle" style="display: flex; justify-content: space-between; align-items: center;">
+    <span class="title">Редактирование трубопровода</span>
+    <span class="close-btn">&times;</span></div>
   </div>
+  <div class="pipeline-body">
+    <table class="node-edit-table" style="width: 100%; table-layout: fixed;">
+      <colgroup>
+        <col style="width: 150px;">
+        <col style="width: auto;">
+      </colgroup>
+      <tbody>
+        <tr style="display: none;">
+          <td>Трубопровод:</td>
+          <td><span id="number_pipe_edit"></span></td>
+        </tr>
+        <tr style="display: none;">
+          <td>Тип трубопровода:</td>
+          <td><span id="type_pipe_edit"></span></td>
+        </tr>
+        <tr style="display: none;">
+          <td>Диаметр трубопровода:</td>
+          <td><span id="DN_pipe_edit"></span></td>
+        </tr>
+        <tr style="display: none;">
+          <td>Длина, L:</td>
+          <td><span id="Length_pipe_edit"></span></td>
+        </tr>
+        <tr>
+          <td>ГОСТ:</td>
+          <td>
+            <select id="get_tube_pipe_edit" style="width: 100%; box-sizing: border-box;"></select>
+          </td>
+        </tr>
+
+        <tr>
+          <td>Номинальный диаметр, DN:</td>
+          <td>
+            <select id="pbDiameter_edit" style="width: 100%; box-sizing: border-box;"></select>
+          </td>
+        </tr>
+
+        <tr>
+          <td>Диаметр внешний, D:</td>
+          <td>
+            <select id="get_tube_pipe_edit" style="width: 100%; box-sizing: border-box;"></select>
+          </td>
+        </tr>
+
+        <tr>
+          <td>Диаметр внутренний, d:</td>
+          <td>
+            <select id="get_tube_pipe_edit" style="width: 100%; box-sizing: border-box;"></select>
+          </td>
+        </tr>
+
+        <tr>
+          <td>Толщина стенки, s:</td>
+          <td>
+            <select id="get_tube_pipe_edit" style="width: 100%; box-sizing: border-box;"></select>
+          </td>
+        </tr>
+
+        
+        <tr>
+          <td>Длина, L:</td>
+          <td>
+            <input type="number" id="pipe_edit" min="0.1" step="1" style="width: 100%; box-sizing: border-box;">
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="step">
+      <button class="confirm" id="splitApplyBtn_Edit">Применить</button>
+      <button class="cancel" id="splitCancelBtn_Edit">Отмена</button>
+    </div>
+  </div>
+</div>
+
 
   <div id="createBranchModal">
     <div class="pipeline-header" id="pipelineDragHandle">
@@ -712,33 +793,109 @@
     </div>    
   </div>
 
-  <div id="Node_Edit">
+  <!-- <div id="Node_Edit">
     <div class="pipeline-header" id="pipelineDragHandle">
       <span class="title">Редактирование узла</span>
     </div>
     <div class="pipeline-body"> 
-      <div class="step"><span>Наименование узла:</span><span id="number_node_edit"></span></div>
-      <div class="step"><span>Тип узла:</span><span id="type_node_edit"></span></div>
+
       <div class="step">
-        <span>Координаты узла:</span>
-        X<input type="number" id="pbCX_edit_node" value="0" step="0.1" readonly>
-        Y<input type="number" id="pbCY_edit_node" value="0" step="0.1" readonly>
-        Z<input type="number" id="pbCZ_edit_node" value="0" step="0.1" readonly>
-      </div>                
-      <div class="step">
-        <span>Изменить тип узла</span>
+        <span>Тип:</span>
         <select id="select_node_edit">
           <option value="Node">Узел</option>
           <option value="Sprinkler">Ороситель</option>
           <option value="Source">Источник</option>
         </select>                
-      </div>          
+      </div>  
+
+      <div class="step"><span>Наименование узла:</span><span id="number_node_edit"></span></div>
+      <div class="step"><span>Тип узла:</span><span id="type_node_edit"></span></div>
       <div class="step">
+        <span>X:</span>
+        <input type="number" id="pbCX_edit_node" value="0" step="0.1" readonly>
+        <! Y<input type="number" id="pbCY_edit_node" value="0" step="0.1" readonly>
+        Z<input type="number" id="pbCZ_edit_node" value="0" step="0.1" readonly> -->
+      <!-- </div>
+      <div class="step">
+        <span>Y:</span>        
+        <input type="number" id="pbCY_edit_node" value="0" step="0.1" readonly>
+        < Z<input type="number" id="pbCZ_edit_node" value="0" step="0.1" readonly> -->
+      <!-- </div> 
+      <div class="step">
+        <span>Z:</span>       
+        <input type="number" id="pbCZ_edit_node" value="0" step="0.1" readonly>
+      </div>                  --> 
+      <!-- <div class="step">
+        <span>Тип:</span>
+        <select id="select_node_edit">
+          <option value="Node">Узел</option>
+          <option value="Sprinkler">Ороситель</option>
+          <option value="Source">Источник</option>
+        </select>                
+      </div>           -->
+      <!-- <div class="step">
         <button class="confirm" id="Node_Edit_confirm">Применить</button>        
         <button class="cancel" id="Node_Edit_cancel">Отмена</button>        
       </div>      
     </div>
+  </div>  -->
+
+<div id="Node_Edit" style="width: 240px; max-width: 90vw;">
+  <div class="pipeline-header" id="pipelineDragHandle" style="display: flex; justify-content: space-between; align-items: center;">
+    <span class="title">Редактирование узла</span>
+    <button type="button" id="Node_Edit_close" title="Закрыть">&times;</button>
   </div>
+  <div class="pipeline-body">
+    <table class="node-edit-table" style="width: 100%; table-layout: fixed;">
+      <colgroup>
+        <col style="width: 60px;">
+        <col style="width: auto;">
+      </colgroup>
+      <tbody>
+        <tr>
+          <td>Тип:</td>
+          <td>
+            <select id="select_node_edit" style="width: 100%; box-sizing: border-box;">
+              <option value="Node">Узел</option>
+              <option value="Sprinkler">Ороситель</option>
+              <option value="Source">Источник</option>
+            </select>
+          </td>
+        </tr>
+        <tr style="display: none;">
+          <td>Наименование узла:</td>
+          <td><span id="number_node_edit"></span></td>
+        </tr>
+        <tr style="display: none;">
+          <td>Тип узла:</td>
+          <td><span id="type_node_edit"></span></td>
+        </tr>
+        <tr>
+          <td>X:</td>
+          <td><input type="number" id="pbCX_edit_node" value="0" step="0.1" readonly style="width: 100%; box-sizing: border-box;"></td>
+        </tr>
+        <tr>
+          <td>Y:</td>
+          <td><input type="number" id="pbCY_edit_node" value="0" step="0.1" readonly style="width: 100%; box-sizing: border-box;"></td>
+        </tr>
+        <tr>
+          <td>Z:</td>
+          <td><input type="number" id="pbCZ_edit_node" value="0" step="0.1" readonly style="width: 100%; box-sizing: border-box;"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="step">
+      <button class="confirm" id="Node_Edit_confirm">Применить</button>
+      <button class="cancel" id="Node_Edit_cancel">Отмена</button>
+    </div>
+  </div>
+</div>
+
+
+
+
+
 
   <div id="splitPipelineModal" class="edit-modal">
     <div class="modal-content">      
@@ -988,7 +1145,7 @@
       <h4>Гидравлическая характеристика системы</h4>
       <div class = "chart-modal-controls">
         <button id="toggleChartFullscreenBtn" class="chart-modal-fullscreen-btn" title="На весь экран">⛶</button>
-        <span id="closeChartBtn" class="chart-modal-close">&times;</span>
+        <span id="closeChartBtn" class="close-btn">&times;</span>
       </div>
     </div>
     <div class="chart-modal-body">

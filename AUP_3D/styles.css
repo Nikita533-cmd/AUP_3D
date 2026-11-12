@@ -408,8 +408,8 @@
       display: none;
       z-index: 20;
       color: #fff;
-      font-size: 16px;
-      min-width: 500px;
+      font-size: 14px;
+      min-width: 250px;
       max-height: 70vh;    /* Окно не займет больше 70% высоты экрана */
       overflow-y: auto;
     }
@@ -424,6 +424,8 @@
         pointer-events: none !important; /* Намертво отключает клики на кнопках */
         
     }
+
+    
 
 
     #pipelineBuilder .pipeline-header, #PipelineModal_Edit .pipeline-header, #createBranchModal .pipeline-header,
@@ -502,7 +504,7 @@
       border: 1px solid #EC0000;
       /* border: none; */
       border-radius: 4px;
-      font-size: 14px;
+      font-size: 12px;
       font-weight: bold;
       background: #fff;
     }
@@ -2641,4 +2643,137 @@ div[class*="CSS2D"] {
 
 .chart-modal-overlay {
     z-index: 9998 !important;
+}
+
+
+
+
+/* ===================================================================
+   close-buttons.css
+   Единый стиль кнопок закрытия (крестиков) для всех модальных окон
+   ===================================================================
+   
+   Подключение в HTML:
+   <link rel="stylesheet" href="css/close-buttons.css">
+   
+   Использование в HTML:
+   <span class="close-btn">&times;</span>
+   или
+   <button class="close-btn">&times;</button>
+   =================================================================== */
+
+/* ===================================================================
+   1. БАЗОВЫЙ СТИЛЬ КНОПКИ ЗАКРЫТИЯ
+   Применяется ко всем окнам с классом close-btn в заголовке
+   =================================================================== */
+
+/* Окно графика */
+.chart-modal-close,
+
+/* Окна построения и редактирования */
+#Node_Edit .pipeline-header .close-btn,
+#PipelineModal_Edit .pipeline-header .close-btn,
+#pipelineBuilder .pipeline-header .close-btn,
+#createBranchModal .pipeline-header .close-btn,
+
+/* Инфо-панели */
+#info_selected_node .pipeline-header .close-btn,
+#info_selected_edge .pipeline-header .close-btn {
+    
+    /* Типографика */
+    font-size: 28px !important;
+    font-weight: bold !important;
+    color: #0f1379!important;
+    line-height: 20px !important;
+    
+    /* Размеры и позиционирование */
+    width: 32px !important;
+    height: 32px !important;
+    padding: 0 5px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    
+    /* Фон (прозрачный, чтобы сливаться с шапкой окна) */
+    background: transparent !important;
+    border: none !important;
+    border-radius: 4px !important;
+    
+    /* Поведение */
+    cursor: pointer !important;
+    user-select: none !important;
+    
+    /* Плавная анимация */
+    transition: all 0.2s ease !important;
+}
+
+/* ===================================================================
+   2. ЭФФЕКТ ПРИ НАВЕДЕНИИ МЫШИ
+   Красный оттенок + лёгкая подсветка фона
+   =================================================================== */
+
+.chart-modal-close:hover,
+#Node_Edit .pipeline-header .close-btn:hover,
+#PipelineModal_Edit .pipeline-header .close-btn:hover,
+#pipelineBuilder .pipeline-header .close-btn:hover,
+#createBranchModal .pipeline-header .close-btn:hover,
+#info_selected_node .pipeline-header .close-btn:hover,
+#info_selected_edge .pipeline-header .close-btn:hover {
+    
+    color: #ff4d4d !important;      /* Красный оттенок текста */
+    background: #0f1379 !important; /* Полупрозрачная подсветка */
+}
+
+/* ===================================================================
+   3. ЭФФЕКТ ПРИ НАЖАТИИ (АКТИВНОЕ СОСТОЯНИЕ)
+   =================================================================== */
+
+.chart-modal-close:active,
+#Node_Edit .pipeline-header .close-btn:active,
+#PipelineModal_Edit .pipeline-header .close-btn:active,
+#pipelineBuilder .pipeline-header .close-btn:active,
+#createBranchModal .pipeline-header .close-btn:active,
+#info_selected_node .pipeline-header .close-btn:active,
+#info_selected_edge .pipeline-header .close-btn:active {
+    
+    color: #ff0000 !important;                      /* Ярко-красный */
+    background: #0f1379 !important; /* Более яркая подсветка */
+    transform: scale(0.95) !important;              /* Лёгкое "вдавливание" */
+}
+
+/* ===================================================================
+   4. АДАПТИВНОСТЬ ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ
+   =================================================================== */
+
+@media (max-width: 768px) {
+    
+    .chart-modal-close,
+    #Node_Edit .pipeline-header .close-btn,
+    #PipelineModal_Edit .pipeline-header .close-btn,
+    #pipelineBuilder .pipeline-header .close-btn,
+    #createBranchModal .pipeline-header .close-btn,
+    #info_selected_node .pipeline-header .close-btn,
+    #info_selected_edge .pipeline-header .close-btn {
+        
+        font-size: 32px !important;  /* Крупнее для пальца */
+        width: 40px !important;
+        height: 40px !important;
+    }
+}
+
+/* ===================================================================
+   5. СПЕЦИАЛЬНЫЕ СТИЛИ ДЛЯ КНОПКИ <button>
+   Сброс стандартных стилей браузера
+   =================================================================== */
+
+button.close-btn {
+    outline: none !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+}
+
+button.close-btn:focus {
+    outline: 2px solid #0f1379 !important;
+    outline-offset: 2px !important;
 }
