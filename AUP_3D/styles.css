@@ -408,8 +408,8 @@
       display: none;
       z-index: 20;
       color: #fff;
-      font-size: 16px;
-      min-width: 500px;
+      font-size: 14px;
+      min-width: 250px;
       max-height: 70vh;    /* Окно не займет больше 70% высоты экрана */
       overflow-y: auto;
     }
@@ -424,6 +424,8 @@
         pointer-events: none !important; /* Намертво отключает клики на кнопках */
         
     }
+
+    
 
 
     #pipelineBuilder .pipeline-header, #PipelineModal_Edit .pipeline-header, #createBranchModal .pipeline-header,
@@ -502,7 +504,7 @@
       border: 1px solid #EC0000;
       /* border: none; */
       border-radius: 4px;
-      font-size: 14px;
+      font-size: 12px;
       font-weight: bold;
       background: #fff;
     }
@@ -1392,6 +1394,7 @@ body {
 .tree-toggle.collapsed {
   transform: rotate(-90deg);
 }
+
 
 .tree-toggle::before {
   content: '▼';
@@ -2448,3 +2451,329 @@ body {
     width: 100px !important;
 }
 
+/* Базовый стиль кнопок в ленте (Ribbon) */
+.btn-ribbon {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    background: #f5f5f5;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px; /* Отступ между иконкой и текстом */
+}
+
+.btn-ribbon:hover {
+    background: #e0e0e0;
+}
+
+/* Активное состояние (когда данные показаны) */
+.btn-ribbon.active {
+    background: #f30707 !important; /* Ваш красный цвет */
+    color: white !important;
+    border-color: #f30707 !important;
+    font-weight: bold;
+}
+
+/* Чтобы иконка внутри тоже становилась белой при активации */
+.btn-ribbon.active .btn-icon {
+    color: white !important;
+}
+
+
+
+
+/* ===================================================================
+   КОНТЕЙНЕРЫ ДЛЯ МЕТОК НА УЗЛАХ (ДЛЯ ИДЕАЛЬНОГО ПОЗИЦИОНИРОВАНИЯ)
+   =================================================================== */
+.node-label-pressure-container,
+.node-label-flow-container {
+    pointer-events: none !important; /* ✅ Клики проходят сквозь */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: max-content !important;
+    z-index: 1 !important; /* ✅ ИЗМЕНЕНО: было без z-index, стало 10 */
+}
+
+/* ===================================================================
+   ЕДИНЫЙ СТИЛЬ ДЛЯ ВСЕХ ТЕКСТОВЫХ МЕТОК РЕЗУЛЬТАТОВ (УЗЛЫ И ТРУБЫ)
+   =================================================================== */
+
+/* 1. БАЗОВЫЙ СТИЛЬ: Прозрачный фон, жирный шрифт, белая обводка */
+.edge-ui-label,
+.node-pressure-label,
+.node-flow-label {
+    pointer-events: none !important; /* ✅ Клики проходят сквозь */
+    background: transparent !important;
+    padding: 2px 6px !important;
+    border-radius: 4px !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
+    white-space: nowrap !important;
+    z-index: 10 !important; /* ✅ ИЗМЕНЕНО: было 9998, стало 10 */
+    
+    text-shadow: 
+        -1px -1px 0 #ffffff,  
+         1px -1px 0 #ffffff,
+        -1px  1px 0 #ffffff,
+         1px  1px 0 #ffffff,
+         0 0 4px rgba(255, 255, 255, 0.8);
+}
+
+/* 2. ЦВЕТА ДЛЯ РАЗНЫХ ТИПОВ ДАННЫХ */
+.node-pressure-label {
+    color: #000000 !important;
+}
+
+.flow-label,
+.node-flow-label {
+    color: #000000 !important;
+}
+
+.velocity-label {
+    color: #000000 !important; /* ✅ ИСПРАВЛЕНО: был зеленый, стал красный */
+}
+
+/* 3. СТИЛЬ ДЛЯ ИНПУТА ДЛИНЫ (оставляем с фоном, так как это поле ввода) */
+.edge-ui-input {
+    pointer-events: auto !important; /* ✅ Инпут кликабельный */
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 2px solid #2196f3 !important;
+    border-radius: 6px !important;
+    padding: 4px 8px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
+    z-index: 1 !important; /* ✅ ИЗМЕНЕНО: было 50, стало 10 */
+    
+    display: flex;
+    align-items: center !important;
+}
+
+.edge-ui-input input {
+    width: 70px !important;
+    border: none !important;
+    background: transparent !important;
+    text-align: center !important;
+    font-size: 14px !important;
+    font-weight: bold !important;
+    color: #333 !important;
+    outline: none !important;
+    pointer-events: auto !important; /* ✅ Поле ввода кликабельно */
+}
+
+.edge-ui-input input:focus {
+    background: rgba(33, 150, 243, 0.1) !important;
+    border-radius: 4px !important;
+}
+
+.edge-ui-label-prefix {
+    font-weight: bold !important;
+    color: #333 !important;
+    margin-right: 4px !important;
+}
+
+/* Принудительное скрытие через CSS (для страховки) */
+.edge-ui-input[style*="display: none"],
+.edge-ui-label[style*="display: none"],
+.node-labels-container[style*="display: none"] {
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+
+
+
+
+
+
+/* ===================================================================
+   ИЕРАРХИЯ Z-INDEX: ПАНЕЛИ > МОДАЛКИ > МЕТКИ
+   =================================================================== */
+
+/* 1. CSS2DRenderer контейнер - создаётся Three.js динамически */
+/* Если класс .CSS2DRenderer не работает, попробуйте .css2drenderer или найдите ID в DevTools */
+.CSS2DRenderer,
+.css2drenderer,
+div[class*="CSS2D"] {
+    pointer-events: none !important;
+    z-index: 1 !important;
+}
+
+/* 2. Метки и инпуты - САМЫЙ НИЗКИЙ УРОВЕНЬ */
+.node-label-pressure-container,
+.node-label-flow-container,
+.edge-ui-label,
+.node-pressure-label,
+.node-flow-label,
+.edge-ui-input {
+    z-index: 1 !important;
+}
+
+/* 3. Ribbon (верхняя панель) */
+.ribbon-wrapper {
+    z-index: 9999 !important;
+}
+
+/* 4. Дерево построения */
+#treePanel {
+    z-index: 9999 !important;
+}
+
+.tree-header-wrapper {
+    z-index: 9999 !important;
+}
+
+/* 5. Модальные окна создания/редактирования */
+#pipelineBuilder,
+#PipelineModal_Edit,
+#createBranchModal,
+#Node_Edit,
+#info_selected_node,
+#info_selected_edge {
+    z-index: 9999 !important;
+}
+
+/* 6. Модальное окно графика */
+.chart-modal {
+    z-index: 9999 !important;
+}
+
+.chart-modal-overlay {
+    z-index: 9998 !important;
+}
+
+
+
+
+/* ===================================================================
+   close-buttons.css
+   Единый стиль кнопок закрытия (крестиков) для всех модальных окон
+   ===================================================================
+   
+   Подключение в HTML:
+   <link rel="stylesheet" href="css/close-buttons.css">
+   
+   Использование в HTML:
+   <span class="close-btn">&times;</span>
+   или
+   <button class="close-btn">&times;</button>
+   =================================================================== */
+
+/* ===================================================================
+   1. БАЗОВЫЙ СТИЛЬ КНОПКИ ЗАКРЫТИЯ
+   Применяется ко всем окнам с классом close-btn в заголовке
+   =================================================================== */
+
+/* Окно графика */
+.chart-modal-close,
+
+/* Окна построения и редактирования */
+#Node_Edit .pipeline-header .close-btn,
+#PipelineModal_Edit .pipeline-header .close-btn,
+#pipelineBuilder .pipeline-header .close-btn,
+#createBranchModal .pipeline-header .close-btn,
+
+/* Инфо-панели */
+#info_selected_node .pipeline-header .close-btn,
+#info_selected_edge .pipeline-header .close-btn {
+    
+    /* Типографика */
+    font-size: 28px !important;
+    font-weight: bold !important;
+    color: #0f1379!important;
+    line-height: 20px !important;
+    
+    /* Размеры и позиционирование */
+    width: 32px !important;
+    height: 32px !important;
+    padding: 0 5px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    
+    /* Фон (прозрачный, чтобы сливаться с шапкой окна) */
+    background: transparent !important;
+    border: none !important;
+    border-radius: 4px !important;
+    
+    /* Поведение */
+    cursor: pointer !important;
+    user-select: none !important;
+    
+    /* Плавная анимация */
+    transition: all 0.2s ease !important;
+}
+
+/* ===================================================================
+   2. ЭФФЕКТ ПРИ НАВЕДЕНИИ МЫШИ
+   Красный оттенок + лёгкая подсветка фона
+   =================================================================== */
+
+.chart-modal-close:hover,
+#Node_Edit .pipeline-header .close-btn:hover,
+#PipelineModal_Edit .pipeline-header .close-btn:hover,
+#pipelineBuilder .pipeline-header .close-btn:hover,
+#createBranchModal .pipeline-header .close-btn:hover,
+#info_selected_node .pipeline-header .close-btn:hover,
+#info_selected_edge .pipeline-header .close-btn:hover {
+    
+    color: #ff4d4d !important;      /* Красный оттенок текста */
+    background: #0f1379 !important; /* Полупрозрачная подсветка */
+}
+
+/* ===================================================================
+   3. ЭФФЕКТ ПРИ НАЖАТИИ (АКТИВНОЕ СОСТОЯНИЕ)
+   =================================================================== */
+
+.chart-modal-close:active,
+#Node_Edit .pipeline-header .close-btn:active,
+#PipelineModal_Edit .pipeline-header .close-btn:active,
+#pipelineBuilder .pipeline-header .close-btn:active,
+#createBranchModal .pipeline-header .close-btn:active,
+#info_selected_node .pipeline-header .close-btn:active,
+#info_selected_edge .pipeline-header .close-btn:active {
+    
+    color: #ff0000 !important;                      /* Ярко-красный */
+    background: #0f1379 !important; /* Более яркая подсветка */
+    transform: scale(0.95) !important;              /* Лёгкое "вдавливание" */
+}
+
+/* ===================================================================
+   4. АДАПТИВНОСТЬ ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ
+   =================================================================== */
+
+@media (max-width: 768px) {
+    
+    .chart-modal-close,
+    #Node_Edit .pipeline-header .close-btn,
+    #PipelineModal_Edit .pipeline-header .close-btn,
+    #pipelineBuilder .pipeline-header .close-btn,
+    #createBranchModal .pipeline-header .close-btn,
+    #info_selected_node .pipeline-header .close-btn,
+    #info_selected_edge .pipeline-header .close-btn {
+        
+        font-size: 32px !important;  /* Крупнее для пальца */
+        width: 40px !important;
+        height: 40px !important;
+    }
+}
+
+/* ===================================================================
+   5. СПЕЦИАЛЬНЫЕ СТИЛИ ДЛЯ КНОПКИ <button>
+   Сброс стандартных стилей браузера
+   =================================================================== */
+
+button.close-btn {
+    outline: none !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+}
+
+button.close-btn:focus {
+    outline: 2px solid #0f1379 !important;
+    outline-offset: 2px !important;
+}

@@ -99,12 +99,17 @@ export const STATE = {
     project: { name: null, folderHandle: null, projectFolderHandle: null },
     sprinkler_kv: null,
     pipe_array: {},
+
+    isEditingLengths: false,
+    showLabelsPressure: false,
+    showLabelsMassFlowRate: false,
+    showLabelsVelocity: false,
 };
 
 
 export const VisualPipelins = {
-    d_pipe_base: 0.05,
-    d_node_base: 0.25
+    d_pipe_base: 0.05, // 0.05
+    d_node_base: 0.15  // 0.25
 }
 
 function genNodeId() {

@@ -7,7 +7,7 @@ import { STATE, Utils, VisualPipelins } from "./state.js";
 import { get_load_pbDiameter } from './check_input.js';
 import { checkAllPipelines } from './collision.js';
 
-// Блок для отображения создания трубопровода.////////////////////////////////////////////////////////////////////////////////////////
+// Блок для отображения создания трубопровода.
 document.getElementById("menuCreatePipeline").onclick = () => Pipe_Line_visible_block();
 // Слушатель для удаления трубопровода
 document.getElementById("delete_SplitPipeline").onclick = () => delete_pipe_tube();
@@ -29,6 +29,132 @@ document.getElementById("menuSave").onclick = () => exportToJSON();
 document.getElementById("menuOpen").onclick = () => importToJSON();
 // Слушатель для создания Нового проекта с геометрией
 document.getElementById("menuNew").onclick = refreshPageHard;
+
+//Слушатель скрыть/показать давления в узлах
+document.getElementById("btnTogglePressure").onclick = togglePressureLabels;
+
+//Слушатель показать/скрыть расходы по участкам труб
+document.getElementById("btnToggleFlow").onclick = toggleFlowLabels;
+
+//Слушатель показать/скрыть скоости по участкам труб
+document.getElementById("btnToggleVelocity").onclick = toggleVelocityLabels;
+
+//Слушатель для редактирования длин
+document.getElementById("btnToggleLengthEdit").onclick = toggleLengthEditMode;
+
+document.getElementById("Node_Edit_close").onclick = () => {
+  document.getElementById("Node_Edit").style.display = "none";
+  // Если при нажатии на "Отмена" вызывается специальная функция, например Close_Node_Edit(), вызовите её здесь
+};
+
+
+
+
+// ============================================================================
+// ОТДЕЛЬНОЕ УПРАВЛЕНИЕ МЕТКАМИ (ИЗОЛИРОВАННОЕ)
+// ============================================================================
+
+// // 1. Управление давлением (P)
+// function togglePressureLabels() {
+//     STATE.showLabelsPressure = !STATE.showLabelsPressure;
+//     console.log("🔘 Давление (P):", STATE.showLabelsPressure);
+    
+//     // Обновляем старые метки на узлах
+//     Engine.scene.traverse((child) => {
+//         if (child.name === 'PressureLabel') child.visible = STATE.showLabelsPressure;
+//     });
+    
+//     updateToggleButtonState('btnTogglePressure', STATE.showLabelsPressure);
+// }
+
+// // Управление расходом (Q) - ТОЛЬКО для расхода
+// function toggleFlowLabels() {
+//   STATE.showLabelsMassFlowRate = !STATE.showLabelsMassFlowRate;
+//   console.log("🔘 Расход (Q):", STATE.showLabelsMassFlowRate);
+
+//   // Обновляем видимость меток для всех труб
+//   STATE.Three_D_objects.forEach((obj) => {
+//     if (obj.type === "Edge") {
+//       if (!obj.uiGroup) {
+//         obj.createUI();
+//       }
+//       obj.updateDOMValues(); // Этот метод сам решит, что показать
+//     }
+//   });
+
+//   // Обновляем состояние кнопки
+//   const btn = document.getElementById("btnToggleFlow");
+//   if (btn) {
+//     STATE.showLabelsMassFlowRate ? btn.classList.add("active") : btn.classList.remove("active");
+//   }
+// }
+
+// 1. Управление давлением (P)
+function togglePressureLabels() {
+    STATE.showLabelsPressure = !STATE.showLabelsPressure;
+    console.log("🔘 Давление (P):", STATE.showLabelsPressure);
+    
+    // Обновляем старые метки (если они еще где-то есть)
+    Engine.scene.traverse((child) => {
+        if (child.name === 'PressureLabel') child.visible = STATE.showLabelsPressure;
+    });
+
+    // ✅ НОВОЕ: Обновляем новые метки во всех узлах (включая оросители)
+    STATE.Three_D_objects.forEach((obj) => {
+        if ((obj.type === "Node" || obj.type === "Sprinkler" || obj.type === "Source") && typeof obj._updateLabelsVisibility === "function") {
+            obj._updateLabelsVisibility();
+        }
+    });
+    
+    updateToggleButtonState('btnTogglePressure', STATE.showLabelsPressure);
+}
+
+// Управление расходом (Q) - ТОЛЬКО для расхода
+function toggleFlowLabels() {
+  STATE.showLabelsMassFlowRate = !STATE.showLabelsMassFlowRate;
+  console.log("🔘 Расход (Q):", STATE.showLabelsMassFlowRate);
+
+  // ✅ Обновляем видимость меток и СТРЕЛОК для всех труб
+  STATE.Three_D_objects.forEach((obj) => {
+    if (obj.type === "Edge") {
+      if (!obj.uiGroup) {
+        obj.createUI();
+      }
+      obj.updateDOMValues(); // Этот метод вызовет updateFlowArrowVisibility внутри
+    }
+  });
+
+  // Обновляем состояние кнопки
+  const btn = document.getElementById("btnToggleFlow");
+  if (btn) {
+    STATE.showLabelsMassFlowRate ? btn.classList.add("active") : btn.classList.remove("active");
+  }
+}
+
+// Управление скоростью (V) - ТОЛЬКО для скорости
+function toggleVelocityLabels() {
+  STATE.showLabelsVelocity = !STATE.showLabelsVelocity;
+  console.log("🔘 Скорость (V):", STATE.showLabelsVelocity);
+
+  // ✅ Обновляем видимость меток и СТРЕЛОК для всех труб
+  STATE.Three_D_objects.forEach((obj) => {
+    if (obj.type === "Edge") {
+      if (!obj.uiGroup) {
+        obj.createUI();
+      }
+      obj.updateDOMValues(); // Этот метод вызовет updateFlowArrowVisibility внутри
+    }
+  });
+
+  // Обновляем состояние кнопки
+  const btn = document.getElementById("btnToggleVelocity");
+  if (btn) {
+    STATE.showLabelsVelocity ? btn.classList.add("active") : btn.classList.remove("active");
+  }
+}
+
+
+
 
 // Логика переключения кнопок направления (+X, -Y и т.д.)
 document.addEventListener('click', function(e) {
@@ -57,6 +183,18 @@ function Add_data_base () {
         Node: [],
         Edge: []
     };
+
+    // 1. Находим селект
+    const sprinklerSelect = document.getElementById('get_sprinkler');
+    
+    // 2. Считываем его текущее выбранное значение (если оно нужно в этой функции)
+    const currentSprinklerValue = sprinklerSelect.value; 
+
+    // 3. ПРИНУДИТЕЛЬНО ИНИЦИИРУЕМ СОБЫТИЕ 'change'
+    // Это заставит заново сработать тот код, который слушает изменения этого селекта
+    const changeEvent = new Event('change', { bubbles: true });
+    sprinklerSelect.dispatchEvent(changeEvent);
+
     Engine.scene.traverse((child) => {    
         if (typeof child.add_list === 'function') {
             if (child.type === 'Edge') {
@@ -66,16 +204,11 @@ function Add_data_base () {
             else {
                 const properties = child.add_list();
                 Data_base.Node.push(properties);
-            }
-            // console.log("child_data_base", child)
-            // const properties = child.add_list();            
+            }           
         }       
     });
     Data_base.pressure_sprinkler = Number(document.getElementById("pressure_sprinkler").value)
-    // Data_base.push(Node);
-    // Data_base.push(Edge);
     console.log("Data_base для отправки на бэкэнд", Data_base)
-    // sendJson(Data_base);
     sendJsonAndVisualize(Data_base);
 }
 function Check_nodes_scene() {
@@ -263,6 +396,7 @@ function CreatePipeline(pbCX, pbCY, pbCZ, activeAxis, activeAxis_direction, pbLe
         if (!check_node_end) {
             Pipe_connection.attach(Node_End);
         }
+        Pipe_connection.createUI(); //Добавил 09.11.2026
     } else {
         // Создание самого первого узла (Источника)
         const Node_Material_start = new THREE.MeshBasicMaterial({ color: '#800080' });
@@ -482,6 +616,21 @@ function edit_pipe_tube(Edge) {
     Edge.kvelocity=new_kvelocity;
     Edge.Length = new_long;
 
+
+    // ✅✅✅ ДОБАВИТЬ ЭТИ 2 БЛОКА НИЖЕ ✅✅✅
+    
+    // 1. Если включен режим редактирования, обновляем число прямо в инпуте на сцене
+    if (Edge._inputLenElement) {
+        Edge._inputLenElement.value = new_long.toFixed(2);
+    }
+
+    // 2. Пересчитываем позиции меток, чтобы они сдвинулись в новый центр трубы
+    if (typeof Edge.updateLabelsPosition === 'function') {
+        Edge.updateLabelsPosition();
+    }
+
+    // ✅✅✅ КОНЕЦ ДОБАВЛЕНИЯ ✅✅✅
+
     const new_Node_Geometry = new THREE.SphereGeometry(VisualPipelins.d_node_base/2, 32, 32);
     Edge.start_node.geometry.dispose();
     Edge.end_node.geometry.dispose();
@@ -612,43 +761,20 @@ function create_branch(Node) {
         console.log("new_DN_tube в создании ветки",new_DN_tube)
         const Node_Geometry = new THREE.SphereGeometry(VisualPipelins.d_node_base/2, 32, 32);
         // проверка на созданные орсоители пока не нужна 
+                // проверка на созданные оросители пока не нужна 
         const check_node_end = check_End_Node(pbCX_end, pbCY_end, pbCZ_end);
         if (check_node_end) {
             currentEndNode = check_node_end;
         } 
         else {            
+            // ✅ Node_new САМ добавит стрелку, так как тип 'Sprinkler'
             currentEndNode = new Node_new(Node_Geometry, Node_Material, 'Sprinkler');
             currentEndNode.position.set(pbCX_end, pbCY_end, pbCZ_end);
-            // ==========================================================
-            // ДОБАВЛЕНИЕ СТРЕЛОЧКИ (ОРОСИТЕЛЯ), НАПРАВЛЕННОЙ ВНИЗ
-            // ==========================================================
-            const sprinklerGroup = new THREE.Group();
-            sprinklerGroup.name = 'SprinklerArrow';
-            const nodeRadius = VisualPipelins.d_node_base/2;
-            // 1. Стержень стрелки (цилиндр)
-            const shaftRadius = nodeRadius * 0.1; // Пропорционально размеру узла
-            const shaftHeight = nodeRadius * 2.5;
-            const shaftGeo = new THREE.CylinderGeometry(shaftRadius, shaftRadius, shaftHeight, 16);
-            const shaft = new THREE.Mesh(shaftGeo, Node_Material);
-            // Сдвигаем вниз, чтобы начало было примерно от центра/низа сферы
-            shaft.position.y = -(shaftHeight / 2); 
             
-            // 2. Наконечник стрелки (конус, направленный вниз)
-            const headRadius = nodeRadius * 1;
-            const headHeight = nodeRadius * 1.5;
-            const headGeo = new THREE.ConeGeometry(headRadius, headHeight, 16);
-            const head = new THREE.Mesh(headGeo, Node_Material);
-            head.rotation.x = Math.PI;
-            head.position.y = -(shaftHeight + headHeight / 2);
-
-            sprinklerGroup.add(shaft);
-            sprinklerGroup.add(head);
-            
-            // Добавляем группу со стрелкой к узлу. 
-            // Теперь стрелка будет двигаться и вращаться вместе с узлом.
-            currentEndNode.add(sprinklerGroup);
-            // ==========================================================
+            // ⚠️ ВАЖНО: добавляем узел на сцену (этой строки не хватало в старом коде)
+            Engine.scene.add(currentEndNode); 
         }
+
         // Просто создаем новые узлы с типом орсоитель      
 
         const step_Start_Pos = new THREE.Vector3();
@@ -664,6 +790,8 @@ function create_branch(Node) {
         
         currentStartNode.attach(Pipe_connection);
         Pipe_connection.attach(currentEndNode);
+
+        Pipe_connection.createUI();
                 
         currentStartNode = currentEndNode;
                 
@@ -790,100 +918,175 @@ function delete_pipe_tube() {
     
 }
 
-function Check_Edit_Node(){
-    // проверка существования узла
-    // alert("внутри функции разбиения")
-    let Check_node = false;
-    Engine.scene.traverse((child) => {       
-        if (child.type === 'Node') {
-            Check_node = true;
-        }        
-    });    
-    if (Check_node) {    
-        if (!Engine.selectedObject || (Engine.selectedObject.type !== 'Node' && Engine.selectedObject.type !== 'Sprinkler' && Engine.selectedObject.type !== 'Source')) {
-            alert("Выберите узел привязки!");
-            return; 
-        }
-    }
-    else{
-        alert("Создайте и выберите узел!")
+// function Check_Edit_Node(){
+//     // проверка существования узла
+//     // alert("внутри функции разбиения")
+//     let Check_node = false;
+//     Engine.scene.traverse((child) => {       
+//         if (child.type === 'Node') {
+//             Check_node = true;
+//         }        
+//     });    
+//     if (Check_node) {    
+//         if (!Engine.selectedObject || (Engine.selectedObject.type !== 'Node' && Engine.selectedObject.type !== 'Sprinkler' && Engine.selectedObject.type !== 'Source')) {
+//             alert("Выберите узел привязки!");
+//             return; 
+//         }
+//     }
+//     else{
+//         alert("Создайте и выберите узел!")
+//         return;
+//     }
+//     document.getElementById("Node_Edit").style.display = 'block';
+//     document.body.classList.add('builder-active');
+
+//     document.getElementById("number_node_edit").innerText = `${ Engine.selectedObject.name} id: ${Engine.selectedObject.id}`;
+//     document.getElementById("type_node_edit").innerText = Engine.selectedObject.type;
+//     document.getElementById("pbCX_edit_node").value = Engine.selectedObject.X_gl;
+//     document.getElementById("pbCY_edit_node").value = Engine.selectedObject.Y_gl;
+//     document.getElementById("pbCZ_edit_node").value = Engine.selectedObject.Z_gl;
+    
+//     document.getElementById("Node_Edit_confirm").onclick = () => Edit_Node(Engine.selectedObject);
+//     document.getElementById("Node_Edit_cancel").onclick = () => cancel("Node_Edit"); 
+// }
+
+function Check_Edit_Node() {
+    // Фильтруем только узлы из выделенных объектов
+    const selectedNodes = Engine.selectedObjects.filter(obj => 
+        obj.type === 'Node' || obj.type === 'Sprinkler' || obj.type === 'Source'
+    );
+
+    if (selectedNodes.length === 0) {
+        alert("Выберите один или несколько узлов!\n(Зажмите Ctrl, чтобы выделить несколько)");
         return;
     }
+
     document.getElementById("Node_Edit").style.display = 'block';
     document.body.classList.add('builder-active');
 
-    document.getElementById("number_node_edit").innerText = `${ Engine.selectedObject.name} id: ${Engine.selectedObject.id}`;
-    document.getElementById("type_node_edit").innerText = Engine.selectedObject.type;
-    document.getElementById("pbCX_edit_node").value = Engine.selectedObject.X_gl;
-    document.getElementById("pbCY_edit_node").value = Engine.selectedObject.Y_gl;
-    document.getElementById("pbCZ_edit_node").value = Engine.selectedObject.Z_gl;
+    const firstNode = selectedNodes[0];
     
-    document.getElementById("Node_Edit_confirm").onclick = () => Edit_Node(Engine.selectedObject);
+    // Показываем в интерфейсе, сколько узлов выбрано
+    if (selectedNodes.length > 1) {
+        document.getElementById("number_node_edit").innerText = `Выбрано узлов: ${selectedNodes.length}`;
+    } else {
+        document.getElementById("number_node_edit").innerText = `${firstNode.name} id: ${firstNode.id}`;
+    }
+    
+    document.getElementById("type_node_edit").innerText = firstNode.type;
+    document.getElementById("pbCX_edit_node").value = firstNode.X_gl;
+    document.getElementById("pbCY_edit_node").value = firstNode.Y_gl;
+    document.getElementById("pbCZ_edit_node").value = firstNode.Z_gl;
+    
+    // Привязываем новую функцию массового редактирования
+    document.getElementById("Node_Edit_confirm").onclick = () => Edit_Multiple_Nodes(selectedNodes);
     document.getElementById("Node_Edit_cancel").onclick = () => cancel("Node_Edit"); 
 }
 
-function Edit_Node(Node) {
+
+function Edit_Multiple_Nodes(nodesArray) {
     const new_type = document.getElementById("select_node_edit").value;
-    Node.type = new_type;
 
-    // 1. Удаляем старую стрелку, если она была (на случай смены с Оросителя на Узел/Источник)
-    const existingArrow = Node.getObjectByName('SprinklerArrow');
-    if (existingArrow) {
-        Node.remove(existingArrow);
-    }
+    // Проходим по ВСЕМ выделенным узлам
+    nodesArray.forEach(node => {
+        node.type = new_type;
 
-    // 2. Обновляем материал (цвет) узла
-    Node.material.dispose();
-    let new_Node_Material;
-    if (new_type === "Node") {        
-        new_Node_Material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    }
-    else if (new_type === "Sprinkler") {        
-        new_Node_Material = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Используем hex для надежности
-    }
-    else if (new_type === "Source") {        
-        new_Node_Material = new THREE.MeshBasicMaterial({ color: 0x800080 });
-    }    
-    
-    Node.material = new_Node_Material;
-    Node.material.needsUpdate = true;
-    Node.userData.originalColor = Node.material.color.getHex();
-
-    // 3. ✅ ГЛАВНОЕ ИСПРАВЛЕНИЕ: Если тип стал "Sprinkler", создаем и добавляем стрелку
-    if (new_type === "Sprinkler") {
-        const sprinklerGroup = new THREE.Group();
-        sprinklerGroup.name = 'SprinklerArrow';
-        const nodeRadius = VisualPipelins.d_node_base / 2;
+        // 1. Обновляем материал (цвет) узла
+        node.material.dispose();
+        let new_Node_Material;
+        if (new_type === "Node") {        
+            new_Node_Material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        } else if (new_type === "Sprinkler") {        
+            new_Node_Material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        } else if (new_type === "Source") {        
+            new_Node_Material = new THREE.MeshBasicMaterial({ color: 0x800080 });
+        }    
         
-        // 1. Стержень стрелки (цилиндр)
-        const shaftRadius = nodeRadius * 0.1;
-        const shaftHeight = nodeRadius * 2.5;
-        const shaftGeo = new THREE.CylinderGeometry(shaftRadius, shaftRadius, shaftHeight, 16);
-        const shaft = new THREE.Mesh(shaftGeo, new_Node_Material); // Используем новый красный материал
-        shaft.position.y = -(shaftHeight / 2);
+        node.material = new_Node_Material;
+        node.material.needsUpdate = true;
         
-        // 2. Наконечник стрелки (конус, направленный вниз)
-        const headRadius = nodeRadius * 1;
-        const headHeight = nodeRadius * 1.5;
-        const headGeo = new THREE.ConeGeometry(headRadius, headHeight, 16);
-        const head = new THREE.Mesh(headGeo, new_Node_Material); // Используем новый красный материал
-        head.rotation.x = Math.PI;
-        head.position.y = -(shaftHeight + headHeight / 2);
+        // Обновляем originalColor, чтобы при снятии выделения он стал цветом нового типа
+        node.userData.originalColor = node.material.color.getHex();
 
-        sprinklerGroup.add(shaft);
-        sprinklerGroup.add(head);
-        
-        // Добавляем группу со стрелкой к узлу
-        Node.add(sprinklerGroup);
-    }
+        // ✅ МАГИЯ: Просто вызываем метод класса! 
+        // Он сам удалит старую стрелку (если тип сменился с Sprinkler) 
+        // или нарисует новую (если тип стал Sprinkler)
+        if (typeof node.updateSprinklerArrow === "function") {
+            node.updateSprinklerArrow();
+        }
+    });
 
-    // 4. Обновляем дерево построения, чтобы в левой панели тоже обновилась иконка и название
+    // Обновляем дерево и снимаем выделение после успешного изменения
     if (typeof updateTreeUI === 'function') {
         updateTreeUI();
     }
-
+    
+    Engine.clearSelection(); // Снимаем выделение после редактирования
     cancel("Node_Edit");
 }
+
+// function Edit_Node(Node) {
+//     const new_type = document.getElementById("select_node_edit").value;
+//     Node.type = new_type;
+
+//     // 1. Удаляем старую стрелку, если она была (на случай смены с Оросителя на Узел/Источник)
+//     const existingArrow = Node.getObjectByName('SprinklerArrow');
+//     if (existingArrow) {
+//         Node.remove(existingArrow);
+//     }
+
+//     // 2. Обновляем материал (цвет) узла
+//     Node.material.dispose();
+//     let new_Node_Material;
+//     if (new_type === "Node") {        
+//         new_Node_Material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+//     }
+//     else if (new_type === "Sprinkler") {        
+//         new_Node_Material = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Используем hex для надежности
+//     }
+//     else if (new_type === "Source") {        
+//         new_Node_Material = new THREE.MeshBasicMaterial({ color: 0x800080 });
+//     }    
+    
+//     Node.material = new_Node_Material;
+//     Node.material.needsUpdate = true;
+//     Node.userData.originalColor = Node.material.color.getHex();
+
+//     // 3. ✅ ГЛАВНОЕ ИСПРАВЛЕНИЕ: Если тип стал "Sprinkler", создаем и добавляем стрелку
+//     if (new_type === "Sprinkler") {
+//         const sprinklerGroup = new THREE.Group();
+//         sprinklerGroup.name = 'SprinklerArrow';
+//         const nodeRadius = VisualPipelins.d_node_base / 2;
+        
+//         // 1. Стержень стрелки (цилиндр)
+//         const shaftRadius = nodeRadius * 0.1;
+//         const shaftHeight = nodeRadius * 2.5;
+//         const shaftGeo = new THREE.CylinderGeometry(shaftRadius, shaftRadius, shaftHeight, 16);
+//         const shaft = new THREE.Mesh(shaftGeo, new_Node_Material); // Используем новый красный материал
+//         shaft.position.y = -(shaftHeight / 2);
+        
+//         // 2. Наконечник стрелки (конус, направленный вниз)
+//         const headRadius = nodeRadius * 1;
+//         const headHeight = nodeRadius * 1.5;
+//         const headGeo = new THREE.ConeGeometry(headRadius, headHeight, 16);
+//         const head = new THREE.Mesh(headGeo, new_Node_Material); // Используем новый красный материал
+//         head.rotation.x = Math.PI;
+//         head.position.y = -(shaftHeight + headHeight / 2);
+
+//         sprinklerGroup.add(shaft);
+//         sprinklerGroup.add(head);
+        
+//         // Добавляем группу со стрелкой к узлу
+//         Node.add(sprinklerGroup);
+//     }
+
+//     // 4. Обновляем дерево построения, чтобы в левой панели тоже обновилась иконка и название
+//     if (typeof updateTreeUI === 'function') {
+//         updateTreeUI();
+//     }
+
+//     cancel("Node_Edit");
+// }
 
 async function sendJsonAndVisualize(v) {
     console.log(" Отправка данных на расчет...", v);
@@ -1122,12 +1325,52 @@ function createTextLabelAlongPipe(text, startWorld, endWorld, color = '#ffffff',
 // ============================================================================
 // 2. Функция очистки старых меток (ВАЖНО для предотвращения утечек памяти!)
 // ============================================================================
+// function clearCalculationLabels() {
+//     const labelsToRemove = [];
+    
+//     Engine.scene.traverse((child) => {
+//         // Очищаем и текстовые метки, и стрелки направления
+//         if (child && (child.name === 'CalculationLabel' || child.name === 'FlowArrow')) {
+//             labelsToRemove.push(child);
+//         }
+//     });
+    
+//     labelsToRemove.forEach(label => {
+//         try {
+//             if (label.parent) {
+//                 label.parent.remove(label);
+//             }
+//             if (label.material) {
+//                 if (label.material.map) label.material.map.dispose();
+//                 label.material.dispose();
+//             }
+//             // Для ArrowHelper нужно удалить и линию, и конус
+//             if (label.line && label.line.material) {
+//                 label.line.material.dispose();
+//             }
+//             if (label.cone && label.cone.material) {
+//                 label.cone.material.dispose();
+//             }
+//         } catch (e) {
+//             console.warn('Ошибка при удалении метки/стрелки:', e);
+//         }
+//     });
+    
+//     console.log(`🗑️ Удалено объектов визуализации: ${labelsToRemove.length}`);
+// }
+
+
 function clearCalculationLabels() {
     const labelsToRemove = [];
     
     Engine.scene.traverse((child) => {
-        // Очищаем и текстовые метки, и стрелки направления
-        if (child && (child.name === 'CalculationLabel' || child.name === 'FlowArrow')) {
+        // ✅ Обновленный список имен для очистки
+        if (child && (
+            child.name === 'PressureLabel' || 
+            child.name === 'FlowLabel' || 
+            child.name === 'VelocityLabel' || 
+            child.name === 'FlowArrow'
+        )) {
             labelsToRemove.push(child);
         }
     });
@@ -1141,13 +1384,8 @@ function clearCalculationLabels() {
                 if (label.material.map) label.material.map.dispose();
                 label.material.dispose();
             }
-            // Для ArrowHelper нужно удалить и линию, и конус
-            if (label.line && label.line.material) {
-                label.line.material.dispose();
-            }
-            if (label.cone && label.cone.material) {
-                label.cone.material.dispose();
-            }
+            if (label.line && label.line.material) label.line.material.dispose();
+            if (label.cone && label.cone.material) label.cone.material.dispose();
         } catch (e) {
             console.warn('Ошибка при удалении метки/стрелки:', e);
         }
@@ -1181,19 +1419,270 @@ function cleanSceneOrphans() {
 // ============================================================================
 // 3. Главная функция визуализации результатов
 // ============================================================================
+// function visualizeResults(result) {
+//     console.log('🚀 Начинаем визуализацию...');
+    
+//     // Очищаем битые ссылки перед работой
+//     cleanSceneOrphans();
+    
+//     // Очищаем старые метки
+//     clearCalculationLabels();
+
+//     let nodesCount = 0;
+//     let edgesCount = 0;
+
+//     // 2. Добавляем метки к УЗЛАМ (Node / Source / Sprinkler)
+//     for (const [uuid, data] of Object.entries(result.nodes)) {
+//         const nodeObj = STATE.Three_D_objects.find(
+//             obj => obj.uuid.toLowerCase() === uuid.toLowerCase() && 
+//                 (obj.type === 'Node' || obj.type === 'Source' || obj.type === 'Sprinkler')
+//         );
+
+//         if (nodeObj) {
+//             // Получаем мировые координаты узла
+//             const nodeWorldPos = new THREE.Vector3();
+//             nodeObj.getWorldPosition(nodeWorldPos);
+            
+//             // Давление — ОТДЕЛЬНОЙ меткой СВЕРХУ узла
+//             const pressureLabel = `${data.pressure_m.toFixed(3)} м вод. ст.`;
+//             const pressureLabelMesh = createTextLabel(pressureLabel, '#000000', 0);
+//             pressureLabelMesh.position.copy(nodeWorldPos);
+//             pressureLabelMesh.position.y += 0.25;  // ⬆️ Поднимаем выше (было 0.25)
+//             Engine.scene.add(pressureLabelMesh);
+            
+//             // Для оросителей добавляем расход
+//             if (data.type === 'sprinkler') {
+//                 const flowLabel = `${data.sprinkler_flow_l_s.toFixed(3)} л/с`;
+//                 const flowLabelMesh = createTextLabel(flowLabel, '#000000', 0);
+//                 flowLabelMesh.position.copy(nodeWorldPos);
+//                 flowLabelMesh.position.y -= 0.6;  // Чуть ниже давления
+//                 Engine.scene.add(flowLabelMesh);
+                
+//                 if (data.pressure_m < 10) {
+//                     pressureLabelMesh.material.color.set('#000000');
+//                 }
+//             } 
+//             // Для источников
+//             else if (data.type === 'source') {
+//                 const sourceFlowLabel = `${Math.abs(result.summary.total_flow_l_s).toFixed(3)} л/с`;
+//                 const sourceFlowLabelMesh = createTextLabel(sourceFlowLabel, '#000000', 0);
+//                 sourceFlowLabelMesh.position.copy(nodeWorldPos);
+//                 sourceFlowLabelMesh.position.y += 0.4;  // Чуть ниже давления
+//                 Engine.scene.add(sourceFlowLabelMesh);
+//             }
+            
+//             nodesCount++;
+//         }
+//     }
+
+//     // 3. Добавляем метки РАСХОДА и СТРЕЛКИ НАПРАВЛЕНИЯ к ТРУБАМ (Edge)
+//     for (const [uuid, data] of Object.entries(result.edges)) {
+//         const edgeObj = STATE.Three_D_objects.find(
+//             obj => obj.uuid.toLowerCase() === uuid.toLowerCase() && obj.type === 'Edge'
+//         );
+
+//         if (edgeObj && edgeObj.start_node && edgeObj.end_node) {
+//             // Мировые координаты начала и конца трубы
+//             const startWorld = new THREE.Vector3();
+//             const endWorld = new THREE.Vector3();
+//             edgeObj.start_node.getWorldPosition(startWorld);
+//             edgeObj.end_node.getWorldPosition(endWorld);
+
+//             // Середина трубы
+//             const midWorld = new THREE.Vector3().lerpVectors(startWorld, endWorld, 0.5);
+
+//             // Текстовая метка расхода — рядом со стрелкой (чуть ниже трубы)
+//             const flowValue = Math.abs(data.flow_l_s);
+//             const labelText = `${flowValue.toFixed(3)} л/с`;
+//             const label = createTextLabel(labelText, '#000000', 0);
+//             label.position.copy(midWorld);
+//             label.position.y -= 0.25;  // ️ Опускаем ниже трубы (рядом со стрелкой)
+//             Engine.scene.add(label);
+
+//             // ============================================================
+//             // СТРЕЛКА НАПРАВЛЕНИЯ ТЕЧЕНИЯ
+//             // ============================================================
+//             const isReverse = (data.direction === 'reverse');
+//             // const arrowColor = '#0f1379';
+//             const arrowColor = '#006400';
+            
+//             const flowArrow = createFlowArrow(
+//                 startWorld, 
+//                 endWorld, 
+//                 isReverse, 
+//                 arrowColor
+//             );
+//             Engine.scene.add(flowArrow);
+
+//             if (isReverse) {
+//                 console.log(`⚠️ Труба ${uuid}: ОБРАТНОЕ направление течения`);
+//             }
+
+//             edgesCount++;
+//         }
+//     }
+
+//     console.log(`✅ ВИЗУАЛИЗАЦИЯ ЗАВЕРШЕНА! Добавлено меток: узлов=${nodesCount}, труб=${edgesCount}`);
+
+//     alert(
+//     `✅ Расчет успешно завершен!\n` +
+//     `Давление насоса: ${result.summary.source_pressure_m.toFixed(3)} м\n` +
+//     `Добавлено меток: ${nodesCount + edgesCount}\n\n` +
+//     `⏱️ Время расчета (всего): ${result.summary.timing.total_s.toFixed(4)} сек\n` +
+//     `  • Этап 1: ${result.summary.timing.stage1_s.toFixed(4)} сек\n` +
+//     `  • Поиск источника: ${result.summary.timing.source_search_s.toFixed(4)} сек\n` +
+//     `  • Финальное решение: ${result.summary.timing.final_solve_s.toFixed(4)} сек\n\n` +
+//     `📊 Невязки:\n` +
+//     `  • Норма невязки: ${result.summary.residual_norm.toExponential(4)}\n` +
+//     `  • Макс. невязка: ${result.summary.max_residual.toExponential(4)}`
+// );
+
+// }
+
+// function visualizeResults(result) {
+//     console.log('🚀 Начинаем визуализацию...');
+    
+//     // Очищаем битые ссылки перед работой
+//     cleanSceneOrphans();
+    
+//     // Очищаем старые метки
+//     clearCalculationLabels();
+
+//     let nodesCount = 0;
+//     let edgesCount = 0;
+
+//     // =========================================================================
+//     // 2. Добавляем метки к УЗЛАМ (Node / Source / Sprinkler)
+//     // =========================================================================
+//     for (const [uuid, data] of Object.entries(result.nodes)) {
+//         const nodeObj = STATE.Three_D_objects.find(
+//             obj => obj.uuid.toLowerCase() === uuid.toLowerCase() && 
+//                 (obj.type === 'Node' || obj.type === 'Source' || obj.type === 'Sprinkler')
+//         );
+
+//         if (nodeObj) {
+//             const nodeWorldPos = new THREE.Vector3();
+//             nodeObj.getWorldPosition(nodeWorldPos);
+            
+//             // --- 1. ДАВЛЕНИЕ ---
+//             const pressureLabel = `${data.pressure_m.toFixed(3)} м вод. ст.`;
+//             const pressureLabelMesh = createTextLabel(pressureLabel, '#000000', 0);
+//             pressureLabelMesh.name = 'PressureLabel'; 
+//             pressureLabelMesh.visible = STATE.showLabelsPressure; 
+//             pressureLabelMesh.position.copy(nodeWorldPos);
+//             pressureLabelMesh.position.y += 0.25;
+//             Engine.scene.add(pressureLabelMesh);
+            
+//             // --- 2. РАСХОД (для оросителей) ---
+//             // Используем toLowerCase() для надежной проверки типа
+//             if (data.type && data.type.toLowerCase() === 'sprinkler') {
+//                 nodeObj.updateFlow(data.sprinkler_flow_l_s || 0);
+                
+//                 // Старая логика для спрайтов (если она еще используется)
+//                 const flowLabelMesh = createTextLabel(`${(data.sprinkler_flow_l_s || 0).toFixed(3)} л/с`, '#000000', 0);
+//                 flowLabelMesh.name = 'FlowLabel'; 
+//                 flowLabelMesh.visible = STATE.showLabelsMassFlowRate; 
+//                 flowLabelMesh.position.copy(nodeWorldPos);
+//                 flowLabelMesh.position.y -= 0.6;
+//                 Engine.scene.add(flowLabelMesh);
+                
+//                 if (data.pressure_m < 10) {
+//                     // pressureLabelMesh.material.color.set('#ff0000'); // Если нужно
+//                 }
+//             } 
+//             // --- 3. РАСХОД (для источников) ---
+//             else if (data.type && data.type.toLowerCase() === 'source') {
+//                 nodeObj.updateFlow(Math.abs(result.summary.total_flow_l_s) || 0);
+                
+//                 const sourceFlowLabelMesh = createTextLabel(`${(Math.abs(result.summary.total_flow_l_s) || 0).toFixed(3)} л/с`, '#000000', 0);
+//                 sourceFlowLabelMesh.name = 'FlowLabel'; 
+//                 sourceFlowLabelMesh.visible = STATE.showLabelsMassFlowRate;
+//                 sourceFlowLabelMesh.position.copy(nodeWorldPos);
+//                 sourceFlowLabelMesh.position.y += 0.4;
+//                 Engine.scene.add(sourceFlowLabelMesh);
+//             }
+
+//             // --- 4. СКОРОСТЬ (в узле, если поле есть в ответе сервера) ---
+//             if (data.velocity_m_s !== undefined) {
+//                 const velocityLabel = `${data.velocity_m_s.toFixed(2)} м/с`;
+//                 const velocityLabelMesh = createTextLabel(velocityLabel, '#0000ff', 0);
+//                 velocityLabelMesh.name = 'VelocityLabel';
+//                 velocityLabelMesh.visible = STATE.showLabelsVelocity;
+//                 velocityLabelMesh.position.copy(nodeWorldPos);
+//                 velocityLabelMesh.position.y -= 1.2; // Размещаем ниже расхода
+//                 Engine.scene.add(velocityLabelMesh);
+//             }
+            
+//             nodesCount++;
+//         }
+//     }
+
+//        // =========================================================================
+//     // 3. Обновляем результаты РАСХОДА и СКОРОСТИ в объектах ТРУБ (Edge)
+//     // =========================================================================
+//     for (const [uuid, data] of Object.entries(result.edges)) {
+//         const edgeObj = STATE.Three_D_objects.find(
+//             obj => obj.uuid.toLowerCase() === uuid.toLowerCase() && obj.type === 'Edge'
+//         );
+
+//         if (edgeObj) {
+//             // ✅ МАГИЯ: Просто передаем данные в объект, он сам обновит свои метки!
+//             const flow = Math.abs(data.flow_l_s || data.massflowrate || 0);
+//             const velocity = data.velocity_m_s || data.velocity || 0;
+            
+//             edgeObj.updateResults(flow, velocity);
+//             edgesCount++;
+//         }
+//     }
+
+//     console.log(`✅ ВИЗУАЛИЗАЦИЯ ЗАВЕРШЕНА! Добавлено меток: узлов=${nodesCount}, труб=${edgesCount}`);
+
+//     alert(
+//         `✅ Расчет успешно завершен!\n` +
+//         `Давление насоса: ${result.summary.source_pressure_m.toFixed(3)} м\n` +
+//         `Добавлено меток: ${nodesCount + edgesCount}\n\n` +
+//         `⏱️ Время расчета (всего): ${result.summary.timing.total_s.toFixed(4)} сек\n` +
+//         `  • Этап 1: ${result.summary.timing.stage1_s.toFixed(4)} сек\n` +
+//         `  • Поиск источника: ${result.summary.timing.source_search_s.toFixed(4)} сек\n` +
+//         `  • Финальное решение: ${result.summary.timing.final_solve_s.toFixed(4)} сек\n\n` +
+//         `📊 Невязки:\n` +
+//         `  • Норма невязки: ${result.summary.residual_norm.toExponential(4)}\n` +
+//         `  • Макс. невязка: ${result.summary.max_residual.toExponential(4)}`
+//     );
+// }
+
 function visualizeResults(result) {
     console.log('🚀 Начинаем визуализацию...');
     
-    // Очищаем битые ссылки перед работой
+    // 1. Очищаем битые ссылки и старые метки перед работой
     cleanSceneOrphans();
-    
-    // Очищаем старые метки
     clearCalculationLabels();
+
+    // ВКЛЮЧАЕМ ВСЕ ТРИ ФЛАГА СРАЗУ
+    STATE.showLabelsPressure = true;
+    STATE.showLabelsMassFlowRate = true;
+    STATE.showLabelsVelocity = true;
+
+    // Обновляем состояние кнопок (делаем их активными)
+    updateToggleButtonState('btnTogglePressure', true);
+    updateToggleButtonState('btnToggleFlow', true);
+    updateToggleButtonState('btnToggleVelocity', true);
+
+
+    // Удаляем старые 3D-стрелки из всех труб перед новым расчетом
+    STATE.Three_D_objects.forEach((obj) => {
+        if (obj.type === "Edge" && obj._flowArrow) {
+            obj.remove(obj._flowArrow);
+            obj._flowArrow = null;
+        }
+    });
 
     let nodesCount = 0;
     let edgesCount = 0;
 
-    // 2. Добавляем метки к УЗЛАМ (Node / Source / Sprinkler)
+    // =========================================================================
+    // 2. Обновляем данные и метки в УЗЛАХ (Node / Source / Sprinkler)
+    // =========================================================================
     for (const [uuid, data] of Object.entries(result.nodes)) {
         const nodeObj = STATE.Three_D_objects.find(
             obj => obj.uuid.toLowerCase() === uuid.toLowerCase() && 
@@ -1201,104 +1690,69 @@ function visualizeResults(result) {
         );
 
         if (nodeObj) {
-            // Получаем мировые координаты узла
-            const nodeWorldPos = new THREE.Vector3();
-            nodeObj.getWorldPosition(nodeWorldPos);
+            // ✅ Передаем данные в новый класс Node_new
+            nodeObj.updatePressure(data.pressure_m || 0);
             
-            // Давление — ОТДЕЛЬНОЙ меткой СВЕРХУ узла
-            const pressureLabel = `${data.pressure_m.toFixed(3)} м вод. ст.`;
-            const pressureLabelMesh = createTextLabel(pressureLabel, '#000000', 0);
-            pressureLabelMesh.position.copy(nodeWorldPos);
-            pressureLabelMesh.position.y += 0.25;  // ⬆️ Поднимаем выше (было 0.25)
-            Engine.scene.add(pressureLabelMesh);
-            
-            // Для оросителей добавляем расход
-            if (data.type === 'sprinkler') {
-                const flowLabel = `${data.sprinkler_flow_l_s.toFixed(3)} л/с`;
-                const flowLabelMesh = createTextLabel(flowLabel, '#000000', 0);
-                flowLabelMesh.position.copy(nodeWorldPos);
-                flowLabelMesh.position.y -= 0.6;  // Чуть ниже давления
-                Engine.scene.add(flowLabelMesh);
-                
-                if (data.pressure_m < 10) {
-                    pressureLabelMesh.material.color.set('#000000');
-                }
-            } 
-            // Для источников
-            else if (data.type === 'source') {
-                const sourceFlowLabel = `${Math.abs(result.summary.total_flow_l_s).toFixed(3)} л/с`;
-                const sourceFlowLabelMesh = createTextLabel(sourceFlowLabel, '#000000', 0);
-                sourceFlowLabelMesh.position.copy(nodeWorldPos);
-                sourceFlowLabelMesh.position.y += 0.4;  // Чуть ниже давления
-                Engine.scene.add(sourceFlowLabelMesh);
+            if (data.type && data.type.toLowerCase() === 'sprinkler') {
+                nodeObj.updateFlow(data.sprinkler_flow_l_s || 0);
+            } else if (data.type && data.type.toLowerCase() === 'source') {
+                nodeObj.updateFlow(Math.abs(result.summary.total_flow_l_s) || 0);
             }
-            
+
+            // ✅ Принудительно обновляем видимость и позиции меток (давление сверху, расход снизу)
+            if (typeof nodeObj._updateLabelsVisibility === "function") {
+                nodeObj._updateLabelsVisibility();
+            }
+
             nodesCount++;
         }
     }
 
-    // 3. Добавляем метки РАСХОДА и СТРЕЛКИ НАПРАВЛЕНИЯ к ТРУБАМ (Edge)
+    // =========================================================================
+    // 3. Обновляем результаты РАСХОДА, СКОРОСТИ и СТРЕЛОК в объектах ТРУБ (Edge)
+    // =========================================================================
     for (const [uuid, data] of Object.entries(result.edges)) {
         const edgeObj = STATE.Three_D_objects.find(
             obj => obj.uuid.toLowerCase() === uuid.toLowerCase() && obj.type === 'Edge'
         );
 
-        if (edgeObj && edgeObj.start_node && edgeObj.end_node) {
-            // Мировые координаты начала и конца трубы
-            const startWorld = new THREE.Vector3();
-            const endWorld = new THREE.Vector3();
-            edgeObj.start_node.getWorldPosition(startWorld);
-            edgeObj.end_node.getWorldPosition(endWorld);
-
-            // Середина трубы
-            const midWorld = new THREE.Vector3().lerpVectors(startWorld, endWorld, 0.5);
-
-            // Текстовая метка расхода — рядом со стрелкой (чуть ниже трубы)
-            const flowValue = Math.abs(data.flow_l_s);
-            const labelText = `${flowValue.toFixed(3)} л/с`;
-            const label = createTextLabel(labelText, '#000000', 0);
-            label.position.copy(midWorld);
-            label.position.y -= 0.25;  // ️ Опускаем ниже трубы (рядом со стрелкой)
-            Engine.scene.add(label);
-
-            // ============================================================
-            // СТРЕЛКА НАПРАВЛЕНИЯ ТЕЧЕНИЯ
-            // ============================================================
-            const isReverse = (data.direction === 'reverse');
-            // const arrowColor = '#0f1379';
-            const arrowColor = '#006400';
+        if (edgeObj) {
+            // ✅ Берем значения и сразу переводим в модуль для отображения
+            const absFlow = Math.abs(data.flow_l_s || data.massflowrate || 0);
+            const absVel = Math.abs(data.velocity_m_s || data.velocity || 0);
             
-            const flowArrow = createFlowArrow(
-                startWorld, 
-                endWorld, 
-                isReverse, 
-                arrowColor
-            );
-            Engine.scene.add(flowArrow);
+            edgeObj.massflowrate = absFlow;
+            edgeObj.velocity = absVel;
+            
+            // ✅ Направление стрелки определяем по флагу "reverse" от бэкенда
+            edgeObj.flowDirection = data.direction === "reverse" ? -1 : 1;
 
-            if (isReverse) {
-                console.log(`⚠️ Труба ${uuid}: ОБРАТНОЕ направление течения`);
+            if (!edgeObj.uiGroup) {
+                edgeObj.createUI();
             }
-
+            
+            // ✅ Пересоздаем стрелку (она сама проверит flowDirection)
+            edgeObj.createFlowArrow(); 
+            edgeObj.updateDOMValues(); 
+            
             edgesCount++;
         }
     }
 
-    console.log(`✅ ВИЗУАЛИЗАЦИЯ ЗАВЕРШЕНА! Добавлено меток: узлов=${nodesCount}, труб=${edgesCount}`);
+    console.log(`✅ ВИЗУАЛИЗАЦИЯ ЗАВЕРШЕНА! Узлов: ${nodesCount}, труб: ${edgesCount}`);
 
     alert(
-    `✅ Расчет успешно завершен!\n` +
-    `Давление насоса: ${result.summary.source_pressure_m.toFixed(3)} м\n` +
-    `Добавлено меток: ${nodesCount + edgesCount}\n\n` +
-    `⏱️ Время расчета (всего): ${result.summary.timing.total_s.toFixed(4)} сек\n` +
-    `  • Этап 1: ${result.summary.timing.stage1_s.toFixed(4)} сек\n` +
-    `  • Поиск источника: ${result.summary.timing.source_search_s.toFixed(4)} сек\n` +
-    `  • Финальное решение: ${result.summary.timing.final_solve_s.toFixed(4)} сек\n\n` +
-    `📊 Невязки:\n` +
-    `  • Норма невязки: ${result.summary.residual_norm.toExponential(4)}\n` +
-    `  • Макс. невязка: ${result.summary.max_residual.toExponential(4)}`
-);
-
+        `✅ Расчет успешно завершен!\n` +
+        `Давление насоса: ${result.summary.source_pressure_m.toFixed(3)} м\n` +
+        `Добавлено меток: ${nodesCount + edgesCount}\n\n` +
+        `⏱️ Время расчета (всего): ${result.summary.timing.total_s.toFixed(4)} сек\n` +
+        `  • Этап 1: ${result.summary.timing.stage1_s.toFixed(4)} сек\n` +
+        `  • Поиск источника: ${result.summary.timing.source_search_s.toFixed(4)} сек\n` +
+        `  • Финальное решение: ${result.summary.timing.final_solve_s.toFixed(4)} сек\n\n` +
+        `📊 Невязки:\n` +
+        `  • Норма невязки: ${result.summary.residual_norm.toExponential(4)}\n` +
+        `  • Макс. невязка: ${result.summary.max_residual.toExponential(4)}`
+    );
 }
 
 // Функция для проверки структуры STATE.Three_D_objects
@@ -1580,32 +2034,10 @@ function loadProjectFromJSON(file) {
                     nodeMap.set(originalId, node);
                     STATE.Three_D_objects.push(node);
 
-                    // ✅ Восстанавливаем стрелку ТОЛЬКО для оросителей
-                    if (typeName === 'Sprinkler') {
-                        const sprinklerGroup = new THREE.Group();
-                        sprinklerGroup.name = 'SprinklerArrow';
-                        const nodeRadius = VisualPipelins.d_node_base / 2;
-                        
-                        // 1. Стержень стрелки (цилиндр)
-                        const shaftRadius = nodeRadius * 0.1;
-                        const shaftHeight = nodeRadius * 2.5;
-                        const shaftGeo = new THREE.CylinderGeometry(shaftRadius, shaftRadius, shaftHeight, 16);
-                        const shaft = new THREE.Mesh(shaftGeo, mat);
-                        shaft.position.y = -(shaftHeight / 2);
-                        
-                        // 2. Наконечник стрелки (конус, направленный вниз)
-                        const headRadius = nodeRadius * 1;
-                        const headHeight = nodeRadius * 1.5;
-                        const headGeo = new THREE.ConeGeometry(headRadius, headHeight, 16);
-                        const head = new THREE.Mesh(headGeo, mat);
-                        head.rotation.x = Math.PI;
-                        head.position.y = -(shaftHeight + headHeight / 2);
-
-                        sprinklerGroup.add(shaft);
-                        sprinklerGroup.add(head);
-                        
-                        // Добавляем группу со стрелкой к узлу
-                        node.add(sprinklerGroup);
+                    // ✅ Node_new сам нарисует стрелку при создании, если typeName === 'Sprinkler'
+                    // Дополнительно вызываем метод для гарантии корректной отрисовки
+                    if (typeof node.updateSprinklerArrow === "function") {
+                        node.updateSprinklerArrow();
                     }
                 });
             }
@@ -1666,41 +2098,41 @@ function loadProjectFromJSON(file) {
     reader.readAsText(file);
 }
 
-// ============================================================================
-// 6. ПРИВЯЗКА СОБЫТИЙ К КНОПКАМ
-// ============================================================================
-document.addEventListener("DOMContentLoaded", () => {
-    // Кнопка Сохранить
-    const btnSave = document.getElementById("menuSave");
-    if (btnSave) {
-        btnSave.onclick = () => exportToJSON();
-    }
+// // ============================================================================
+// // 6. ПРИВЯЗКА СОБЫТИЙ К КНОПКАМ
+// // ============================================================================
+// document.addEventListener("DOMContentLoaded", () => {
+//     // Кнопка Сохранить
+//     const btnSave = document.getElementById("menuSave");
+//     if (btnSave) {
+//         btnSave.onclick = () => exportToJSON();
+//     }
 
-    // Кнопка Открыть
-    const btnOpen = document.getElementById("menuOpen");
-    const fileInput = document.getElementById("fileInputJSON");
+//     // Кнопка Открыть
+//     const btnOpen = document.getElementById("menuOpen");
+//     const fileInput = document.getElementById("fileInputJSON");
 
-    if (btnOpen && fileInput) {
-        btnOpen.onclick = () => {
-            fileInput.click(); // Открываем системное окно выбора файла
-        };
+//     if (btnOpen && fileInput) {
+//         btnOpen.onclick = () => {
+//             fileInput.click(); // Открываем системное окно выбора файла
+//         };
 
-        fileInput.onchange = (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                loadProjectFromJSON(file);
-                // Сбрасываем input, чтобы можно было загрузить тот же файл повторно при необходимости
-                fileInput.value = ''; 
-            }
-        };
-    }
+//         fileInput.onchange = (event) => {
+//             const file = event.target.files[0];
+//             if (file) {
+//                 loadProjectFromJSON(file);
+//                 // Сбрасываем input, чтобы можно было загрузить тот же файл повторно при необходимости
+//                 fileInput.value = ''; 
+//             }
+//         };
+//     }
     
-    // Кнопка Экспорт (если она отличается от Сохранить)
-    const btnExport = document.getElementById("menuExportJSON");
-    if (btnExport) {
-        btnExport.onclick = () => exportToJSON();
-    }
-});
+//     // Кнопка Экспорт (если она отличается от Сохранить)
+//     const btnExport = document.getElementById("menuExportJSON");
+//     if (btnExport) {
+//         btnExport.onclick = () => exportToJSON();
+//     }
+// });
 
 
 
@@ -2205,3 +2637,376 @@ function loadProjectFromJSOssN(file) {
 
     reader.readAsText(file);
 }
+
+
+// ============================================================================
+// ФУНКЦИЯ ОБНОВЛЕНИЯ ВИДИМОСТИ ВСЕХ МЕТOK
+// ============================================================================
+function updateLabelsVisibility() {
+    Engine.scene.traverse((child) => {
+        // Давление
+        if (child.name === 'PressureLabel') {
+            child.visible = STATE.showLabelsPressure;
+        }
+        // Расход (текст) и стрелки направления
+        if (child.name === 'FlowLabel' || child.name === 'FlowArrow') {
+            child.visible = STATE.showLabelsMassFlowRate;
+        }
+        // Скорость (если добавите позже)
+        if (child.name === 'VelocityLabel') {
+            child.visible = STATE.showLabelsVelocity;
+        }
+    });
+
+    // Обновляем состояние кнопок в интерфейсе (опционально, для подсветки активных)
+    updateToggleButtonState('btnTogglePressure', STATE.showLabelsPressure);
+    updateToggleButtonState('btnToggleFlow', STATE.showLabelsMassFlowRate);
+    updateToggleButtonState('btnToggleVelocity', STATE.showLabelsVelocity);
+}
+
+// Вспомогательная функция для визуального состояния кнопок
+function updateToggleButtonState(btnId, isActive) {
+    const btn = document.getElementById(btnId);
+    if (btn) {
+        if (isActive) {
+            // ✅ ТОЛЬКО добавляем класс. Текст и иконки внутри кнопки НЕ трогаем!
+            btn.classList.add('active');
+        } else {
+            // ✅ ТОЛЬКО убираем класс. Текст и иконки внутри кнопки НЕ трогаем!
+            btn.classList.remove('active');
+        }
+    }
+}
+
+// function toggleSpecificLabel(type) {
+//     // Переключаем флаг
+//     if (type === 'pressure') STATE.showLabelsPressure = !STATE.showLabelsPressure;
+//     if (type === 'flow') STATE.showLabelsMassFlowRate = !STATE.showLabelsMassFlowRate;
+//     if (type === 'velocity') STATE.showLabelsVelocity = !STATE.showLabelsVelocity;
+
+//     console.log(`🔘 Переключение: ${type} = `, 
+//         type === 'pressure' ? STATE.showLabelsPressure : 
+//         type === 'flow' ? STATE.showLabelsMassFlowRate : 
+//         STATE.showLabelsVelocity
+//     );
+
+//     // Обновляем метки для всех труб
+//     STATE.Three_D_objects.forEach(obj => {
+//         if (obj.type === 'Edge') {
+//             obj.updateDOMValues(); // Этот метод сам решит, что показать
+//         }
+//     });
+
+//     // Обновляем старые метки (для узлов)
+//     Engine.scene.traverse((child) => {
+//         if (child.name === 'PressureLabel') child.visible = STATE.showLabelsPressure;
+//         if (child.name === 'FlowLabel') child.visible = STATE.showLabelsMassFlowRate;
+//         if (child.name === 'VelocityLabel') child.visible = STATE.showLabelsVelocity;
+//     });
+
+//     // Обновляем состояние кнопок
+//     updateToggleButtonState('btnTogglePressure', STATE.showLabelsPressure);
+//     updateToggleButtonState('btnToggleFlow', STATE.showLabelsMassFlowRate);
+//     updateToggleButtonState('btnToggleVelocity', STATE.showLabelsVelocity);
+// }
+
+
+// ============================================================================
+// РЕЖИМ МАССОВОГО РЕДАКТИРОВАНИЯ ДЛИН (Через CSS2DRenderer)
+// ============================================================================
+
+// function toggleLengthEditMode() {
+//     STATE.isEditingLengths = !STATE.isEditingLengths;
+//     const btn = document.getElementById('btnToggleLengthEdit');
+
+//     if (STATE.isEditingLengths) {
+//         if (btn) btn.classList.add('active');
+        
+//         STATE.Three_D_objects.forEach(obj => {
+//             if (obj.type === 'Edge') {
+//                 // 1. Создаем HTML-обертку и инпут
+//                 const div = document.createElement('div');
+//                 div.className = 'length-inline-input'; // Убедитесь, что этот класс есть в CSS
+                
+//                 const input = document.createElement('input');
+//                 input.type = 'number';
+//                 input.step = '0.1';
+//                 input.min = '0.1';
+//                 input.value = obj.Length.toFixed(2);
+                
+//                 // 2. Обработчик изменения
+//                 input.addEventListener('change', (e) => {
+//                     const newLength = parseFloat(e.target.value);
+//                     if (newLength > 0.1) {
+//                         applyNewLengthToEdge(obj, newLength);
+//                         e.target.value = obj.Length.toFixed(2);
+//                     } else {
+//                         alert("Длина должна быть больше 0.1 м");
+//                         e.target.value = obj.Length.toFixed(2);
+//                     }
+//                 });
+
+//                 // Отключаем вращение камеры при клике в инпут
+//                 input.addEventListener('focus', () => { Engine.controls.enabled = false; });
+//                 input.addEventListener('blur', () => { Engine.controls.enabled = true; });
+
+//                 div.appendChild(input);
+
+//                 // 3. ✅ МАГИЯ: Превращаем HTML в 3D-объект и привязываем к центру трубы
+//                 const label = new CSS2DObject(div);
+//                 label.position.set(0, 0, 0); // Локальный центр трубы
+                
+//                 // Сохраняем ссылку, чтобы потом удалить
+//                 obj.lengthInputLabel = label; 
+                
+//                 Engine.scene.add(label);
+//             }
+//         });
+        
+//     } else {
+//         if (btn) btn.classList.remove('active');
+        
+//         // Очищаем все инпуты со сцены
+//         STATE.Three_D_objects.forEach(obj => {
+//             if (obj.type === 'Edge' && obj.lengthInputLabel) {
+//                 Engine.scene.remove(obj.lengthInputLabel);
+//                 obj.lengthInputLabel = null;
+//             }
+//         });
+//     }
+// }
+
+// // ============================================================================
+// // РЕЖИМ МАССОВОГО РЕДАКТИРОВАНИЯ ДЛИН (УЛЬТРА-ПРОСТАЯ ВЕРСИЯ)
+// // ============================================================================
+// function toggleLengthEditMode(event) {
+//   if (event) {
+//     event.stopPropagation();
+//     event.preventDefault();
+//   }
+
+//   STATE.isEditingLengths = !STATE.isEditingLengths;
+//   const btn = document.getElementById("btnToggleLengthEdit");
+//   if (btn) {
+//     STATE.isEditingLengths ? btn.classList.add("active") : btn.classList.remove("active");
+//   }
+
+//   console.log("🔘 Режим редактирования длин:", STATE.isEditingLengths);
+//   console.log("📦 Всего труб в STATE:", STATE.Three_D_objects.filter(o => o.type === 'Edge').length);
+
+//   // Принудительно обновляем ВСЕ трубы
+//   let count = 0;
+//   STATE.Three_D_objects.forEach((obj) => {
+//     if (obj.type === "Edge") {
+//       console.log(`🔍 Обработка трубы #${count + 1}:`, obj.uuid);
+      
+//       if (!obj.uiGroup) {
+//         console.log("  ⚠️ UI не создан, создаем...");
+//         obj.createUI();
+//       }
+      
+//       console.log("  📏 Вызываем updateDOMValues...");
+//       obj.updateDOMValues();
+      
+//       // Проверяем, что метод существует
+//       if (typeof obj.updateDOMValues !== 'function') {
+//         console.error("  ❌ Метод updateDOMValues НЕ НАЙДЕН!");
+//       } else {
+//         console.log("  ✅ Метод updateDOMValues вызван");
+//       }
+      
+//       count++;
+//     }
+//   });
+  
+//   console.log(`✅ Обновлено ${count} труб`);
+  
+//   // Принудительно сообщаем рендереру об изменениях
+//   if (window.Engine && window.Engine.labelRenderer) {
+//     window.Engine.labelRenderer.forceRender = true;
+//   }
+// }
+
+
+function toggleLengthEditMode(event) {
+  if (event) {
+    event.stopPropagation();
+    event.preventDefault();
+  }
+
+  STATE.isEditingLengths = !STATE.isEditingLengths;
+  const btn = document.getElementById("btnToggleLengthEdit");
+  if (btn) {
+    STATE.isEditingLengths ? btn.classList.add("active") : btn.classList.remove("active");
+  }
+
+  console.log("🔘 Режим редактирования длин:", STATE.isEditingLengths);
+
+  STATE.Three_D_objects.forEach((obj) => {
+    if (obj.type === "Edge") {
+      if (!obj.uiGroup) obj.createUI();
+      obj.updateDOMValues(); // Этот метод теперь жестко меняет style.display
+    }
+  });
+}
+
+
+
+// // Делаем функцию доступной глобально (на всякий случай)
+// window.toggleLengthEditMode = toggleLengthEditMode;
+
+// 3. Обработка изменения длины
+// function handleLengthInputChange(event, edgeObj) {
+//     const newLength = parseFloat(event.target.value);
+    
+//     if (newLength > 0.1) {
+//         // Применяем новую длину напрямую к геометрии
+//         applyNewLengthToEdge(edgeObj, newLength);
+//         // Обновляем значение в инпуте на случай округлений
+//         event.target.value = edgeObj.Length.toFixed(2);
+//     } else {
+//         alert("Длина должна быть больше 0.1 м");
+//         event.target.value = edgeObj.Length.toFixed(2); // Откат
+//     }
+// }
+
+// 4. Прямое обновление геометрии трубы (аналог edit_pipe_tube, но без зависимости от DOM)
+// function applyNewLengthToEdge(edge, newLength) {
+//     const start_node = edge.start_node;
+//     const end_node = edge.end_node;
+    
+//     const start_World_Pos = new THREE.Vector3();
+//     const end_World_Pos = new THREE.Vector3();
+    
+//     start_node.getWorldPosition(start_World_Pos);
+//     end_node.getWorldPosition(end_World_Pos);
+    
+//     // Направление от начала к концу
+//     const direction_Vector = new THREE.Vector3().subVectors(end_World_Pos, start_World_Pos).normalize();
+    
+//     // Новая мировая позиция конца
+//     const new_World_End = new THREE.Vector3().addVectors(start_World_Pos, direction_Vector.multiplyScalar(newLength));
+    
+//     // Переводим новую мировую позицию в локальные координаты родителя конечного узла
+//     const local_End_Node = new_World_End.clone();
+//     if (end_node.parent) {
+//         end_node.parent.worldToLocal(local_End_Node);
+//     }    
+//     end_node.position.copy(local_End_Node);
+    
+//     // Обновляем матрицы
+//     end_node.updateMatrixWorld(true); 
+//     start_node.updateMatrixWorld(true);
+//     edge.updateMatrixWorld(true);
+
+//     // Пересоздаем геометрию трубы
+//     const path_Start = start_World_Pos.clone();
+//     const path_End = new_World_End.clone();
+//     edge.worldToLocal(path_Start);
+//     edge.worldToLocal(path_End);
+    
+//     const new_Path = new THREE.LineCurve3(path_Start, path_End);
+//     edge.geometry.dispose(); 
+//     edge.geometry = new THREE.TubeGeometry(new_Path, 64, VisualPipelins.d_pipe_base/2, 12, false);
+    
+//     // Обновляем свойства объекта
+//     edge.Length = newLength;
+    
+//     // Пересчитываем длины всех труб на сцене (ваша существующая функция)
+//     check_position_node_for_edge();
+//     checkAllPipelines(); // Проверка коллизий
+// }
+
+// function applyNewLengthToEdge(edge, newLength) {
+//     const start_node = edge.start_node;
+//     const end_node = edge.end_node;
+    
+//     const start_World_Pos = new THREE.Vector3();
+//     const end_World_Pos = new THREE.Vector3();
+    
+//     start_node.getWorldPosition(start_World_Pos);
+//     end_node.getWorldPosition(end_World_Pos);
+    
+//     const direction_Vector = new THREE.Vector3().subVectors(end_World_Pos, start_World_Pos).normalize();
+//     const new_World_End = new THREE.Vector3().addVectors(start_World_Pos, direction_Vector.multiplyScalar(newLength));
+    
+//     const local_End_Node = new_World_End.clone();
+//     if (end_node.parent) {
+//         end_node.parent.worldToLocal(local_End_Node);
+//     }    
+//     end_node.position.copy(local_End_Node);
+    
+//     end_node.updateMatrixWorld(true); 
+//     start_node.updateMatrixWorld(true);
+//     edge.updateMatrixWorld(true);
+
+//     const path_Start = start_World_Pos.clone();
+//     const path_End = new_World_End.clone();
+//     edge.worldToLocal(path_Start);
+//     edge.worldToLocal(path_End);
+    
+//     const new_Path = new THREE.LineCurve3(path_Start, path_End);
+//     edge.geometry.dispose(); 
+//     edge.geometry = new THREE.TubeGeometry(new_Path, 64, VisualPipelins.d_pipe_base/2, 12, false);
+    
+//     edge.Length = newLength;
+    
+//     // ✅ Метки автоматически обновятся, так как они дети трубы!
+//     // Никакого пересоздания не нужно!
+    
+//     check_position_node_for_edge();
+//     checkAllPipelines();
+// }
+
+// Глобальная функция для изменения длины трубы
+window.applyNewLengthToEdge = function(edge, newLength) {
+    console.log("📏 Изменение длины трубы:", edge.uuid, "новая длина:", newLength);
+    
+    const start_node = edge.start_node;
+    const end_node = edge.end_node;
+    
+    const start_World_Pos = new THREE.Vector3();
+    const end_World_Pos = new THREE.Vector3();
+    
+    start_node.getWorldPosition(start_World_Pos);
+    end_node.getWorldPosition(end_World_Pos);
+    
+    const direction_Vector = new THREE.Vector3().subVectors(end_World_Pos, start_World_Pos).normalize();
+    const new_World_End = new THREE.Vector3().addVectors(start_World_Pos, direction_Vector.multiplyScalar(newLength));
+    
+    const local_End_Node = new_World_End.clone();
+    if (end_node.parent) {
+        end_node.parent.worldToLocal(local_End_Node);
+    }    
+    end_node.position.copy(local_End_Node);
+    
+    end_node.updateMatrixWorld(true); 
+    start_node.updateMatrixWorld(true);
+    edge.updateMatrixWorld(true);
+
+    const path_Start = start_World_Pos.clone();
+    const path_End = new_World_End.clone();
+    edge.worldToLocal(path_Start);
+    edge.worldToLocal(path_End);
+    
+    const new_Path = new THREE.LineCurve3(path_Start, path_End);
+    edge.geometry.dispose(); 
+    edge.geometry = new THREE.TubeGeometry(new_Path, 64, VisualPipelins.d_pipe_base/2, 12, false);
+    
+    edge.Length = newLength;
+    
+    // ✅ НОВОЕ: Обновляем позиции меток!
+    if (typeof edge.updateLabelsPosition === 'function') {
+        edge.updateLabelsPosition();
+    }
+    
+    if (typeof check_position_node_for_edge === 'function') {
+        check_position_node_for_edge();
+    }
+    
+    if (typeof checkAllPipelines === 'function') {
+        checkAllPipelines();
+    }
+    
+    console.log("✅ Длина трубы обновлена:", edge.Length);
+};
