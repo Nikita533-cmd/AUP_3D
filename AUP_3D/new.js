@@ -312,20 +312,34 @@ function CreatePipeline(pbCX, pbCY, pbCZ, activeAxis, activeAxis_direction, pbLe
         const isContinuous = document.getElementById("continuousPipelineCheck")?.checked || false;
         
         if (isContinuous) {
+            // 1. Если уже был выделен другой объект — сбрасываем его через метод Engine
+            if (Engine.selectedObject && Engine.selectedObject !== Node_End) {
+                if (typeof Engine.deselectObject === 'function') {
+                    Engine.deselectObject(Engine.selectedObject);
+                }
+            }
+
+            // 2. Запоминаем в Engine и выделяем (желтым цветом) именно наш новый узел
             Engine.selectedObject = Node_End;
-            // Если галочка стоит: обновляем поля для следующего шага
-            document.getElementById("pbCX").value = Node_End.position.x.toFixed(2);
-            document.getElementById("pbCY").value = Node_End.position.y.toFixed(2);
-            document.getElementById("pbCZ").value = Node_End.position.z.toFixed(2);
-            // document.getElementById("pbLength").value = "5"; // Сброс длины по умолчанию
+            if (typeof Engine.selectObject === 'function') {
+                Engine.selectObject(Node_End);
+            }
+
+            // 3. Вызываем идущие следом в клике мыши функции обновлений координат и интерфейса
+            if (typeof Engine.update_Pipe_tube_coordinate === 'function') Engine.update_Pipe_tube_coordinate();
+            if (typeof Engine.update_Pipe_tube === 'function') Engine.update_Pipe_tube();
+            if (typeof Engine.info_selected_elevent === 'function') Engine.info_selected_elevent();
+            if (typeof Engine.update_Node_coordinate === 'function') Engine.update_Node_coordinate();
             
             if (typeof Utils !== 'undefined') {
-                Utils.showStatus(`Участок создан. Конечный узел выбран и подсвечен. Готов к следующему.`);
+                Utils.showStatus(`Участок создан. Фокус автоматически переведен на новый узел.`);
             }
-        } else {
-            // Если галочка НЕ стоит: просто сообщаем об успехе, окно можно закрыть вручную
+        } 
+        else {
+            // Если галочка НЕ стоит: мы вообще не трогаем выделение и не симулируем клик.
+            // Старый выбранный узел остается активным, а новый просто добавляется на сцену.
             if (typeof Utils !== 'undefined') {
-                Utils.showStatus(`Участок создан. Конечный узел выбран и подсвечен.`);
+                Utils.showStatus(`Участок создан. Конечный узел успешно добавлен на сцену.`);
             }
         }
     }
