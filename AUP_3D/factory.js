@@ -44,7 +44,7 @@ export class Node_new extends THREE.Mesh {
     };
   }
 
-  // ✅ Единая точка входа для обновления данных узла
+  // Единая точка входа для обновления данных узла
   applyResult(data) {
     this.pressure_m = data.pressure_m || 0;
     this.flow_l_s = (data.type && data.type.toLowerCase() === 'sprinkler') ? (data.sprinkler_flow_l_s || 0) : 0;
@@ -106,12 +106,12 @@ export class Node_new extends THREE.Mesh {
     if (this._qLabel) this._qLabel.visible = !!showQ && this.flow_l_s > 0;
   }
 
-  // ✅ Вызывается из глобального updateLabelsForZoom
+  // Вызывается из глобального updateLabelsForZoom
   updateLabelTransform(sizeFactor, offsetFactor, camRight, camUp) {
     if (!this._pLabel || !this._qLabel) return;
     
     // P: справа-сверху относительно камеры
-    const pRight = 0.2, pUp = 0.2;
+    const pRight = 0.0, pUp = 0.15;
     this._pLabel.position.set(
       camRight.x * pRight + camUp.x * pUp,
       camRight.y * pRight + camUp.y * pUp,
@@ -121,7 +121,7 @@ export class Node_new extends THREE.Mesh {
     this._pLabel.scale.set(sP, sP, 1);
 
     // Q: слева-снизу относительно камеры
-    const qRight = -0.2, qUp = -0.55;
+    const qRight = 0, qUp = -0.35;
     this._qLabel.position.set(
       camRight.x * qRight + camUp.x * qUp,
       camRight.y * qRight + camUp.y * qUp,
@@ -200,7 +200,7 @@ export class Edge_new extends THREE.Mesh {
     };
   }
 
-  // ✅ Единая точка входа для обновления данных трубы
+  // Единая точка входа для обновления данных трубы
   applyResult(data) {
     this.massflowrate = Math.abs(data.flow_l_s || data.massflowrate || 0);
     this.velocity = Math.abs(data.velocity_m_s || data.velocity || 0);
@@ -221,7 +221,7 @@ export class Edge_new extends THREE.Mesh {
       this._qLabel.userData.isPipeLabel = true;
       this._qLabel.userData.anchorObj = this;
       this._qLabel.userData.pipeOffset = 0.18;
-      this._qLabel.userData.baseScale = 15;
+      this._qLabel.userData.baseScale = 2;
       this.add(this._qLabel);
     }
     if (!this._vLabel) {
@@ -230,7 +230,7 @@ export class Edge_new extends THREE.Mesh {
       this._vLabel.userData.isPipeLabel = true;
       this._vLabel.userData.anchorObj = this;
       this._vLabel.userData.pipeOffset = -0.18;
-      this._vLabel.userData.baseScale = 15;
+      this._vLabel.userData.baseScale = 2;
       this.add(this._vLabel);
     }
   }
@@ -238,25 +238,53 @@ export class Edge_new extends THREE.Mesh {
   _createPipeLabelMesh(text, color, scaleSize) {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    const fontSize = 64;
+    
+    // 1. Увеличиваем разрешение шрифта в 2 раза (было 64 -> стало 128)
+    const fontSize = 128; 
+    const padding = 40;
     ctx.font = `Bold ${fontSize}px Arial, sans-serif`;
+    
     const textWidth = ctx.measureText(text).width;
-    const padding = 30;
     canvas.width = Math.ceil(textWidth + padding * 2);
     canvas.height = fontSize + padding * 2;
-    ctx.fillStyle = color;
+
+    // После изменения размеров canvas контекст сбрасывается, задаем настройки заново
+    ctx.font = `Bold ${fontSize}px Arial, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    // ctx.shadowColor = 'rgba(255,255,255,0.9)';
-    // ctx.shadowBlur = 6;
+
+    // 2. Вместо размытой тени делаем четкую белую подложку-обводку
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 14; 
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+    ctx.strokeText(text, canvas.width / 2, canvas.height / 2);
+
+    // 3. Рисуем сам текст поверх обводки
+    ctx.fillStyle = color;
     ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+
+    // 4. Настраиваем текстуру для максимальной резкости
     const texture = new THREE.CanvasTexture(canvas);
     texture.minFilter = THREE.LinearFilter;
-    const scale = scaleSize / 10240;
+    texture.magFilter = THREE.LinearFilter;
+    texture.generateMipmaps = false;
+    texture.anisotropy = 8; // Убирает размытие при взгляде на трубу сбоку
+    texture.colorSpace = THREE.SRGBColorSpace; // Чтобы цвета не были блеклыми (для новых версий Three.js)
+
+    // 5. Компенсируем двукратное увеличение fontSize (делим не на 10240, а на 20480)
+    const scale = scaleSize / 20048; 
     const geometry = new THREE.PlaneGeometry(canvas.width * scale, canvas.height * scale);
-    const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true, side: THREE.DoubleSide, depthTest: false });
+    
+    const material = new THREE.MeshBasicMaterial({ 
+      map: texture, 
+      transparent: true, 
+      side: THREE.DoubleSide, 
+      depthTest: false 
+    });
+
     return new THREE.Mesh(geometry, material);
   }
+
 
   _updateLabelTexts() {
     if (this._qLabel) {
@@ -279,7 +307,7 @@ export class Edge_new extends THREE.Mesh {
     this.updateFlowArrowVisibility();
   }
 
-  // ✅ Вызывается из глобального updateLabelsForZoom
+  // Вызывается из глобального updateLabelsForZoom
   updateLabelTransform(sizeFactor, offsetFactor, camRight, camUp, camPos) {
     if (!this._qLabel && !this._vLabel) return;
     
