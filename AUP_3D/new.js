@@ -559,81 +559,67 @@ function check_pipe_tube_Edit(){
     document.getElementById("splitApplyBtn_Edit").onclick = () => edit_pipe_tube(Engine.selectedObject);
     
 }
-// функция дял изменения геометрии трубы
+// функция для изменения геометрии трубы
 function edit_pipe_tube(Edge) {
     let start_node = Edge.start_node;
     let end_node = Edge.end_node;
-    const new_type_tube = document.getElementById("get_tube_pipe_edit").selectedOptions[0].textContent; // тип трубы (ГОСТ)
-        
-    const new_pbDiameter = document.getElementById("pbDiameter_edit"); //// элемент для удосбвтва вывода свойств
-    const new_DN_tube = parseFloat(new_pbDiameter.selectedOptions[0].textContent); ///// сами свойства
+    const new_type_tube = document.getElementById("get_tube_pipe_edit").selectedOptions[0].textContent;
+    const new_pbDiameter = document.getElementById("pbDiameter_edit");
+    const new_DN_tube = parseFloat(new_pbDiameter.selectedOptions[0].textContent);
     const new_k_t = parseFloat(new_pbDiameter.selectedOptions[0].dataset.k_t);
     const new_kvelocity = parseFloat(new_pbDiameter.selectedOptions[0].dataset.kvelocity);
-    const new_long = parseFloat(document.getElementById("pipe_edit").value);    
-    
+    const new_long = parseFloat(document.getElementById("pipe_edit").value);
+
     const start_World_Pos = new THREE.Vector3();
     const end_World_Pos = new THREE.Vector3();
-    // берем мирвоые позиции из локальных объекта 
     start_node.getWorldPosition(start_World_Pos);
     end_node.getWorldPosition(end_World_Pos);
-    // преобразованеи вектора в 1
-    const direction_Vector = new THREE.Vector3();
-    direction_Vector.subVectors(end_World_Pos, start_World_Pos).normalize();
-    // расчет положение точки end
-    const new_World_End = new THREE.Vector3();
-    new_World_End.addVectors(start_World_Pos, direction_Vector.multiplyScalar(new_long));
-    
-    const local_End_Node = new_World_End.clone();    
-    // Переход из мировых координат в локальыне рордителя
-    if (end_node.parent) {
-        end_node.parent.worldToLocal(local_End_Node);
-    }    
+
+    const direction_Vector = new THREE.Vector3().subVectors(end_World_Pos, start_World_Pos).normalize();
+    const new_World_End = new THREE.Vector3().addVectors(start_World_Pos, direction_Vector.multiplyScalar(new_long));
+
+    const local_End_Node = new_World_End.clone();
+    if (end_node.parent) end_node.parent.worldToLocal(local_End_Node);
     end_node.position.copy(local_End_Node);
-    
-    end_node.updateMatrixWorld(true); 
+
+    end_node.updateMatrixWorld(true);
     start_node.updateMatrixWorld(true);
     Edge.updateMatrixWorld(true);
 
-    // обновление отображения ребра
     const path_Start = start_World_Pos.clone();
     const path_End = new_World_End.clone();
-
     Edge.worldToLocal(path_Start);
     Edge.worldToLocal(path_End);
-    
     const new_Path = new THREE.LineCurve3(path_Start, path_End);
-        
-    Edge.geometry.dispose(); 
+    Edge.geometry.dispose();
     Edge.geometry = new THREE.TubeGeometry(new_Path, 64, VisualPipelins.d_pipe_base/2, 12, false);
-    
-    Edge.ghost=new_type_tube;
-    Edge.DN=new_DN_tube;
-    Edge.k_t=new_k_t;
-    Edge.kvelocity=new_kvelocity;
+
+    Edge.ghost = new_type_tube;
+    Edge.DN = new_DN_tube;
+    Edge.k_t = new_k_t;
+    Edge.kvelocity = new_kvelocity;
     Edge.Length = new_long;
 
-    if (Edge._inputLenElement) {
-        Edge._inputLenElement.value = new_long.toFixed(2);
-    }
+    // ✅ Перерисовываем текст + стрелку + смещения именно этой трубы
+    if (typeof Edge._updateLabelTexts === 'function') Edge._updateLabelTexts();
+    if (typeof Edge.createFlowArrow === 'function') Edge.createFlowArrow();
+    if (typeof Edge._updateLabelsVisibility === 'function') Edge._updateLabelsVisibility();
 
-    if (typeof Edge.updateLabelsPosition === 'function') {
-        Edge.updateLabelsPosition();
-    }
+    if (Edge._inputLenElement) Edge._inputLenElement.value = new_long.toFixed(2);
+    if (typeof Edge.updateLabelsPosition === 'function') Edge.updateLabelsPosition();
 
     const new_Node_Geometry = new THREE.SphereGeometry(VisualPipelins.d_node_base/2, 32, 32);
     Edge.start_node.geometry.dispose();
     Edge.end_node.geometry.dispose();
     Edge.start_node.geometry = new_Node_Geometry;
     Edge.end_node.geometry = new_Node_Geometry;
-    cancel("PipelineModal_Edit");
 
+    cancel("PipelineModal_Edit");
     update_Node_XYZ();
 
-    console.log("Engine.scene.children_EDIT",Engine.scene.children);
-    // check_position_node_for_edge(Edge.end_node);
+    // ⚠️ ВАЖНО: этот вызов пересобирает ВСЕ трубы — теперь он обновит и их метки/стрелки
     check_position_node_for_edge();
-    checkAllPipelines(); // функция для проверки коллизии
-
+    checkAllPipelines();
 }
 
 // функция для обновления глобал координат (функция внутри класса Node)
@@ -819,24 +805,36 @@ function html_branch_content(Count) {
 
 function check_position_node_for_edge() {
     Engine.scene.traverse((child) => {
-        if ( child.type === 'Edge') {
+        if (child.type === 'Edge' && child.start_node && child.end_node) {
             const start_check = new THREE.Vector3();
             const end_check = new THREE.Vector3();
             child.start_node.getWorldPosition(start_check);
             child.end_node.getWorldPosition(end_check);
-            const new_long = start_check.distanceTo(end_check); // пересчитанная длина ребра междлу точками
+
+            // 1. Пересчитываем длину
+            const new_long = start_check.distanceTo(end_check);
             child.Length = new_long;
+
+            // 2. Пересоздаём геометрию трубы
             const Local_position_start = start_check.clone();
             const Local_position_end = end_check.clone();
-            child.worldToLocal(Local_position_start); //переходим в координаты родителя
-            child.worldToLocal(Local_position_end); //переходим в координаты родителя
-            const path = new THREE.LineCurve3(Local_position_start, Local_position_end); // строим путь от родителя
-            child.geometry.dispose(); // удаялем старую геомтерию
+            child.worldToLocal(Local_position_start);
+            child.worldToLocal(Local_position_end);
+            const path = new THREE.LineCurve3(Local_position_start, Local_position_end);
+            child.geometry.dispose();
             child.geometry = new THREE.TubeGeometry(path, 64, VisualPipelins.d_pipe_base/2, 12, false);
             child.updateMatrixWorld(true);
-        }
-    });    
 
+            // 3. ✅ Обновляем ТЕКСТ меток (L и DN могли измениться)
+            if (typeof child._updateLabelTexts === 'function') child._updateLabelTexts();
+
+            // 4. ✅ Пересоздаём СТРЕЛКУ по новой геометрии
+            if (typeof child.createFlowArrow === 'function') child.createFlowArrow();
+
+            // 5. ✅ Пересчитываем СМЕЩЕНИЯ меток (targetOffset DN/Q/V/L)
+            if (typeof child._updateLabelsVisibility === 'function') child._updateLabelsVisibility();
+        }
+    });
 }
 
 // Удаление выбранной трубы и связанный с ней дочерних элементов и есть дочерний узел является концом другого трубопровода,тот тоже удаляется
@@ -1173,15 +1171,37 @@ function logPipelineTree() {
     console.log("====================================");
 }
 
-// ============================================================================
-// ГЛАВНАЯ ФУНКЦИЯ ВИЗУАЛИЗАЦИИ (теперь всего несколько строк!)
+/// ============================================================================
+// ГЛАВНАЯ ФУНКЦИЯ ВИЗУАЛИЗАЦИИ (ПОЛНАЯ ИНКАПСУЛЯЦИЯ)
 // ============================================================================
 function visualizeResults(result) {
     console.log('🚀 Начинаем визуализацию...');
-    
-    // 1. Очищаем старые метки через методы классов
-    STATE.Three_D_objects.forEach(obj => { if (typeof obj.destroyLabels === 'function') obj.destroyLabels(); });
 
+    // 1. Очищаем СТАРЫЕ глобальные метки из сцены (на случай, если остались от прошлых версий)
+    const stale = [];
+    Engine.scene.traverse((c) => {
+        if (c.name === 'PressureLabel' || c.name === 'FlowLabel' ||
+            c.name === 'VelocityLabel' || c.name === 'FlowArrow' || 
+            c.name === 'DNLabel' || c.name === 'LengthLabel') {
+            stale.push(c);
+        }
+    });
+    stale.forEach(l => {
+        if (l.parent) l.parent.remove(l);
+        if (l.geometry) l.geometry.dispose();
+        if (l.material) { 
+            if (l.material.map) l.material.map.dispose(); 
+            l.material.dispose(); 
+        }
+    });
+
+    // 2. Очищаем инкапсулированные метки через методы классов + сбрасываем глобальный массив
+    STATE.Three_D_objects.forEach(obj => {
+        if (typeof obj.destroyLabels === 'function') obj.destroyLabels();
+    });
+    STATE.calculationLabels = [];
+
+    // 3. Включаем все флаги видимости
     STATE.showLabelsPressure = true;
     STATE.showLabelsMassFlowRate = true;
     STATE.showLabelsVelocity = true;
@@ -1189,24 +1209,54 @@ function visualizeResults(result) {
     updateToggleButtonState('btnToggleFlow', true);
     updateToggleButtonState('btnToggleVelocity', true);
 
-    // 2. Применяем результаты к узлам
+    let nodesCount = 0;
+    let edgesCount = 0;
+
+    // 4. Применяем результаты к УЗЛАМ (Node / Source / Sprinkler)
+    // ✅ МАГИЯ: Класс Node_new сам создаст/обновит метки P и Q через свой метод applyResult
     for (const [uuid, data] of Object.entries(result.nodes)) {
         const nodeObj = STATE.Three_D_objects.find(
-            obj => obj.uuid.toLowerCase() === uuid.toLowerCase() && ['Node', 'Source', 'Sprinkler'].includes(obj.type)
+            obj => obj.uuid.toLowerCase() === uuid.toLowerCase() &&
+            (obj.type === 'Node' || obj.type === 'Source' || obj.type === 'Sprinkler')
         );
-        if (nodeObj) nodeObj.applyResult(data);
+        
+        if (nodeObj && typeof nodeObj.applyResult === 'function') {
+            nodeObj.applyResult(data);
+            nodesCount++;
+        }
     }
 
-    // 3. Применяем результаты к трубам
+    // 5. Применяем результаты к ТРУБАМ (Edge)
+    // ✅ МАГИЯ: Класс Edge_new сам создаст/обновит метки DN, Q, L, V и стрелку через свой метод applyResult
     for (const [uuid, data] of Object.entries(result.edges)) {
         const edgeObj = STATE.Three_D_objects.find(
             obj => obj.uuid.toLowerCase() === uuid.toLowerCase() && obj.type === 'Edge'
         );
-        if (edgeObj) edgeObj.applyResult(data);
+        
+        if (edgeObj && typeof edgeObj.applyResult === 'function') {
+            edgeObj.applyResult(data);
+            edgesCount++;
+        }
     }
 
-    console.log(`✅ ВИЗУАЛИЗАЦИЯ ЗАВЕРШЕНА!`);
-    alert(`✅ Расчет успешно завершен!\nДавление насоса: ${result.summary.source_pressure_m.toFixed(3).replace('.',',')} м`);
+    // 6. Принудительно обновляем позиции и размеры всех меток под текущий зум камеры
+    updateLabelsForZoom();
+
+    console.log(`✅ ВИЗУАЛИЗАЦИЯ ЗАВЕРШЕНА! Узлов: ${nodesCount}, труб: ${edgesCount}`);
+    
+    // 7. Показываем итоговое сообщение пользователю
+    alert(
+        `✅ Расчет успешно завершен!\n` +
+        `Давление насоса: ${result.summary.source_pressure_m.toFixed(3)} м\n` +
+        `Добавлено меток: ${nodesCount + edgesCount}\n` +
+        `⏱️ Время расчета (всего): ${result.summary.timing.total_s.toFixed(4)} сек\n` +
+        `  • Этап 1: ${result.summary.timing.stage1_s.toFixed(4)} сек\n` +
+        `  • Поиск источника: ${result.summary.timing.source_search_s.toFixed(4)} сек\n` +
+        `  • Финальное решение: ${result.summary.timing.final_solve_s.toFixed(4)} сек\n` +
+        `📊 Невязки:\n` +
+        `  • Норма невязки: ${result.summary.residual_norm.toExponential(4)}\n` +
+        `  • Макс. невязка: ${result.summary.max_residual.toExponential(4)}`
+    );
 }
 
 // ============================================================================
@@ -1852,27 +1902,21 @@ function toggleLengthEditMode(event) {
 
 // Глобальная функция для изменения длины трубы
 window.applyNewLengthToEdge = function(edge, newLength) {
-    console.log("📏 Изменение длины трубы:", edge.uuid, "новая длина:", newLength);
-    
     const start_node = edge.start_node;
     const end_node = edge.end_node;
-    
     const start_World_Pos = new THREE.Vector3();
     const end_World_Pos = new THREE.Vector3();
-    
     start_node.getWorldPosition(start_World_Pos);
     end_node.getWorldPosition(end_World_Pos);
-    
+
     const direction_Vector = new THREE.Vector3().subVectors(end_World_Pos, start_World_Pos).normalize();
     const new_World_End = new THREE.Vector3().addVectors(start_World_Pos, direction_Vector.multiplyScalar(newLength));
-    
+
     const local_End_Node = new_World_End.clone();
-    if (end_node.parent) {
-        end_node.parent.worldToLocal(local_End_Node);
-    }    
+    if (end_node.parent) end_node.parent.worldToLocal(local_End_Node);
     end_node.position.copy(local_End_Node);
-    
-    end_node.updateMatrixWorld(true); 
+
+    end_node.updateMatrixWorld(true);
     start_node.updateMatrixWorld(true);
     edge.updateMatrixWorld(true);
 
@@ -1880,27 +1924,19 @@ window.applyNewLengthToEdge = function(edge, newLength) {
     const path_End = new_World_End.clone();
     edge.worldToLocal(path_Start);
     edge.worldToLocal(path_End);
-    
-    const new_Path = new THREE.LineCurve3(path_Start, path_End);
-    edge.geometry.dispose(); 
-    edge.geometry = new THREE.TubeGeometry(new_Path, 64, VisualPipelins.d_pipe_base/2, 12, false);
-    
+    edge.geometry.dispose();
+    edge.geometry = new THREE.TubeGeometry(new THREE.LineCurve3(path_Start, path_End), 64, VisualPipelins.d_pipe_base/2, 12, false);
     edge.Length = newLength;
-    
-    // Обновляем позиции меток
-    if (typeof edge.updateLabelsPosition === 'function') {
-        edge.updateLabelsPosition();
-    }
-    
-    if (typeof check_position_node_for_edge === 'function') {
-        check_position_node_for_edge();
-    }
-    
-    if (typeof checkAllPipelines === 'function') {
-        checkAllPipelines();
-    }
-    
-    console.log("Длина трубы обновлена:", edge.Length);
+
+    // ✅ Текст + стрелка + смещения
+    if (typeof edge._updateLabelTexts === 'function') edge._updateLabelTexts();
+    if (typeof edge.createFlowArrow === 'function') edge.createFlowArrow();
+    if (typeof edge._updateLabelsVisibility === 'function') edge._updateLabelsVisibility();
+
+    if (typeof edge.updateLabelsPosition === 'function') edge.updateLabelsPosition();
+
+    check_position_node_for_edge();
+    checkAllPipelines();
 };
 
 // ============================================================================
