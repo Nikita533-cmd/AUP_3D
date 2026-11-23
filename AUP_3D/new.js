@@ -16,8 +16,8 @@ import { World } from './world.js';
 STATE.calculationLabels = STATE.calculationLabels || [];
 
 const BASE_ZOOM = 1000;
-const COMPENSATION_SIZE = 1.0;    // ✅ Коэффициент для РАЗМЕРА метки (1.0 = всегда читаемы)
-const COMPENSATION_OFFSET = 0.3;  // ✅ Коэффициент для СМЕЩЕНИЯ (0.3 = слабо разносятся)
+const COMPENSATION_SIZE = 1.0;    // Коэффициент для РАЗМЕРА метки (1.0 = всегда читаемы)
+const COMPENSATION_OFFSET = 0.3;  // Коэффициент для СМЕЩЕНИЯ (0.3 = слабо разносятся)
 
 function updateLabelsForZoom() {
     if (!Engine || !Engine.camera) return;
@@ -31,7 +31,7 @@ function updateLabelsForZoom() {
     const camRight = new THREE.Vector3().setFromMatrixColumn(Engine.camera.matrixWorld, 0).normalize();
     const camPos = Engine.camera.position;
 
-    // ✅ Делегируем обновление каждому объекту
+    // Делегируем обновление каждому объекту
     for (const obj of STATE.Three_D_objects) {
         if (typeof obj.updateLabelTransform === 'function') {
             obj.updateLabelTransform(sizeFactor, offsetFactor, camRight, camUp, camPos);
@@ -104,7 +104,7 @@ function togglePressureLabels() {
         if (child.name === 'PressureLabel') child.visible = STATE.showLabelsPressure;
     });
 
-    // ✅ НОВОЕ: Обновляем новые метки во всех узлах (включая оросители)
+    // НОВОЕ: Обновляем новые метки во всех узлах (включая оросители)
     STATE.Three_D_objects.forEach((obj) => {
         if ((obj.type === "Node" || obj.type === "Sprinkler" || obj.type === "Source") && typeof obj._updateLabelsVisibility === "function") {
             obj._updateLabelsVisibility();
@@ -155,14 +155,14 @@ function toggleFlowLabels() {
     STATE.showLabelsMassFlowRate = !STATE.showLabelsMassFlowRate;
     console.log("🔘 Расход (Q):", STATE.showLabelsMassFlowRate);
 
-    // ✅ 1. Обновляем видимость меток расхода на ТРУБАХ
+    // 1. Обновляем видимость меток расхода на ТРУБАХ
     STATE.Three_D_objects.forEach((obj) => {
         if (obj.type === "Edge" && typeof obj._updateLabelsVisibility === "function") {
             obj._updateLabelsVisibility();
         }
     });
 
-    // ✅ 2. ДОБАВИТЬ: Обновляем видимость меток расхода на УЗЛАХ (включая оросители и источники)
+    // 2. ДОБАВИТЬ: Обновляем видимость меток расхода на УЗЛАХ (включая оросители и источники)
     STATE.Three_D_objects.forEach((obj) => {
         if ((obj.type === "Node" || obj.type === "Sprinkler" || obj.type === "Source") && typeof obj._updateLabelsVisibility === "function") {
             obj._updateLabelsVisibility();
@@ -187,7 +187,7 @@ function toggleVelocityLabels() {
     STATE.showLabelsVelocity = !STATE.showLabelsVelocity;
     console.log("🔘 Скорость (V):", STATE.showLabelsVelocity);
 
-    // ✅ Обновляем видимость через методы классов
+    // Обновляем видимость через методы классов
     STATE.Three_D_objects.forEach((obj) => {
         if (obj.type === "Edge" && typeof obj._updateLabelsVisibility === "function") {
             obj._updateLabelsVisibility();
@@ -447,7 +447,7 @@ function CreatePipeline(pbCX, pbCY, pbCZ, activeAxis, activeAxis_direction, pbLe
             Pipe_connection.attach(Node_End);
         }
 
-        // ✅ СОЗДАЁМ метки DN и L СРАЗУ, до расчёта
+        // СОЗДАЁМ метки DN и L СРАЗУ, до расчёта
         if (typeof Pipe_connection._ensureLabels === 'function') {
             Pipe_connection._ensureLabels();          // создаёт _dnLabel, _lLabel с актуальными значениями
             Pipe_connection._updateLabelsVisibility(); // показывает DN и L, скрывает Q и V (они = 0)
@@ -490,7 +490,7 @@ function CreatePipeline(pbCX, pbCY, pbCZ, activeAxis, activeAxis_direction, pbLe
     updateTreeUI(); 
     checkAllPipelines(); // функция для проверки коллизии
     // =========================================================================
-    // ✅ ГАРАНТИРОВАННЫЙ ВЫБОР И ПОДСВЕТКА ПОСЛЕДНЕГО УЗЛА (ЗЕЛЕНЫЙ ЦВЕТ)
+    // ГАРАНТИРОВАННЫЙ ВЫБОР И ПОДСВЕТКА ПОСЛЕДНЕГО УЗЛА (ЗЕЛЕНЫЙ ЦВЕТ)
     // =========================================================================
     if (Node_End) {
         // 1. Делаем его выбранным объектом в системе
@@ -505,7 +505,7 @@ function CreatePipeline(pbCX, pbCY, pbCZ, activeAxis, activeAxis_direction, pbLe
         // if (!Node_End.userData.originalColor) {
         //     Node_End.userData.originalColor = Node_End.material.color.getHex();
         // }
-        // Node_End.material.color.setHex(0x00ff00); // ✅ Зеленый цвет выделения
+        // Node_End.material.color.setHex(0x00ff00); // Зеленый цвет выделения
         // Node_End.material.needsUpdate = true;
 
         // 4. Проверяем галочку "Непрерывное создание"
@@ -656,7 +656,7 @@ function edit_pipe_tube(Edge) {
     Edge.kvelocity = new_kvelocity;
     Edge.Length = new_long;
 
-    // ✅ Перерисовываем текст + стрелку + смещения именно этой трубы
+    // Перерисовываем текст + стрелку + смещения именно этой трубы
     if (typeof Edge._updateLabelTexts === 'function') Edge._updateLabelTexts();
     if (typeof Edge.createFlowArrow === 'function') Edge.createFlowArrow();
     if (typeof Edge._updateLabelsVisibility === 'function') Edge._updateLabelsVisibility();
@@ -798,11 +798,11 @@ function create_branch(Node) {
             currentEndNode = check_node_end;
         } 
         else {            
-            // ✅ Node_new САМ добавит стрелку, так как тип 'Sprinkler'
+            // Node_new САМ добавит стрелку, так как тип 'Sprinkler'
             currentEndNode = new Node_new(Node_Geometry, Node_Material, 'Sprinkler');
             currentEndNode.position.set(pbCX_end, pbCY_end, pbCZ_end);
             
-            // ⚠️ ВАЖНО: добавляем узел на сцену (этой строки не хватало в старом коде)
+            // ВАЖНО: добавляем узел на сцену (этой строки не хватало в старом коде)
             Engine.scene.add(currentEndNode); 
         }
 
@@ -886,13 +886,13 @@ function check_position_node_for_edge() {
             child.geometry = new THREE.TubeGeometry(path, 64, VisualPipelins.d_pipe_base/2, 12, false);
             child.updateMatrixWorld(true);
 
-            // 3. ✅ Обновляем ТЕКСТ меток (L и DN могли измениться)
+            // 3. Обновляем ТЕКСТ меток (L и DN могли измениться)
             if (typeof child._updateLabelTexts === 'function') child._updateLabelTexts();
 
-            // 4. ✅ Пересоздаём СТРЕЛКУ по новой геометрии
+            // 4. Пересоздаём СТРЕЛКУ по новой геометрии
             if (typeof child.createFlowArrow === 'function') child.createFlowArrow();
 
-            // 5. ✅ Пересчитываем СМЕЩЕНИЯ меток (targetOffset DN/Q/V/L)
+            // 5. Пересчитываем СМЕЩЕНИЯ меток (targetOffset DN/Q/V/L)
             if (typeof child._updateLabelsVisibility === 'function') child._updateLabelsVisibility();
         }
     });
@@ -1056,7 +1056,7 @@ function Edit_Multiple_Nodes(nodesArray) {
         // Обновляем originalColor, чтобы при снятии выделения он стал цветом нового типа
         node.userData.originalColor = node.material.color.getHex();
 
-        // ✅ МАГИЯ: Просто вызываем метод класса! 
+        // МАГИЯ: Просто вызываем метод класса! 
         // Он сам удалит старую стрелку (если тип сменился с Sprinkler) 
         // или нарисует новую (если тип стал Sprinkler)
         if (typeof node.updateSprinklerArrow === "function") {
@@ -1100,7 +1100,7 @@ function Edit_Multiple_Nodes(nodesArray) {
 //     Node.material.needsUpdate = true;
 //     Node.userData.originalColor = Node.material.color.getHex();
 
-//     // 3. ✅ ГЛАВНОЕ ИСПРАВЛЕНИЕ: Если тип стал "Sprinkler", создаем и добавляем стрелку
+//     // 3. ГЛАВНОЕ ИСПРАВЛЕНИЕ: Если тип стал "Sprinkler", создаем и добавляем стрелку
 //     if (new_type === "Sprinkler") {
 //         const sprinklerGroup = new THREE.Group();
 //         sprinklerGroup.name = 'SprinklerArrow';
@@ -1154,10 +1154,10 @@ async function sendJsonAndVisualize(v) {
         }
 
         const result = await response.json();
-        console.log('✅ Ответ от сервера:', result);
+        console.log('Ответ от сервера:', result);
 
         if (result.status === "success") {
-            // ✅ ДОБАВИТЬ ЭТО: сохраняем данные для графика
+            // ДОБАВИТЬ ЭТО: сохраняем данные для графика
             window.lastCalculationResult = {
                 K_system: result.summary.K_system || 0.025,
                 H_max: result.summary.H_max || 0.0,
@@ -1283,7 +1283,7 @@ function visualizeResults(result) {
     let edgesCount = 0;
 
     // 4. Применяем результаты к УЗЛАМ (Node / Source / Sprinkler)
-    // ✅ МАГИЯ: Класс Node_new сам создаст/обновит метки P и Q через свой метод applyResult
+    // МАГИЯ: Класс Node_new сам создаст/обновит метки P и Q через свой метод applyResult
     for (const [uuid, data] of Object.entries(result.nodes)) {
         const nodeObj = STATE.Three_D_objects.find(
             obj => obj.uuid.toLowerCase() === uuid.toLowerCase() &&
@@ -1297,7 +1297,7 @@ function visualizeResults(result) {
     }
 
     // 5. Применяем результаты к ТРУБАМ (Edge)
-    // ✅ МАГИЯ: Класс Edge_new сам создаст/обновит метки DN, Q, L, V и стрелку через свой метод applyResult
+    // МАГИЯ: Класс Edge_new сам создаст/обновит метки DN, Q, L, V и стрелку через свой метод applyResult
     for (const [uuid, data] of Object.entries(result.edges)) {
         const edgeObj = STATE.Three_D_objects.find(
             obj => obj.uuid.toLowerCase() === uuid.toLowerCase() && obj.type === 'Edge'
@@ -1312,11 +1312,11 @@ function visualizeResults(result) {
     // 6. Принудительно обновляем позиции и размеры всех меток под текущий зум камеры
     updateLabelsForZoom();
 
-    console.log(`✅ ВИЗУАЛИЗАЦИЯ ЗАВЕРШЕНА! Узлов: ${nodesCount}, труб: ${edgesCount}`);
+    console.log(`ВИЗУАЛИЗАЦИЯ ЗАВЕРШЕНА! Узлов: ${nodesCount}, труб: ${edgesCount}`);
     
     // 7. Показываем итоговое сообщение пользователю
     alert(
-        `✅ Расчет успешно завершен!\n` +
+        `Расчет успешно завершен!\n` +
         `Давление насоса: ${result.summary.source_pressure_m.toFixed(3)} м\n` +
         `Добавлено меток: ${nodesCount + edgesCount}\n` +
         `⏱️ Время расчета (всего): ${result.summary.timing.total_s.toFixed(4)} сек\n` +
@@ -1370,9 +1370,9 @@ function exportToJSON() {
     URL.revokeObjectURL(url);
     
     if (typeof Utils !== 'undefined' && Utils.showStatus) {
-        Utils.showStatus('✅ Проект успешно сохранен');
+        Utils.showStatus('Проект успешно сохранен');
     } else {
-        console.log("✅ Проект успешно сохранен");
+        console.log("Проект успешно сохранен");
     }
 }
 
@@ -1407,7 +1407,7 @@ export function clearSceneForLoad() {
 
     // Полностью очищаем массив отслеживаемых объектов
     STATE.Three_D_objects = [];
-    console.log("🧹 Сцена очищена для загрузки нового проекта");
+    console.log("Сцена очищена для загрузки нового проекта");
 }
 
 // 5.3. Главная функция загрузки из JSON
@@ -1417,7 +1417,7 @@ function loadProjectFromJSON(file) {
     reader.onload = (e) => {
         try {
             const data = JSON.parse(e.target.result);
-            console.log("📦 Данные для загрузки:", data);
+            console.log("Данные для загрузки:", data);
 
             // 1. Очищаем текущую сцену
             clearSceneForLoad();
@@ -1459,7 +1459,7 @@ function loadProjectFromJSON(file) {
                     nodeMap.set(originalId, node);
                     STATE.Three_D_objects.push(node);
 
-                    // ✅ Node_new сам нарисует стрелку при создании, если typeName === 'Sprinkler'
+                    // Node_new сам нарисует стрелку при создании, если typeName === 'Sprinkler'
                     // Дополнительно вызываем метод для гарантии корректной отрисовки
                     if (typeof node.updateSprinklerArrow === "function") {
                         node.updateSprinklerArrow();
@@ -1503,7 +1503,7 @@ function loadProjectFromJSON(file) {
                         
                         STATE.Three_D_objects.push(edge);
                     } else {
-                        console.warn(`⚠️ Не найдены узлы для трубы: start=${ed.start_node}, end=${ed.end_node}`);
+                        console.warn(`Не найдены узлы для трубы: start=${ed.start_node}, end=${ed.end_node}`);
                     }
                 });
             }
@@ -1512,15 +1512,15 @@ function loadProjectFromJSON(file) {
             if (typeof update_Node_XYZ === 'function') update_Node_XYZ();
             if (typeof updateTreeUI === 'function') updateTreeUI();
 
-            console.log("✅ Проект успешно загружен!");
+            console.log("Проект успешно загружен!");
             if (typeof Utils !== 'undefined' && Utils.showStatus) {
-                Utils.showStatus('✅ Проект успешно загружен');
+                Utils.showStatus('Проект успешно загружен');
             } else {
-                alert("✅ Проект успешно загружен!");
+                alert("Проект успешно загружен!");
             }
 
         } catch (error) {
-            console.error("❌ Ошибка при парсинге JSON:", error);
+            console.error("Ошибка при парсинге JSON:", error);
             alert("Ошибка при чтении файла. Убедитесь, что это корректный JSON проекта.");
         }
     };
@@ -1547,7 +1547,7 @@ function importToJSON() {
     fileInput.onchange = (event) => {
         const file = event.target.files[0];
         if (file) {
-            console.log("📂 Выбран файл для загрузки:", file.name);
+            console.log("Выбран файл для загрузки:", file.name);
             loadProjectFromJSON(file);
             
             // Сбрасываем value, чтобы можно было выбрать тот же файл повторно
@@ -1760,15 +1760,15 @@ window.addEventListener('load', () => {
             eng.camera.updateProjectionMatrix();
             World.initAxesGizmo();
             
-            console.log("✅ Сцена успешно инициализирована и готова к работе");
+            console.log("Сцена успешно инициализирована и готова к работе");
             
-            // ✅ ДОБАВИТЬ ЭТО: Включаем DN и L по умолчанию при старте
+            // ДОБАВИТЬ ЭТО: Включаем DN и L по умолчанию при старте
             if (typeof STATE !== 'undefined') {
                 STATE.showLabelsDN = true;
                 STATE.showLabelsLength = true;
             }
 
-            // ✅ ДОБАВИТЬ ЭТО: Делаем кнопки визуально активными (красными) сразу
+            // ДОБАВИТЬ ЭТО: Делаем кнопки визуально активными (красными) сразу
             const btnDN = document.getElementById("DN_visible");
             if (btnDN) btnDN.classList.add("active");
             
@@ -1778,11 +1778,11 @@ window.addEventListener('load', () => {
             if (typeof window.initContextMenu === 'function') {
                 window.initContextMenu();
             } else {
-                console.warn("⚠️ Функция initContextMenu не найдена!");
+                console.warn("Функция initContextMenu не найдена!");
             }
             
         } else {
-            console.warn("⚠️ Объект Engine или сцена не найдены при загрузке!");
+            console.warn("Объект Engine или сцена не найдены при загрузке!");
         }
     }, 500);
 });
@@ -1819,7 +1819,7 @@ function loadProjectFromJSOssN(file) {
     reader.onload = (e) => {
         try {
             const data = JSON.parse(e.target.result);
-            console.log("📦 Данные для загрузки:", data);
+            console.log("Данные для загрузки:", data);
 
             // 1. Очищаем текущую сцену
             clearSceneForLoad();
@@ -1861,7 +1861,7 @@ function loadProjectFromJSOssN(file) {
                     nodeMap.set(originalId, node);
                     STATE.Three_D_objects.push(node);
 
-                    // ✅ Восстанавливаем стрелку ТОЛЬКО для оросителей
+                    // Восстанавливаем стрелку ТОЛЬКО для оросителей
                     if (typeName === 'Sprinkler') {
                         const sprinklerGroup = new THREE.Group();
                         sprinklerGroup.name = 'SprinklerArrow';
@@ -1931,15 +1931,15 @@ function loadProjectFromJSOssN(file) {
             if (typeof update_Node_XYZ === 'function') update_Node_XYZ();
             if (typeof updateTreeUI === 'function') updateTreeUI();
 
-            console.log("✅ Проект успешно загружен!");
+            console.log("Проект успешно загружен!");
             if (typeof Utils !== 'undefined' && Utils.showStatus) {
-                Utils.showStatus('✅ Проект успешно загружен');
+                Utils.showStatus('Проект успешно загружен');
             } else {
-                alert("✅ Проект успешно загружен!");
+                alert("Проект успешно загружен!");
             }
 
         } catch (error) {
-            console.error("❌ Ошибка при парсинге JSON:", error);
+            console.error("Ошибка при парсинге JSON:", error);
             alert("Ошибка при чтении файла. Убедитесь, что это корректный JSON проекта.");
         }
     };
@@ -1971,7 +1971,7 @@ function toggleLengthEditMode(event) {
     STATE.isEditingLengths ? btn.classList.add("active") : btn.classList.remove("active");
   }
 
-  console.log("🔘 Режим редактирования длин:", STATE.isEditingLengths);
+  console.log("Режим редактирования длин:", STATE.isEditingLengths);
 
   STATE.Three_D_objects.forEach((obj) => {
     if (obj.type === "Edge") {
@@ -2009,7 +2009,7 @@ window.applyNewLengthToEdge = function(edge, newLength) {
     edge.geometry = new THREE.TubeGeometry(new THREE.LineCurve3(path_Start, path_End), 64, VisualPipelins.d_pipe_base/2, 12, false);
     edge.Length = newLength;
 
-    // ✅ Текст + стрелка + смещения
+    // Текст + стрелка + смещения
     if (typeof edge._updateLabelTexts === 'function') edge._updateLabelTexts();
     if (typeof edge.createFlowArrow === 'function') edge.createFlowArrow();
     if (typeof edge._updateLabelsVisibility === 'function') edge._updateLabelsVisibility();
@@ -2071,7 +2071,7 @@ function initContextMenu() {
         }
     });
     
-    console.log('✅ Контекстное меню инициализировано');
+    console.log('Контекстное меню инициализировано');
 }
 
 function buildContextMenu(obj) {
