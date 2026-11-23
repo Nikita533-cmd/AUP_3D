@@ -76,6 +76,12 @@ document.getElementById("btnToggleFlow").onclick = toggleFlowLabels;
 //Слушатель показать/скрыть скоости по участкам труб
 document.getElementById("btnToggleVelocity").onclick = toggleVelocityLabels;
 
+// ============================================================================
+// ПРИВЯЗКА КНОПОК (добавьте это в блок с остальными document.getElementById)
+// ============================================================================
+document.getElementById("src_tank").onclick = toggleDNLabels;
+document.getElementById("src_city").onclick = toggleLengthLabels;
+
 //Слушатель для редактирования длин
 document.getElementById("btnToggleLengthEdit").onclick = toggleLengthEditMode;
 
@@ -106,6 +112,42 @@ function togglePressureLabels() {
     });
     
     updateToggleButtonState('btnTogglePressure', STATE.showLabelsPressure);
+}
+
+// ============================================================================
+// УПРАВЛЕНИЕ ВИДИМОСТЬЮ DN И ДЛИНЫ (L)
+// ============================================================================
+
+function toggleDNLabels() {
+    STATE.showLabelsDN = !STATE.showLabelsDN;
+    console.log("🔘 Диаметр (DN):", STATE.showLabelsDN);
+
+    STATE.Three_D_objects.forEach((obj) => {
+        if (obj.type === "Edge" && typeof obj._updateLabelsVisibility === "function") {
+            obj._updateLabelsVisibility();
+        }
+    });
+
+    const btn = document.getElementById("src_tank");
+    if (btn) {
+        STATE.showLabelsDN ? btn.classList.add("active") : btn.classList.remove("active");
+    }
+}
+
+function toggleLengthLabels() {
+    STATE.showLabelsLength = !STATE.showLabelsLength;
+    console.log("🔘 Длина (L):", STATE.showLabelsLength);
+
+    STATE.Three_D_objects.forEach((obj) => {
+        if (obj.type === "Edge" && typeof obj._updateLabelsVisibility === "function") {
+            obj._updateLabelsVisibility();
+        }
+    });
+
+    const btn = document.getElementById("src_city");
+    if (btn) {
+        STATE.showLabelsLength ? btn.classList.add("active") : btn.classList.remove("active");
+    }
 }
 
 // Управление расходом (Q)
@@ -1205,9 +1247,18 @@ function visualizeResults(result) {
     STATE.showLabelsPressure = true;
     STATE.showLabelsMassFlowRate = true;
     STATE.showLabelsVelocity = true;
+    STATE.showLabelsDN = true;          
+    STATE.showLabelsLength = true; 
+
     updateToggleButtonState('btnTogglePressure', true);
     updateToggleButtonState('btnToggleFlow', true);
     updateToggleButtonState('btnToggleVelocity', true);
+
+    const btnDN = document.getElementById("src_tank");
+    if (btnDN) btnDN.classList.add("active");
+    
+    const btnL = document.getElementById("src_city");
+    if (btnL) btnL.classList.add("active");
 
     let nodesCount = 0;
     let edgesCount = 0;

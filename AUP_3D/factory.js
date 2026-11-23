@@ -119,10 +119,34 @@ export class Node_new extends THREE.Mesh {
   }
 
   _updateLabelsVisibility() {
-    const showP = typeof STATE !== "undefined" && STATE.showLabelsPressure;
+    const showDN = typeof STATE !== "undefined" && STATE.showLabelsDN;
     const showQ = typeof STATE !== "undefined" && STATE.showLabelsMassFlowRate;
-    if (this._pLabel) this._pLabel.visible = !!showP && this.pressure_m > 0;
-    if (this._qLabel) this._qLabel.visible = !!showQ && this.flow_l_s > 0;
+    const showL = typeof STATE !== "undefined" && STATE.showLabelsLength;
+    const showV = typeof STATE !== "undefined" && STATE.showLabelsVelocity;
+
+    // DN виден только если включен флаг
+    if (this._dnLabel) {
+      this._dnLabel.visible = !!showDN;
+      this._dnLabel.userData.targetOffset = showQ ? 0.35 : 0.18;
+    }
+    
+    // Q виден только если включен флаг и есть расход
+    if (this._qLabel) {
+      this._qLabel.visible = !!showQ && this.massflowrate > 0;
+      this._qLabel.userData.targetOffset = 0.18;
+    }
+
+    // L виден только если включен флаг
+    if (this._lLabel) {
+      this._lLabel.visible = !!showL;
+      this._lLabel.userData.targetOffset = showV ? -0.35 : -0.18;
+    }
+
+    // V виден только если включен флаг и есть скорость
+    if (this._vLabel) {
+      this._vLabel.visible = !!showV && this.velocity > 0;
+      this._vLabel.userData.targetOffset = -0.18;
+    }
   }
 
   // Вызывается из глобального updateLabelsForZoom
@@ -339,34 +363,36 @@ export class Edge_new extends THREE.Mesh {
     }
   }
 
-  _updateLabelsVisibility() {
+    _updateLabelsVisibility() {
+    const showDN = typeof STATE !== "undefined" && STATE.showLabelsDN;
     const showQ = typeof STATE !== "undefined" && STATE.showLabelsMassFlowRate;
+    const showL = typeof STATE !== "undefined" && STATE.showLabelsLength;
     const showV = typeof STATE !== "undefined" && STATE.showLabelsVelocity;
-    
-    // DN всегда виден, но смещается: если Q скрыт, DN занимает его место (0.18), иначе выше (0.35)
+
+    // DN виден ТОЛЬКО если включен флаг showDN
     if (this._dnLabel) {
-      this._dnLabel.visible = true;
+      this._dnLabel.visible = !!showDN; 
       this._dnLabel.userData.targetOffset = showQ ? 0.35 : 0.18;
     }
     
-    // Q виден только если включен и есть расход
+    // Q виден только если включен флаг и есть расход
     if (this._qLabel) {
-      this._qLabel.visible = showQ && this.massflowrate > 0;
+      this._qLabel.visible = !!showQ && this.massflowrate > 0;
       this._qLabel.userData.targetOffset = 0.18;
     }
 
-    // L всегда виден, но смещается: если V скрыт, L занимает его место (-0.18), иначе ниже (-0.35)
+    // L виден ТОЛЬКО если включен флаг showL
     if (this._lLabel) {
-      this._lLabel.visible = true;
+      this._lLabel.visible = !!showL; 
       this._lLabel.userData.targetOffset = showV ? -0.35 : -0.18;
     }
 
-    // V виден только если включен и есть скорость
+    // V виден только если включен флаг и есть скорость
     if (this._vLabel) {
-      this._vLabel.visible = showV && this.velocity > 0;
+      this._vLabel.visible = !!showV && this.velocity > 0;
       this._vLabel.userData.targetOffset = -0.18;
     }
-    
+
     this.updateFlowArrowVisibility();
   }
 
