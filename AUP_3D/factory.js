@@ -1,128 +1,183 @@
 // ============================================================
-// factory.js — Фабрика для создания 3D-объектов (трубы, ветки, рядки, узлы)
-// Зависимости: THREE (глобальный), CONFIG, AXES_SETTINGS, genNodeId (из state.js)
+// factory.js — Фабрика и классы 3D-объектов с инкапсулированными метками
 // ============================================================
-// import * as THREE from 'three';
 import * as THREE from "three";
-// import { AXES_SETTINGS, CONFIG, STATE } from "./state.js";
 import { CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
 import { AXES_SETTINGS, CONFIG, STATE, VisualPipelins } from "./state.js";
 
+// ============================================================================
+// КЛАСС УЗЛА (Node / Source / Sprinkler)
+// ============================================================================
 export class Node_new extends THREE.Mesh {
   constructor(geometry, material, type) {
     super(geometry, material);
     this.type = type;
     this.name = "Node_new";
-    this.X_gl = 10;
-    this.Y_gl = 0;
-    this.Z_gl = 0;
-    this.K = Number(STATE.sprinkler_kv);
+    this.X_gl = 0; this.Y_gl = 0; this.Z_gl = 0;
+    this.K = Number(STATE.sprinkler_kv || 0);
     
-    // Данные для меток
     this.pressure_m = 0;
     this.flow_l_s = 0;
 
-    // 1. МЕТКА ДАВЛЕНИЯ (над узлом)
-    this._pressureSpan = document.createElement("span");
-    this._pressureSpan.className = "node-pressure-label";
-    this._pressureSpan.style.display = "none";
+    // 3D Метки (Спрайты)
+    this._pLabel = null;
+    this._qLabel = null;
     
-    const pressureDiv = document.createElement("div");
-    pressureDiv.className = "node-label-pressure-container";
-    pressureDiv.appendChild(this._pressureSpan);
-    
-    this._pressureObject = new CSS2DObject(pressureDiv);
-    this._pressureObject.position.set(0, 0.25, 0); // Над узлом
-    this.add(this._pressureObject);
-
-    // 2. МЕТКА РАСХОДА (под стрелкой)
-    this._flowSpan = document.createElement("span");
-    this._flowSpan.className = "node-flow-label";
-    this._flowSpan.style.display = "none";
-    
-    const flowDiv = document.createElement("div");
-    flowDiv.className = "node-label-flow-container";
-    flowDiv.appendChild(this._flowSpan);
-    
-    this._flowObject = new CSS2DObject(flowDiv);
-    this._flowObject.position.set(0, -0.6, 0); // Под стрелкой (ниже узла)
-    this.add(this._flowObject);
- 
-    // проверяем, нужно ли рисовать стрелку
     this.updateSprinklerArrow();
-
-    STATE.Three_D_objects.push(this);
+    if (typeof STATE !== "undefined" && STATE.Three_D_objects) {
+      STATE.Three_D_objects.push(this);
+    }
   }
 
   update_Global() {
-    const World_Vector = new THREE.Vector3();
-    this.getWorldPosition(World_Vector);
-    this.X_gl = World_Vector.x;
-    this.Y_gl = World_Vector.y;
-    this.Z_gl = World_Vector.z;
+    const pos = new THREE.Vector3();
+    this.getWorldPosition(pos);
+    this.X_gl = pos.x; this.Y_gl = pos.y; this.Z_gl = pos.z;
     return [this.X_gl, this.Y_gl, this.Z_gl];
   }
 
   add_list() {
     return {
-      id: this.uuid,
-      type: this.type,
-      X_gl: this.X_gl,
-      Y_gl: this.Y_gl,
-      Z_gl: this.Z_gl,
-      K: this.K,
-      pressure_m: this.pressure_m,
-      flow_l_s: this.flow_l_s,
+      id: this.uuid, type: this.type,
+      X_gl: this.X_gl, Y_gl: this.Y_gl, Z_gl: this.Z_gl,
+      K: this.K, pressure_m: this.pressure_m, flow_l_s: this.flow_l_s,
     };
   }
 
-  // Методы обновления данных
-  updatePressure(pressure) {
-    this.pressure_m = pressure;
+  // Единая точка входа для обновления данных узла
+  applyResult(data) {
+    this.pressure_m = data.pressure_m || 0;
+
+    // ✅ ГЛАВНОЕ ИСПРАВЛЕНИЕ: смотрим на this.type (тип объекта на сцене),
+    // а НЕ на data.type (которого может не быть в ответе бэкенда)
+    if (this.type === 'Sprinkler') {
+      // Подхватываем расход из любого возможного имени поля
+      this.flow_l_s =
+        data.sprinkler_flow_l_s ??
+        data.flow_l_s ??
+        data.q_l_s ??
+        data.flow ??
+        0;
+    } else {
+      this.flow_l_s = 0; // у обычных узлов и источников локальный расход = 0
+    }
+
+    // 🔍 ВРЕМЕННАЯ ОТЛАДКА — удалите после проверки
+    if (this.type === 'Sprinkler') {
+      console.log(`💧 Ороситель ${this.uuid.slice(0,8)}: flow_l_s = ${this.flow_l_s}, ключи ответа:`, Object.keys(data));
+    }
+
+    this._ensureLabels();
+    this._updateLabelTexts();
     this._updateLabelsVisibility();
   }
 
-  updateFlow(flow) {
-    this.flow_l_s = flow;
-    this._updateLabelsVisibility();
-  }
-
-  // Единый метод управления видимостью
-  _updateLabelsVisibility() {
-    const showPressure = typeof STATE !== "undefined" && STATE.showLabelsPressure === true;
-    const showFlow = typeof STATE !== "undefined" && STATE.showLabelsMassFlowRate === true;
-
-    // Давление - отображаем НАД узлом
-    if (this._pressureSpan) {
-      if (showPressure && this.pressure_m > 0) {
-        this._pressureSpan.innerText = `P = ${this.pressure_m.toFixed(3)} м`;
-        this._pressureSpan.style.display = "inline";
-        this._pressureObject.visible = true;
-      } else {
-        this._pressureSpan.innerText = "";
-        this._pressureSpan.style.display = "none";
-        this._pressureObject.visible = false;
-      }
+  _ensureLabels() {
+    if (!this._pLabel) {
+      this._pLabel = this._createSprite('P = 0 м', '#000000', 5);
+      this._pLabel.name = 'PressureLabel';
+      this.add(this._pLabel);
     }
-
-    // Расход - отображаем ПОД стрелкой (ниже узла)
-    if (this._flowSpan) {
-      if (showFlow && this.flow_l_s > 0) {
-        this._flowSpan.innerText = `Q = ${this.flow_l_s.toFixed(3)} л/с`;
-        this._flowSpan.style.display = "inline";
-        this._flowObject.visible = true;
-      } else {
-        this._flowSpan.innerText = "";
-        this._flowSpan.style.display = "none";
-        this._flowObject.visible = false;
-      }
+    if (!this._qLabel) {
+      this._qLabel = this._createSprite('Q = 0 л/с', '#000000', 5);
+      this._qLabel.name = 'FlowLabel';
+      this.add(this._qLabel);
     }
   }
 
+  _createSprite(text, color, scaleSize) {
+    const canvas = document.createElement('canvas');
+    const size = 1024;
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
 
-    // ✅ НОВЫЙ МЕТОД: Управляет отображением 3D-стрелки оросителя
+    ctx.font = 'Bold 40px Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // 1. Рисуем плотную белую обводку-фон вокруг букв
+    ctx.lineJoin = 'round';
+    ctx.miterLimit = 2;
+    ctx.lineWidth = 8; // Толщина обводки (можно менять от 6 до 10)
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+    ctx.strokeText(text, size / 2, size / 2);
+
+    // 2. Поверх обводки рисуем сам черный текст
+    ctx.fillStyle = color;
+    ctx.fillText(text, size / 2, size / 2);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+
+    const material = new THREE.SpriteMaterial({
+      map: texture,
+      depthTest: false,
+      transparent: true,
+      sizeAttenuation: true
+    });
+
+    const sprite = new THREE.Sprite(material);
+    sprite.userData.baseScale = scaleSize;
+    return sprite;
+  }
+
+
+  _updateLabelTexts() {
+    if (this._pLabel) {
+      const newSprite = this._createSprite(`P = ${(this.pressure_m).toFixed(3).replace('.', ',')} м`, '#000000', 5);
+      this._pLabel.material.map.dispose();
+      this._pLabel.material.map = newSprite.material.map;
+    }
+    if (this._qLabel) {
+      const newSprite = this._createSprite(`Q = ${(this.flow_l_s).toFixed(3).replace('.', ',')} л/с`, '#000000', 5);
+      this._qLabel.material.map.dispose();
+      this._qLabel.material.map = newSprite.material.map;
+    }
+  }
+
+   _updateLabelsVisibility() {
+    const showP = typeof STATE !== "undefined" && STATE.showLabelsPressure;
+    const showQ = typeof STATE !== "undefined" && STATE.showLabelsMassFlowRate;
+
+    // Давление (P)
+    if (this._pLabel) {
+      this._pLabel.visible = !!showP && this.pressure_m > 0;
+    }
+    
+    // Расход (Q) — используем this.flow_l_s, а НЕ this.massflowrate!
+    if (this._qLabel) {
+      this._qLabel.visible = !!showQ && this.flow_l_s > 0;
+    }
+  }
+
+  // Вызывается из глобального updateLabelsForZoom
+  updateLabelTransform(sizeFactor, offsetFactor, camRight, camUp) {
+    if (!this._pLabel || !this._qLabel) return;
+
+    const applySprite = (label, rightOff, upOff) => {
+      // ✅ Мировое смещение относительно узла → локальное
+      const worldAnchor = this.getWorldPosition(new THREE.Vector3());
+      const worldPos = worldAnchor.clone()
+        .addScaledVector(camRight, rightOff)
+        .addScaledVector(camUp, upOff);
+      this.worldToLocal(worldPos);
+      label.position.copy(worldPos);
+      const s = 5 * sizeFactor;
+      label.scale.set(s, s, 1);
+    };
+
+    applySprite(this._pLabel, 0.0, 0.15);   // P: справа-сверху
+    applySprite(this._qLabel, 0.0, -0.35);  // Q: слева-снизу
+  }
+
+  destroyLabels() {
+    if (this._pLabel) { this.remove(this._pLabel); this._pLabel.material.map.dispose(); this._pLabel = null; }
+    if (this._qLabel) { this.remove(this._qLabel); this._qLabel.material.map.dispose(); this._qLabel = null; }
+  }
+
   updateSprinklerArrow() {
-    // 1. Удаляем старую стрелку, если она есть (и очищаем память)
     const existingArrow = this.getObjectByName('SprinklerArrow');
     if (existingArrow) {
       this.remove(existingArrow);
@@ -131,54 +186,27 @@ export class Node_new extends THREE.Mesh {
         if (child.material) child.material.dispose();
       });
     }
-
-    // 2. Если тип узла "Sprinkler", создаем новую стрелку
     if (this.type === 'Sprinkler') {
-      const sprinklerGroup = new THREE.Group();
-      sprinklerGroup.name = 'SprinklerArrow';
-      
-      // Используем размер из VisualPipelins или запасной вариант
-      const nodeRadius = (typeof VisualPipelins !== 'undefined' ? VisualPipelins.d_node_base : 0.12) / 2;
-      
-      // Стержень
-      const shaftRadius = nodeRadius * 0.1;
-      const shaftHeight = nodeRadius * 2.5;
-      const shaftGeo = new THREE.CylinderGeometry(shaftRadius, shaftRadius, shaftHeight, 16);
-      const shaft = new THREE.Mesh(shaftGeo, this.material); // Используем материал самого узла
-      shaft.position.y = -(shaftHeight / 2);
-      
-      // Наконечник (конус)
-      const headRadius = nodeRadius * 1;
-      const headHeight = nodeRadius * 1.5;
-      const headGeo = new THREE.ConeGeometry(headRadius, headHeight, 16);
-      const head = new THREE.Mesh(headGeo, this.material);
-      head.rotation.x = Math.PI; // Поворачиваем вниз
-      head.position.y = -(shaftHeight + headHeight / 2);
-
-      sprinklerGroup.add(shaft);
-      sprinklerGroup.add(head);
-      
-      this.add(sprinklerGroup);
+      const group = new THREE.Group();
+      group.name = 'SprinklerArrow';
+      const r = (typeof VisualPipelins !== 'undefined' ? VisualPipelins.d_node_base : 0.12) / 2;
+      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.1, r * 0.1, r * 2.5, 16), this.material);
+      shaft.position.y = -(r * 1.25);
+      const head = new THREE.Mesh(new THREE.ConeGeometry(r, r * 1.5, 16), this.material);
+      head.rotation.x = Math.PI;
+      head.position.y = -(r * 2.5 + r * 0.75);
+      group.add(shaft, head);
+      this.add(group);
     }
   }
-
 }
 
+// ============================================================================
+// КЛАСС РЕБРА (Труба / Edge)
+// ============================================================================
 export class Edge_new extends THREE.Mesh {
-  constructor(
-    geometry,
-    material,
-    start_node,
-    end_node,
-    type,
-    Length,
-    DN,
-    ghost,
-    k_t,
-    kvelocity,
-  ) {
+  constructor(geometry, material, start_node, end_node, type, Length, DN, ghost, k_t, kvelocity) {
     super(geometry, material);
-
     this.start_node = start_node;
     this.end_node = end_node;
     this.name = "Edge_new";
@@ -189,17 +217,17 @@ export class Edge_new extends THREE.Mesh {
     this.k_t = k_t;
     this.kvelocity = kvelocity;
 
-    // Результаты расчета
     this.massflowrate = 0;
     this.velocity = 0;
     this.flowDirection = 1;
 
-    // Ссылки на DOM-элементы для быстрого обновления без пересоздания
-    this.uiGroup = null;
-    this._inputLenElement = null;
-    this._divFlowElement = null;
-    this._divVelElement = null;
+    this.uiGroup = null;       // CSS2D для интерактивного ввода длины
+    this._dnLabel = null; 
+    this._qLabel = null;       // 3D Mesh для Q
+    this._lLabel = null;
+    this._vLabel = null;       // 3D Mesh для V
     this._flowArrow = null;
+    this._xSign = 1;           // Гистерезис для поворота меток трубы
 
     if (typeof STATE !== "undefined" && STATE.Three_D_objects) {
       STATE.Three_D_objects.push(this);
@@ -208,351 +236,390 @@ export class Edge_new extends THREE.Mesh {
 
   add_list() {
     return {
-      id: this.uuid,
-      type: this.type,
-      DN: this.DN,
-      Length: this.Length,
-      start_node: this.start_node.uuid,
-      end_node: this.end_node.uuid,
-      ghost: this.ghost,
-      k_t: this.k_t,
-      kvelocity: this.kvelocity,
-      massflowrate: this.massflowrate,
-      velocity: this.velocity,
+      id: this.uuid, type: this.type, DN: this.DN, Length: this.Length,
+      start_node: this.start_node.uuid, end_node: this.end_node.uuid,
+      ghost: this.ghost, k_t: this.k_t, kvelocity: this.kvelocity,
+      massflowrate: this.massflowrate, velocity: this.velocity,
     };
   }
 
-  // Полная очистка DOM-элементов без использования ломающегося instanceof  
-  destroyUI() {
-    if (this.uiGroup) {
-      this.uiGroup.traverse((child) => {
-        if ((child.isCSS2DObject || child.element) && typeof child.element.remove === "function") {
-          child.element.remove();
-        }
-      });
-      this.remove(this.uiGroup);
-      this.uiGroup = null;
-      this._inputLenElement = null;
-      this._divFlowElement = null;
-      this._divVelElement = null;
-      this._labelLen = null;
-      this._labelFlow = null;
-      this._labelVel = null;
+  // Единая точка входа для обновления данных трубы
+  applyResult(data) {
+    this.massflowrate = Math.abs(data.flow_l_s || data.massflowrate || 0);
+    this.velocity = Math.abs(data.velocity_m_s || data.velocity || 0);
+    this.flowDirection = data.direction === 'reverse' ? -1 : 1;
+    
+    this._ensureLabels();
+    this._updateLabelTexts();
+    this._updateLabelsVisibility();
+    this.createFlowArrow();
+  }
+
+  _ensureLabels() {
+    if (!this.uiGroup) this._createLengthUI();
+    
+    if (!this._dnLabel) {
+      this._dnLabel = this._createPipeLabelMesh(`DN ${this.DN}`, '#000000', 15);
+      this._dnLabel.name = 'DNLabel';
+      this._dnLabel.userData.isPipeLabel = true;
+      this._dnLabel.userData.anchorObj = this;
+      this._dnLabel.userData.baseScale = 2;
+      this.add(this._dnLabel);
+    }
+    if (!this._qLabel) {
+      this._qLabel = this._createPipeLabelMesh('Q = 0 л/с', '#000000', 15);
+      this._qLabel.name = 'FlowLabel';
+      this._qLabel.userData.isPipeLabel = true;
+      this._qLabel.userData.anchorObj = this;
+      this._qLabel.userData.baseScale = 2;
+      this.add(this._qLabel);
+    }
+    if (!this._lLabel) {
+      this._lLabel = this._createPipeLabelMesh(`L = ${this.Length.toFixed(2)} м`, '#000000', 15);
+      this._lLabel.name = 'LengthLabel';
+      this._lLabel.userData.isPipeLabel = true;
+      this._lLabel.userData.anchorObj = this;
+      this._lLabel.userData.baseScale = 2;
+      this.add(this._lLabel);
+    }
+    if (!this._vLabel) {
+      this._vLabel = this._createPipeLabelMesh('V = 0 м/с', '#000000', 15);
+      this._vLabel.name = 'VelocityLabel';
+      this._vLabel.userData.isPipeLabel = true;
+      this._vLabel.userData.anchorObj = this;
+      this._vLabel.userData.baseScale = 2;
+      this.add(this._vLabel);
     }
   }
 
-  createUI() {
-    console.log("🔥 ВЫПОЛНЯЕТСЯ НОВЫЙ createUI!");
+  _createPipeLabelMesh(text, color, scaleSize) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // 1. Увеличиваем разрешение шрифта в 2 раза (было 64 -> стало 128)
+    const fontSize = 128; 
+    const padding = 40;
+    ctx.font = `Bold ${fontSize}px Arial, sans-serif`;
+    
+    const textWidth = ctx.measureText(text).width;
+    canvas.width = Math.ceil(textWidth + padding * 2);
+    canvas.height = fontSize + padding * 2;
 
-    if (this.uiGroup) {
-      this.updateDOMValues();
-      return;
+    // После изменения размеров canvas контекст сбрасывается, задаем настройки заново
+    ctx.font = `Bold ${fontSize}px Arial, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // 2. Вместо размытой тени делаем четкую белую подложку-обводку
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 14; 
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+    ctx.strokeText(text, canvas.width / 2, canvas.height / 2);
+
+    // 3. Рисуем сам текст поверх обводки
+    ctx.fillStyle = color;
+    ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+
+    // 4. Настраиваем текстуру для максимальной резкости
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    texture.generateMipmaps = false;
+    texture.anisotropy = 8; // Убирает размытие при взгляде на трубу сбоку
+    texture.colorSpace = THREE.SRGBColorSpace; // Чтобы цвета не были блеклыми (для новых версий Three.js)
+
+    // 5. Компенсируем двукратное увеличение fontSize (делим не на 10240, а на 20480)
+    const scale = scaleSize / 20048; 
+    const geometry = new THREE.PlaneGeometry(canvas.width * scale, canvas.height * scale);
+    
+    const material = new THREE.MeshBasicMaterial({ 
+      map: texture, 
+      transparent: true, 
+      side: THREE.DoubleSide, 
+      depthTest: false 
+    });
+
+    return new THREE.Mesh(geometry, material);
+  }
+
+
+  _updateLabelTexts() {
+    if (this._dnLabel) {
+      const newMesh = this._createPipeLabelMesh(`DN ${this.DN}`, '#000000', 15);
+      this._dnLabel.geometry.dispose(); this._dnLabel.geometry = newMesh.geometry;
+      this._dnLabel.material.map.dispose(); this._dnLabel.material.map = newMesh.material.map;
+    }
+    if (this._qLabel) {
+      const newMesh = this._createPipeLabelMesh(`Q = ${this.massflowrate.toFixed(3).replace('.', ',')} л/с`, '#000000', 15);
+      this._qLabel.geometry.dispose(); this._qLabel.geometry = newMesh.geometry;
+      this._qLabel.material.map.dispose(); this._qLabel.material.map = newMesh.material.map;
+    }
+    if (this._lLabel) {
+      const newMesh = this._createPipeLabelMesh(`L = ${this.Length.toFixed(2).replace('.', ',')} м`, '#000000', 15);
+      this._lLabel.geometry.dispose(); this._lLabel.geometry = newMesh.geometry;
+      this._lLabel.material.map.dispose(); this._lLabel.material.map = newMesh.material.map;
+    }
+    if (this._vLabel) {
+      const newMesh = this._createPipeLabelMesh(`V = ${this.velocity.toFixed(3).replace('.', ',')} м/с`, '#000000', 15);
+      this._vLabel.geometry.dispose(); this._vLabel.geometry = newMesh.geometry;
+      this._vLabel.material.map.dispose(); this._vLabel.material.map = newMesh.material.map;
+    }
+  }
+
+    _updateLabelsVisibility() {
+    const showDN = typeof STATE !== "undefined" && STATE.showLabelsDN;
+    const showQ = typeof STATE !== "undefined" && STATE.showLabelsMassFlowRate;
+    const showL = typeof STATE !== "undefined" && STATE.showLabelsLength;
+    const showV = typeof STATE !== "undefined" && STATE.showLabelsVelocity;
+
+    // DN виден ТОЛЬКО если включен флаг showDN
+    if (this._dnLabel) {
+      this._dnLabel.visible = !!showDN; 
+      this._dnLabel.userData.targetOffset = showQ ? 0.35 : 0.18;
+    }
+    
+    // Q виден только если включен флаг и есть расход
+    if (this._qLabel) {
+      this._qLabel.visible = !!showQ && this.massflowrate > 0;
+      this._qLabel.userData.targetOffset = 0.18;
     }
 
+    // L виден ТОЛЬКО если включен флаг showL
+    if (this._lLabel) {
+      this._lLabel.visible = !!showL; 
+      this._lLabel.userData.targetOffset = showV ? -0.35 : -0.18;
+    }
+
+    // V виден только если включен флаг и есть скорость
+    if (this._vLabel) {
+      this._vLabel.visible = !!showV && this.velocity > 0;
+      this._vLabel.userData.targetOffset = -0.18;
+    }
+
+    this.updateFlowArrowVisibility();
+  }
+
+  // Вызывается из глобального updateLabelsForZoom
+    // Вызывается из глобального updateLabelsForZoom
+  updateLabelTransform(sizeFactor, offsetFactor, camRight, camUp, camPos) {
+    if (!this._dnLabel && !this._qLabel && !this._lLabel && !this._vLabel) return;
+
+    const s = new THREE.Vector3(), e = new THREE.Vector3();
+    this.start_node.getWorldPosition(s);
+    this.end_node.getWorldPosition(e);
+    const mid = new THREE.Vector3().lerpVectors(s, e, 0.5);
+    const dir = new THREE.Vector3().subVectors(e, s).normalize();
+
+    let xAxis = dir.clone();
+    if (Math.abs(dir.y) > 0.9) { xAxis.set(0, 1, 0); this._xSign = 1; }
+    else {
+      const dot = xAxis.dot(camRight);
+      let sgn = (this._xSign === undefined) ? 1 : this._xSign;
+      if (dot > 0.15) sgn = 1;
+      else if (dot < -0.15) sgn = -1;
+      this._xSign = sgn;
+      xAxis.multiplyScalar(sgn);
+    }
+
+    const toCam = new THREE.Vector3().subVectors(camPos, mid).normalize();
+    let zAxis = toCam.clone().addScaledVector(xAxis, -toCam.dot(xAxis));
+    if (zAxis.lengthSq() < 1e-6) {
+      zAxis = camUp.clone().addScaledVector(xAxis, -camUp.dot(xAxis));
+      if (zAxis.lengthSq() < 1e-6) zAxis = camRight.clone().addScaledVector(xAxis, -camRight.dot(xAxis));
+    }
+    zAxis.normalize();
+    const yAxis = new THREE.Vector3().crossVectors(zAxis, xAxis).normalize();
+
+    // ✅ Мировой базис → локальный (учитываем поворот самой трубы)
+    const worldBasis = new THREE.Matrix4().makeBasis(xAxis, yAxis, zAxis);
+    const invWorldQuat = this.getWorldQuaternion(new THREE.Quaternion()).invert();
+    const localBasis = worldBasis.clone().premultiply(
+      new THREE.Matrix4().makeRotationFromQuaternion(invWorldQuat)
+    );
+
+    const apply = (label) => {
+      if (!label || !label.visible) return;
+      label.quaternion.setFromRotationMatrix(localBasis);
+      const off = (label.userData.targetOffset !== undefined ? label.userData.targetOffset : 0) * offsetFactor;
+      // ✅ Мировая точка → локальная позиция метки
+      const worldPos = mid.clone().addScaledVector(yAxis, off);
+      this.worldToLocal(worldPos);
+      label.position.copy(worldPos);
+      const sc = (label.userData.baseScale || 15) * sizeFactor;
+      label.scale.set(sc, sc, 1);
+    };
+
+    apply(this._dnLabel);
+    apply(this._qLabel);
+    apply(this._lLabel);
+    apply(this._vLabel);
+
+    // ✅ НОВОЕ: Компенсируем зум камеры для HTML-инпута длины.
+    // Если sizeFactor > 1 (камера отдалилась и 3D-объекты уменьшились), 
+    // мы уменьшаем инпут (inverseScale < 1), чтобы он визуально "сжимался" вместе с трубой.
+    if (this._labelLenInner) {
+      const inverseScale = 1.0 / Math.max(0.1, sizeFactor);
+      this._labelLenInner.style.transform = `scale(${inverseScale})`;
+    }
+  }
+
+    _createLengthUI() {
     this.uiGroup = new THREE.Group();
     this.uiGroup.name = "EdgeUI";
 
-    const startPos = new THREE.Vector3();
-    const endPos = new THREE.Vector3();
-    this.start_node.getWorldPosition(startPos);
-    this.end_node.getWorldPosition(endPos);
+    // 1. Обёртка, координаты которой обновляет CSS2DRenderer
+    const wrapperDiv = document.createElement("div");
+    wrapperDiv.className = "edge-ui-input-wrapper";
 
-    const midWorldPos = new THREE.Vector3().lerpVectors(startPos, endPos, 0.5);
-    const midLocalPos = midWorldPos.clone();
-    this.worldToLocal(midLocalPos);
+    // 2. Внутренний блок, масштаб которого мы будем менять динамически
+    const innerDiv = document.createElement("div");
+    innerDiv.className = "edge-ui-input";
+    innerDiv.style.display = "none";
 
-    // 1. Инпут длины (L)
-    const divLen = document.createElement("div");
-    divLen.className = "edge-ui-input";
-    divLen.style.display = "none"; // 🔥 КРИТИЧЕСКИ ВАЖНО: скрываем сразу при создании
-
-    const labelPrefix = document.createElement("span");
-    labelPrefix.className = "edge-ui-label-prefix";
-    labelPrefix.innerText = "L = ";
-    divLen.appendChild(labelPrefix);
+    const prefix = document.createElement("span");
+    prefix.className = "edge-ui-label-prefix";
+    prefix.innerText = "L = ";
 
     this._inputLenElement = document.createElement("input");
     this._inputLenElement.type = "number";
     this._inputLenElement.step = "0.1";
     this._inputLenElement.min = "0.1";
-
     this._inputLenElement.addEventListener("change", (e) => {
-      const newLength = parseFloat(e.target.value);
-      if (newLength > 0.1 && typeof window.applyNewLengthToEdge === "function") {
-        window.applyNewLengthToEdge(this, newLength);
-      }
-      this._inputLenElement.value = this.Length.toFixed(2);
+      const val = parseFloat(e.target.value);
+      if (val > 0.1 && typeof window.applyNewLengthToEdge === "function") window.applyNewLengthToEdge(this, val);
+      e.target.value = this.Length.toFixed(2);
     });
     this._inputLenElement.addEventListener("focus", () => { if (window.Engine?.controls) window.Engine.controls.enabled = false; });
     this._inputLenElement.addEventListener("blur", () => { if (window.Engine?.controls) window.Engine.controls.enabled = true; });
-    divLen.appendChild(this._inputLenElement);
 
-    this._labelLen = new CSS2DObject(divLen);
-    this._labelLen.isCSS2DObject = true;
-    this._labelLen.position.copy(midLocalPos);
-    this._labelLen.position.y += 0.35;
+    innerDiv.appendChild(prefix);
+    innerDiv.appendChild(this._inputLenElement);
+    wrapperDiv.appendChild(innerDiv);
+
+    this._labelLen = new CSS2DObject(wrapperDiv);
     this._labelLen.visible = false;
+    this._labelLen.isCSS2DObject = true;
+
+    // ✅ Сохраняем ссылку на innerDiv, чтобы менять его scale в updateLabelTransform
+    this._labelLenInner = innerDiv;
+
     this.uiGroup.add(this._labelLen);
-
-    // 2. Метка расхода (Q)
-    this._divFlowElement = document.createElement("div");
-    this._divFlowElement.className = "edge-ui-label flow-label";
-    this._divFlowElement.innerText = "";
-    this._divFlowElement.style.display = "none"; // 🔥 Скрываем сразу
-
-    this._labelFlow = new CSS2DObject(this._divFlowElement);
-    this._labelFlow.isCSS2DObject = true;
-    this._labelFlow.position.copy(midLocalPos);
-    this._labelFlow.position.y += 0.2;
-    this._labelFlow.visible = false;
-    this.uiGroup.add(this._labelFlow);
-
-    // 3. Метка скорости (V)
-    this._divVelElement = document.createElement("div");
-    this._divVelElement.className = "edge-ui-label velocity-label";
-    this._divVelElement.innerText = "";
-    this._divVelElement.style.display = "none"; // 🔥 Скрываем сразу
-
-    this._labelVel = new CSS2DObject(this._divVelElement);
-    this._labelVel.isCSS2DObject = true;
-    this._labelVel.position.copy(midLocalPos);
-    this._labelVel.position.y -= 0.2;
-    this._labelVel.visible = false;
-    this.uiGroup.add(this._labelVel);
-
     this.add(this.uiGroup);
-    this.uiGroup.visible = true;
-    this.updateMatrixWorld(true);
-
-    console.log("✅ createUI завершен. Все элементы изначально скрыты.");
   }
 
   // updateDOMValues() {
-  //   if (!this.uiGroup) return;
-
+  //   if (!this.uiGroup || !this._labelLen || !this._inputLenElement) return;
   //   const isEditing = typeof STATE !== "undefined" && STATE.isEditingLengths === true;
-  //   const showFlow = typeof STATE !== "undefined" && STATE.showLabelsMassFlowRate === true;
-  //   const showVel = typeof STATE !== "undefined" && STATE.showLabelsVelocity === true;
-
-  //   // 1. Длина (L)
-  //   if (this._labelLen && this._labelLen.element) {
-  //     if (this._inputLenElement) {
-  //       this._inputLenElement.value = this.Length ? this.Length.toFixed(3) : "0.00";
-  //     }
-  //     this._labelLen.visible = isEditing;
-  //     this._labelLen.element.style.display = isEditing ? "block" : "none";
-  //   }
-
-  //   // 2. Расход (Q) — ✅ ИСПРАВЛЕНО: показываем всегда, используем Math.abs()
-  //   if (this._labelFlow && this._labelFlow.element) {
-  //     const absFlow = Math.abs(this.massflowrate);
-  //     this._divFlowElement.innerText = `Q = ${absFlow.toFixed(3)} л/с`;
-  //     this._labelFlow.visible = showFlow;
-  //     this._labelFlow.element.style.display = showFlow ? "block" : "none";
-  //   }
-
-  //   // 3. Скорость (V) — ✅ ИСПРАВЛЕНО: показываем всегда, используем Math.abs()
-  //   if (this._labelVel && this._labelVel.element) {
-  //     const absVel = Math.abs(this.velocity);
-  //     this._divVelElement.innerText = `V = ${absVel.toFixed(3)} м/с`;
-  //     this._labelVel.visible = showVel;
-  //     this._labelVel.element.style.display = showVel ? "block" : "none";
-  //   }
-
-  //   // 4. Обновляем видимость стрелки
-  //   this.updateFlowArrowVisibility();
+  //   this._inputLenElement.value = this.Length.toFixed(2);
+  //   this._labelLen.visible = isEditing;
+  //   this._labelLen.element.style.display = isEditing ? "block" : "none";
+    
+  //   const s = new THREE.Vector3(), e = new THREE.Vector3();
+  //   this.start_node.getWorldPosition(s); this.end_node.getWorldPosition(e);
+  //   const midLocal = new THREE.Vector3().lerpVectors(s, e, 0.5);
+  //   this.worldToLocal(midLocal);
+  //   this._labelLen.position.copy(midLocal);
+  //   this._labelLen.position.y += 0.5;
   // }
 
-
   updateDOMValues() {
-    if (!this.uiGroup) return;
-
-    const isEditing = typeof STATE !== "undefined" && STATE.isEditingLengths === true;
-    const showFlow = typeof STATE !== "undefined" && STATE.showLabelsMassFlowRate === true;
-    const showVel = typeof STATE !== "undefined" && STATE.showLabelsVelocity === true;
-
-    // Вычисляем середину трубы (общая точка отсчета)
-    const startPos = new THREE.Vector3();
-    const endPos = new THREE.Vector3();
-    this.start_node.getWorldPosition(startPos);
-    this.end_node.getWorldPosition(endPos);
-    const midWorldPos = new THREE.Vector3().lerpVectors(startPos, endPos, 0.5);
-    const midLocalPos = midWorldPos.clone();
-    this.worldToLocal(midLocalPos);
-
-    // ===================================================================
-    // 1. Инпут длины (L) — показываем только в режиме редактирования
-    // ===================================================================
-    if (this._labelLen && this._labelLen.element) {
-      if (this._inputLenElement) {
-        this._inputLenElement.value = this.Length ? this.Length.toFixed(3) : "0.00";
-      }
-      this._labelLen.visible = isEditing;
-      this._labelLen.element.style.display = isEditing ? "block" : "none";
-
-      // Позиция инпута: всегда над трубой (самый верхний)
-      this._labelLen.position.copy(midLocalPos);
-      this._labelLen.position.y += 0.5;
-    }
-
-    // ===================================================================
-    // 2. Расход (Q) — меняет позицию в зависимости от режима
-    // ===================================================================
-    if (this._labelFlow && this._labelFlow.element) {
-      const hasFlow = this.massflowrate > 0;
-      this._divFlowElement.innerText = hasFlow ? `Q = ${Math.abs(this.massflowrate).toFixed(3)} л/с` : "";
-      this._labelFlow.visible = hasFlow && showFlow;
-      this._labelFlow.element.style.display = (hasFlow && showFlow) ? "block" : "none";
-
-      // ✅ Позиция Q зависит от режима редактирования
-      this._labelFlow.position.copy(midLocalPos);
-      if (isEditing) {
-        // Режим редактирования: Q под трубой (освобождаем место сверху для L)
-        this._labelFlow.position.y -= 0.1;
-      } else {
-        // Обычный режим: Q над трубой
-        this._labelFlow.position.y += 0.2;
-      }
-    }
-
-    // ===================================================================
-    // 3. Скорость (V) — всегда под Q
-    // ===================================================================
-    if (this._labelVel && this._labelVel.element) {
-      const hasVel = this.velocity > 0;
-      this._divVelElement.innerText = hasVel ? `V = ${Math.abs(this.velocity).toFixed(3)} м/с` : "";
-      this._labelVel.visible = hasVel && showVel;
-      this._labelVel.element.style.display = (hasVel && showVel) ? "block" : "none";
-
-      // ✅ Позиция V зависит от режима редактирования
-      this._labelVel.position.copy(midLocalPos);
-      if (isEditing) {
-        // Режим редактирования: V под Q (оба под трубой)
-        this._labelVel.position.y -= 0.3;
-      } else {
-        // Обычный режим: V под трубой
-        this._labelVel.position.y -= 0.2;
-      }
-    }
-
-    // 4. Обновляем видимость стрелки
-    this.updateFlowArrowVisibility();
-  }
-
-
-  // Быстрое обновление результатов
-  updateResults(massflowrate, velocity) {
-    this.massflowrate = massflowrate;
-    this.velocity = velocity;
-
-    if (this.uiGroup) {
-      this.updateDOMValues();
-    } else {
-      this.createUI();
-    }
-  }
-
-  // Обновление позиций меток после изменения геометрии трубы
-  updateLabelsPosition() {
-    if (!this.uiGroup) return;
-
-    const startPos = new THREE.Vector3();
-    const endPos = new THREE.Vector3();
-    this.start_node.getWorldPosition(startPos);
-    this.end_node.getWorldPosition(endPos);
-
-    const midWorldPos = new THREE.Vector3().lerpVectors(startPos, endPos, 0.5);
-    const midLocalPos = midWorldPos.clone();
-    this.worldToLocal(midLocalPos);
-
-    this.uiGroup.children.forEach((child) => {
-      if (child.isCSS2DObject && child.element) {
-        let offsetY = 0;
-        
-        // 🔥 ИСПРАВЛЕНО: используем classList вместо ненадежного поиска по тексту
-        if (child.element.querySelector("input")) {
-          offsetY = 0.2; // Инпут длины - выше
-        } else if (child.element.classList.contains("flow-label")) {
-          offsetY = -0.1; // Расход - ниже
-        } else if (child.element.classList.contains("velocity-label")) {
-          offsetY = -0.2; // Скорость - еще ниже
-        }
-
-        child.position.copy(midLocalPos);
-        child.position.y += offsetY;
-      }
-    });
-
-    this.updateMatrixWorld(true);
-  }
-
-  // Создает или обновляет 3D-стрелку направления потока
-  createFlowArrow() {
-    if (this._flowArrow) {
-      this.remove(this._flowArrow);
-    }
-
-    const startPos = new THREE.Vector3();
-    const endPos = new THREE.Vector3();
-    this.start_node.getWorldPosition(startPos);
-    this.end_node.getWorldPosition(endPos);
-
-    const localStart = new THREE.Vector3();
-    const localEnd = new THREE.Vector3();
-    this.worldToLocal(localStart.copy(startPos));
-    this.worldToLocal(localEnd.copy(endPos));
-
-    // ✅ ИСПРАВЛЕНО: используем flowDirection, так как massflowrate теперь всегда по модулю (>= 0)
-    const isReverse = this.flowDirection === -1;
+    // Добавили проверку this._labelLenInner
+    if (!this.uiGroup || !this._labelLen || !this._inputLenElement || !this._labelLenInner) return;
     
-    const direction = isReverse
-      ? new THREE.Vector3().subVectors(localStart, localEnd).normalize()
-      : new THREE.Vector3().subVectors(localEnd, localStart).normalize();
+    const isEditing = typeof STATE !== "undefined" && STATE.isEditingLengths === true;
+    this._inputLenElement.value = this.Length.toFixed(2);
+    
+    // 1. Управляем видимостью самого CSS2D-объекта (обёртки)
+    this._labelLen.visible = isEditing;
 
-    const midLocal = new THREE.Vector3().lerpVectors(localStart, localEnd, 0.5);
-    const geometry = new THREE.ConeGeometry(0.05, 0.2, 16);
-    const material = new THREE.MeshBasicMaterial({ color: 0x008000 });
+    // 2. ✅ ИСПРАВЛЕНИЕ: Явно переключаем display у ВНУТРЕННЕГО блока
+    if (isEditing) {
+      this._labelLenInner.style.display = "flex";
+    } else {
+      this._labelLenInner.style.display = "none";
+    }
+    
+    // 3. Находим точные мировые координаты начала и конца трубы
+    const s = new THREE.Vector3();
+    const e = new THREE.Vector3();
+    this.start_node.getWorldPosition(s);
+    this.end_node.getWorldPosition(e);
+    
+    // 4. Вычисляем точную мировую середину (50%)
+    const midWorld = new THREE.Vector3().lerpVectors(s, e, 0.5);
+    
+    // 5. Переводим в локальные координаты трубы
+    const midLocal = midWorld.clone();
+    this.worldToLocal(midLocal);
+    
+    // 6. Устанавливаем позицию БЕЗ лишних смещений
+    this._labelLen.position.copy(midLocal);
+  }
 
-    this._flowArrow = new THREE.Mesh(geometry, material);
-    this._flowArrow.position.copy(midLocal);
+  updateLabelsPosition() { this.updateDOMValues(); }
 
-    const defaultUp = new THREE.Vector3(0, 1, 0);
-    const quaternion = new THREE.Quaternion().setFromUnitVectors(defaultUp, direction);
-    this._flowArrow.quaternion.copy(quaternion);
-
+  createFlowArrow() {
+    if (this._flowArrow) { this.remove(this._flowArrow); this._flowArrow.geometry.dispose(); this._flowArrow.material.dispose(); }
+    const s = new THREE.Vector3(), e = new THREE.Vector3();
+    this.start_node.getWorldPosition(s); this.end_node.getWorldPosition(e);
+    const localS = new THREE.Vector3(), localE = new THREE.Vector3();
+    this.worldToLocal(localS.copy(s)); this.worldToLocal(localE.copy(e));
+    const dir = (this.flowDirection === -1) ? new THREE.Vector3().subVectors(localS, localE).normalize() : new THREE.Vector3().subVectors(localE, localS).normalize();
+    const mid = new THREE.Vector3().lerpVectors(localS, localE, 0.5);
+    this._flowArrow = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.2, 16), new THREE.MeshBasicMaterial({ color: 0x008000 }));
+    this._flowArrow.position.copy(mid);
+    this._flowArrow.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
     this.add(this._flowArrow);
     this.updateFlowArrowVisibility();
   }
 
   updateFlowArrowVisibility() {
     if (!this._flowArrow) return;
-    
-    const showFlow = typeof STATE !== "undefined" && STATE.showLabelsMassFlowRate === true;
-    const showVel = typeof STATE !== "undefined" && STATE.showLabelsVelocity === true;
-    
-    // ✅ Стрелка показывается, если включен ХОТЯ БЫ ОДИН из флагов (Q или V)
-    const showArrow = showFlow || showVel;
-    const hasFlow = Math.abs(this.massflowrate) > 0;
-    
-    this._flowArrow.visible = hasFlow && showArrow;
+    const showQ = typeof STATE !== "undefined" && STATE.showLabelsMassFlowRate;
+    const showV = typeof STATE !== "undefined" && STATE.showLabelsVelocity;
+    this._flowArrow.visible = (Math.abs(this.massflowrate) > 0) && (showQ || showV);
   }
+
+  destroyLabels() {
+    if (this.uiGroup) {
+      this.uiGroup.traverse(c => { if (c.element && typeof c.element.remove === "function") c.element.remove(); });
+      this.remove(this.uiGroup); this.uiGroup = null;
+    }
+    [this._dnLabel, this._qLabel, this._lLabel, this._vLabel, this._flowArrow].forEach(l => {
+      if (l) { this.remove(l); if (l.geometry) l.geometry.dispose(); if (l.material) { if (l.material.map) l.material.map.dispose(); l.material.dispose(); } }
+    });
+    this._dnLabel = null; this._qLabel = null; this._lLabel = null; this._vLabel = null; this._flowArrow = null;
+  }
+
+    // ✅ Обратная совместимость: публичный createUI (вызывается из new.js)
+    createUI() {
+        if (!this.uiGroup) this._createLengthUI();
+        this.updateDOMValues();
+    }
+
+    // ✅ Обратная совместимость: публичный updateResults
+    updateResults(massflowrate, velocity) {
+        this.massflowrate = massflowrate;
+        this.velocity = velocity;
+        if (this.uiGroup) this.updateDOMValues();
+        else this._createLengthUI();
+    }
 }
 
+// ============================================================================
+// ФАБРИКА (остальные методы без изменений)
+// ============================================================================
 export const Factory = {
   createOrientedCylinder(s, e, r, m, n) {
     const l = s.distanceTo(e);
     if (l < 0.001) return null;
-    const mesh = new THREE.Mesh(
-      new THREE.CylinderGeometry(r, r, l, CONFIG.QUALITY.PIPE_TESS),
-      m,
-    );
+    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(r, r, l, CONFIG.QUALITY.PIPE_TESS), m);
     mesh.name = n;
     mesh.position.copy(s).lerp(e, 0.5);
     const d = new THREE.Vector3().subVectors(e, s).normalize();
     const u = new THREE.Vector3(0, 1, 0);
     if (d.dot(u) > 0.999) mesh.quaternion.identity();
-    else if (d.dot(u) < -0.999)
-      mesh.quaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI);
+    else if (d.dot(u) < -0.999) mesh.quaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI);
     else mesh.quaternion.setFromUnitVectors(u, d);
     return mesh;
   },
@@ -563,38 +630,19 @@ export const Factory = {
     const hl = size * AXES_SETTINGS.HEAD_LENGTH_RATIO;
     const hw = hl * AXES_SETTINGS.HEAD_WIDTH_RATIO;
     const cs = (t, c) => {
-      const cv = document.createElement("canvas"),
-        cx = cv.getContext("2d");
-      cv.width = 128;
-      cv.height = 128;
-      cx.font = "48px Arial";
-      cx.fillStyle = c;
-      cx.textAlign = "center";
-      cx.textBaseline = "middle";
+      const cv = document.createElement("canvas"), cx = cv.getContext("2d");
+      cv.width = 128; cv.height = 128;
+      cx.font = "48px Arial"; cx.fillStyle = c; cx.textAlign = "center"; cx.textBaseline = "middle";
       cx.fillText(t, 64, 64);
-      const sp = new THREE.Sprite(
-        new THREE.SpriteMaterial({
-          map: new THREE.CanvasTexture(cv),
-          depthTest: false,
-          transparent: true,
-        }),
-      );
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), depthTest: false, transparent: true }));
       sp.scale.setScalar(Math.max(1, size * AXES_SETTINGS.LABEL_SIZE_RATIO));
       return sp;
     };
-    [
-      ["x", new THREE.Vector3(1, 0, 0), AXES_SETTINGS.COLORS.X],
-      ["y", new THREE.Vector3(0, 1, 0), AXES_SETTINGS.COLORS.Y],
-      ["z", new THREE.Vector3(0, 0, 1), AXES_SETTINGS.COLORS.Z],
-    ].forEach(([a, d, c]) => {
+    [["x", new THREE.Vector3(1, 0, 0), AXES_SETTINGS.COLORS.X], ["y", new THREE.Vector3(0, 1, 0), AXES_SETTINGS.COLORS.Y], ["z", new THREE.Vector3(0, 0, 1), AXES_SETTINGS.COLORS.Z]].forEach(([a, d, c]) => {
       g.add(new THREE.ArrowHelper(d, o, size, c.line, hl, hw));
       const l = cs(a.toUpperCase(), c.text);
       const off = size + hl;
-      l.position.set(
-        a === "x" ? off : 0,
-        a === "y" ? off : 0,
-        a === "z" ? off : 0,
-      );
+      l.position.set(a === "x" ? off : 0, a === "y" ? off : 0, a === "z" ? off : 0);
       g.add(l);
     });
     return g;

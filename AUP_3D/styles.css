@@ -2537,41 +2537,67 @@ body {
     color: #000000 !important; /* ✅ ИСПРАВЛЕНО: был зеленый, стал красный */
 }
 
-/* 3. СТИЛЬ ДЛЯ ИНПУТА ДЛИНЫ (оставляем с фоном, так как это поле ввода) */
+/* ===================================================================
+   СТИЛЬ ИНПУТА ДЛИНЫ (шрифт 6px)
+   =================================================================== */
+
 .edge-ui-input {
-    pointer-events: auto !important; /* ✅ Инпут кликабельный */
+    pointer-events: auto !important;
     background: rgba(255, 255, 255, 0.95) !important;
-    border: 2px solid #2196f3 !important;
-    border-radius: 6px !important;
-    padding: 4px 8px !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
-    z-index: 1 !important; /* ✅ ИЗМЕНЕНО: было 50, стало 10 */
+    border: 1px solid #2196f3 !important;
+    border-radius: 2px !important;
     
-    display: flex;
+    padding: 2px 3px !important;
+    
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+    
+    display: flex !important;
     align-items: center !important;
+    justify-content: center !important;
+    width: max-content !important;
+    min-width: 45px !important;
+    
+    transform-origin: center center !important;
+    font-family: 'Roboto', Arial, sans-serif !important;
+    white-space: nowrap !important;
 }
 
 .edge-ui-input input {
-    width: 70px !important;
+    width: 30px !important;
+    
     border: none !important;
     background: transparent !important;
     text-align: center !important;
-    font-size: 14px !important;
-    font-weight: bold !important;
-    color: #333 !important;
+    
+    font-size: 6px !important;
+    font-weight: 700 !important;
+    color: #000000 !important;
+    
     outline: none !important;
-    pointer-events: auto !important; /* ✅ Поле ввода кликабельно */
+    pointer-events: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    
+    -moz-appearance: textfield !important;
+}
+
+.edge-ui-input input::-webkit-outer-spin-button,
+.edge-ui-input input::-webkit-inner-spin-button {
+    -webkit-appearance: none !important;
+    margin: 0 !important;
 }
 
 .edge-ui-input input:focus {
     background: rgba(33, 150, 243, 0.1) !important;
-    border-radius: 4px !important;
+    border-radius: 1px !important;
 }
 
 .edge-ui-label-prefix {
-    font-weight: bold !important;
-    color: #333 !important;
-    margin-right: 4px !important;
+    font-weight: 700 !important;
+    color: #000000 !important;
+    font-size: 6px !important;
+    margin-right: 2px !important;
+    user-select: none;
 }
 
 /* Принудительное скрытие через CSS (для страховки) */
@@ -2776,4 +2802,209 @@ button.close-btn {
 button.close-btn:focus {
     outline: 2px solid #0f1379 !important;
     outline-offset: 2px !important;
+}
+
+
+
+
+
+
+
+/* Контекстное меню в стиле CAD */
+.cad-context-menu {
+    position: absolute;
+    display: none; /* Скрыто по умолчанию */
+    background: #ffffff;
+    border: 1px solid #cccccc;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 10000; /* Поверх всего, включая ribbon */
+    min-width: 180px;
+    user-select: none;
+    padding: 4px 0;
+}
+
+.cad-context-menu ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.cad-context-menu li {
+    padding: 8px 16px;
+    font-size: 13px;
+    color: #333;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.1s;
+}
+
+.cad-context-menu li:hover {
+    background-color: #e8f0fe;
+    color: #1a73e8;
+}
+
+.cad-context-menu li.danger:hover {
+    background-color: #fce8e6;
+    color: #d93025;
+}
+
+.cad-context-menu li.separator {
+    height: 1px;
+    background-color: #e0e0e0;
+    margin: 4px 0;
+    padding: 0;
+    cursor: default;
+}
+
+.cad-context-menu li.separator:hover {
+    background-color: transparent;
+}
+
+
+
+
+
+
+
+/* ===================================================================
+   ЕДИНЫЙ КРАСНЫЙ СТИЛЬ ДЛЯ ВСЕХ АКТИВНЫХ КНОПОК (ГСК, Результаты и др.)
+   =================================================================== */
+
+/* 1. Базовый стиль кнопки (гарантируем стабильность) */
+.btn-ribbon {
+    background: transparent !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    color: #ffffff !important;
+    transition: all 0.2s ease !important;
+}
+
+.btn-ribbon:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* 2. АКТИВНОЕ СОСТОЯНИЕ (Ярко-красный цвет при клике) */
+.btn-ribbon.active {
+    background: #f30707 !important;       /* Яркий красный цвет */
+    border-color: #f30707 !important;
+    color: #ffffff !important;            /* Белый текст */
+    font-weight: bold !important;
+    box-shadow: 0 0 12px rgba(243, 7, 7, 0.6) !important; /* Красное свечение для акцента */
+}
+
+/* 3. Делаем текстовую иконку или emoji белой при активации */
+.btn-ribbon.active .btn-icon {
+    color: #ffffff !important;
+}
+
+/* 4. СПЕЦИАЛЬНО ДЛЯ КНОПКИ ГСК (ЛСК): перекрашиваем SVG-линии осей в белый цвет */
+.btn-ribbon.active svg path {
+    stroke: #ffffff !important;
+    fill: #ffffff !important;
+}
+
+
+
+
+
+/* ===================================================================
+   ЖЁСТКОЕ ИСПРАВЛЕНИЕ ОТОБРАЖЕНИЯ ОКНА РЕДАКТИРОВАНИЯ ТРУБОПРОВОДА
+   (Вставить в самый конец файла!)
+   =================================================================== */
+
+#PipelineModal_Edit {
+    display: none !important;
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 9999 !important;
+    background: #F3F2F8 !important;
+    border-radius: 12px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+    min-width: 380px !important;
+    max-width: 90vw !important;
+    max-height: 80vh !important;
+    overflow-y: auto !important;
+    padding: 0 !important;
+}
+
+/* Когда JS делает display: block, мы это разрешаем */
+#PipelineModal_Edit[style*="display: block"] {
+    display: block !important;
+}
+
+/* Принудительно показываем и растягиваем содержимое */
+#PipelineModal_Edit .pipeline-body {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    padding: 16px !important;
+    color: #0F1379 !important;
+    font-weight: bold !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Исправляем таблицу внутри, чтобы ячейки не схлопывались */
+#PipelineModal_Edit table {
+    display: table !important;
+    width: 100% !important;
+    border-collapse: collapse !important;
+}
+
+#PipelineModal_Edit table tr {
+    display: table-row !important;
+}
+
+#PipelineModal_Edit table td {
+    display: table-cell !important;
+    padding: 6px 8px !important;
+    font-size: 13px !important;
+    color: #0F1379 !important;
+    vertical-align: middle !important;
+}
+
+/* Поля ввода и селекты делаем видимыми и удобными */
+#PipelineModal_Edit select,
+#PipelineModal_Edit input[type="number"] {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 6px 8px !important;
+    border: 1px solid #ccc !important;
+    border-radius: 4px !important;
+    font-size: 13px !important;
+    font-weight: bold !important;
+    background: #ffffff !important;
+    color: #0F1379 !important;
+}
+
+/* Кнопки внизу окна */
+#PipelineModal_Edit .step {
+    display: flex !important;
+    gap: 8px !important;
+    margin-top: 12px !important;
+}
+
+#PipelineModal_Edit button {
+    flex: 1 !important;
+    padding: 10px !important;
+    border: none !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+}
+
+#PipelineModal_Edit button.confirm {
+    background: #0F1379 !important;
+    color: #ffffff !important;
+}
+
+#PipelineModal_Edit button.cancel {
+    background: #d32f2f !important;
+    color: #ffffff !important;
 }

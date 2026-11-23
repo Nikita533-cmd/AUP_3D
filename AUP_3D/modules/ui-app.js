@@ -201,12 +201,12 @@ export class UIApp {
 
     document.getElementById("menuSceneSettings").onclick = () =>
       this.scene.openSceneSettings();
-    document.getElementById("menuRunCalc").onclick = () =>
-      Utils.showStatus("Запуск гидравлического расчета... (демо-режим)");
+    // document.getElementById("menuRunCalc").onclick = () =>
+    //   Utils.showStatus("Запуск гидравлического расчета... (демо-режим)");
 
-    document.getElementById("menuShowGraph").onclick = () => this.graph.show();
-    document.getElementById("menuShowAutoConnections").onclick = () =>
-      this.graph.showAutoConnections();
+    // document.getElementById("menuShowGraph").onclick = () => this.graph.show();
+    // document.getElementById("menuShowAutoConnections").onclick = () =>
+    //   this.graph.showAutoConnections();
 
     document.getElementById("menuResetView").onclick = () =>
       this.scene.resetView();

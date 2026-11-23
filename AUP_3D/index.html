@@ -243,7 +243,7 @@
       <button class="ribbon-tab" data-tab="tab-pipeline">Трубопровод</button>
       <button class="ribbon-tab" data-tab="tab-branch">Ветка</button>
       <button class="ribbon-tab" data-tab="tab-node">Узел</button>
-      <button class="ribbon-tab" data-tab="tab-sources">Источники</button>
+      <!-- <button class="ribbon-tab" data-tab="tab-sources">Источники</button> -->
       <button class="ribbon-tab" data-tab="tab-anatation">Аннотация</button>
       <button class="ribbon-tab" data-tab="tab-calc">Расчет</button>
       <button class="ribbon-tab" data-tab="tab-results">Результаты</button>
@@ -301,17 +301,41 @@
 
       <!-- Вкладка: Аннотация -->
       <div class="ribbon-panel" id="tab-anatation">
-        <button class="btn-ribbon" id="src_tank"><span class="btn-icon">DN</span><span>Диаметр</span></button>
-        <button class="btn-ribbon" id="src_city"><span class="btn-icon">L</span><span>Длина</span></button>
-        <button class="btn-ribbon" id="src_city"><span class="btn-icon">H</span><span>Высотные отметки</span></button>
-        <button class="btn-ribbon" id="src_pump"><span class="btn-icon">🚰</span><span>Насос</span></button>
+        <button class="btn-ribbon" id="DN_visible"><span class="btn-icon">DN</span><span>Диаметр</span></button>
+        <button class="btn-ribbon" id="L_visible"><span class="btn-icon">L</span><span>Длина</span></button>
+        <button class="btn-ribbon" id="H_visible"><span class="btn-icon">H</span><span>Высотные отм.</span></button>
+        <button class="btn-ribbon" id="menuToggleAxes">
+            <span class="btn-icon">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="28"
+                height="28"
+                viewBox="0 0 28 28"
+                fill="none"
+                aria-hidden="true"
+              >
+                <!-- Синяя ось: вверх -->
+                <path d="M8 20 V4" stroke="#2447D8" stroke-width="2"/>
+                <path d="M8 0 L3 6 H13 Z" fill="#2447D8"/>
+
+                <!-- Зелёная ось: вправо -->
+                <path d="M8 20 H24" stroke="#15951B" stroke-width="2"/>
+                <path d="M28 20 L22 15 V25 Z" fill="#15951B"/>
+
+                <!-- Красная ось: влево-вниз -->
+                <path d="M8 20 L3 25" stroke="#E02020" stroke-width="2"/>
+                <path d="M0 28 L1 21 L7 27 Z" fill="#E02020"/>
+              </svg>
+            </span>
+            <span>ГСК</span>
+          </button>        
       </div>
 
       <!-- Вкладка: Расчет -->
       <div class="ribbon-panel" id="tab-calc">
         <button class="btn-ribbon" id="Add_list_object"><span class="btn-icon">▶️</span><span>Расчет</span></button>
-        <button class="btn-ribbon" id="Check_3D" style="color: #09bd36;"><span class="btn-icon">✅</span><span>ПроCHECKовочка</span></button>
-        <button class="btn-ribbon" id="menuRunCalc"><span class="btn-icon">🚀</span><span>Запуск расчета</span></button>
+        <!-- <button class="btn-ribbon" id="Check_3D" style="color: #09bd36;"><span class="btn-icon">✅</span><span>ПроCHECKовочка</span></button> -->
+        
       </div>
 
       <!-- Вкладка: Результаты -->
@@ -320,13 +344,13 @@
         <button class="btn-ribbon" id="btnToggleFlow"><span class="btn-icon">Q</span><span>Расход</span></button>
         <button class="btn-ribbon" id="btnToggleVelocity"><span class="btn-icon">V</span><span>Скорость</span></button>
 
-        <button class="btn-ribbon" id="menuShowGraph"><span class="btn-icon">DN</span><span>Диаметр</span></button>
-        <button class="btn-ribbon" id="menuShowGraph"><span class="btn-icon">L</span><span>Длина</span></button>
+        <!-- <button class="btn-ribbon" id="menuShowGraph"><span class="btn-icon">DN</span><span>Диаметр</span></button> -->
+        <!-- <button class="btn-ribbon" id="menuShowGraph"><span class="btn-icon">L</span><span>Длина</span></button> -->
         <!-- <button class="btn-ribbon" id="btnToggleLengthEdit"><span class="btn-icon">📏</span><span>Редактировать длины</span></button> -->
-        <button class="btn-ribbon" id="menuShowGraph"><span class="btn-icon">🕸️</span><span>Граф сети</span></button>
-        <button class="btn-ribbon" id="menuShowAutoConnections"><span class="btn-icon">📈</span><span>Характеристика H(Q)</span></button>
+        <!-- <button class="btn-ribbon" id="menuShowGraph"><span class="btn-icon">🕸️</span><span>Граф сети</span></button> -->
+        <!-- <button class="btn-ribbon" id="menuShowAutoConnections"><span class="btn-icon">📈</span><span>Характеристика H(Q)</span></button> -->
         <button class="btn-ribbon" id="menuShowSystemCurve" style="color: #ff9800;"><span class="btn-icon">📊</span><span>Характеристика H(Q)</span></button>
-        <button class="btn-ribbon" id="menuExportJSON"><span class="btn-icon">💾</span><span>Экспорт JSON</span></button>        
+        <!-- <button class="btn-ribbon" id="menuExportJSON"><span class="btn-icon">💾</span><span>Экспорт JSON</span></button>         -->
       </div>
 
       <!-- Вкладка: Вид -->
@@ -624,7 +648,7 @@
     </div>
   </div> -->
 
-  <div id="PipelineModal_Edit" style="width: 350px; max-width: 90vw;">
+<div id="PipelineModal_Edit" style="width: 350px; max-width: 90vw;">
   <div class="pipeline-header" id="pipelineDragHandle" style="display: flex; justify-content: space-between; align-items: center;">
     <span class="title">Редактирование трубопровода</span>
     <span class="close-btn">&times;</span></div>
@@ -1157,6 +1181,11 @@
     </div>
   </div>
 
+
+  <!-- Контекстное меню (по правому клику) -->
+<div id="contextMenu" class="cad-context-menu">
+    <ul id="contextMenuList"></ul>
+</div>
 
 <!-- Контейнер для плавающих инпутов длин
 <div id="lengthInputsContainer" class="length-inputs-container" style="display: none;"></div> -->
