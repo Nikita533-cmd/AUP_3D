@@ -400,6 +400,7 @@ export class Edge_new extends THREE.Mesh {
   }
 
   // Вызывается из глобального updateLabelsForZoom
+    // Вызывается из глобального updateLabelsForZoom
   updateLabelTransform(sizeFactor, offsetFactor, camRight, camUp, camPos) {
     if (!this._dnLabel && !this._qLabel && !this._lLabel && !this._vLabel) return;
 
@@ -452,19 +453,33 @@ export class Edge_new extends THREE.Mesh {
     apply(this._qLabel);
     apply(this._lLabel);
     apply(this._vLabel);
+
+    // ✅ НОВОЕ: Компенсируем зум камеры для HTML-инпута длины.
+    // Если sizeFactor > 1 (камера отдалилась и 3D-объекты уменьшились), 
+    // мы уменьшаем инпут (inverseScale < 1), чтобы он визуально "сжимался" вместе с трубой.
+    if (this._labelLenInner) {
+      const inverseScale = 1.0 / Math.max(0.1, sizeFactor);
+      this._labelLenInner.style.transform = `scale(${inverseScale})`;
+    }
   }
 
-  _createLengthUI() {
+    _createLengthUI() {
     this.uiGroup = new THREE.Group();
     this.uiGroup.name = "EdgeUI";
-    const midLocal = new THREE.Vector3(); // Упрощенно, позиция обновится в updateDOMValues
-    const div = document.createElement("div");
-    div.className = "edge-ui-input";
-    div.style.display = "none";
+
+    // 1. Обёртка, координаты которой обновляет CSS2DRenderer
+    const wrapperDiv = document.createElement("div");
+    wrapperDiv.className = "edge-ui-input-wrapper";
+
+    // 2. Внутренний блок, масштаб которого мы будем менять динамически
+    const innerDiv = document.createElement("div");
+    innerDiv.className = "edge-ui-input";
+    innerDiv.style.display = "none";
+
     const prefix = document.createElement("span");
     prefix.className = "edge-ui-label-prefix";
     prefix.innerText = "L = ";
-    div.appendChild(prefix);
+
     this._inputLenElement = document.createElement("input");
     this._inputLenElement.type = "number";
     this._inputLenElement.step = "0.1";
@@ -476,27 +491,69 @@ export class Edge_new extends THREE.Mesh {
     });
     this._inputLenElement.addEventListener("focus", () => { if (window.Engine?.controls) window.Engine.controls.enabled = false; });
     this._inputLenElement.addEventListener("blur", () => { if (window.Engine?.controls) window.Engine.controls.enabled = true; });
-    div.appendChild(this._inputLenElement);
-    this._labelLen = new CSS2DObject(div);
-    this._labelLen.visible = false; 
+
+    innerDiv.appendChild(prefix);
+    innerDiv.appendChild(this._inputLenElement);
+    wrapperDiv.appendChild(innerDiv);
+
+    this._labelLen = new CSS2DObject(wrapperDiv);
+    this._labelLen.visible = false;
     this._labelLen.isCSS2DObject = true;
+
+    // ✅ Сохраняем ссылку на innerDiv, чтобы менять его scale в updateLabelTransform
+    this._labelLenInner = innerDiv;
+
     this.uiGroup.add(this._labelLen);
     this.add(this.uiGroup);
   }
 
+  // updateDOMValues() {
+  //   if (!this.uiGroup || !this._labelLen || !this._inputLenElement) return;
+  //   const isEditing = typeof STATE !== "undefined" && STATE.isEditingLengths === true;
+  //   this._inputLenElement.value = this.Length.toFixed(2);
+  //   this._labelLen.visible = isEditing;
+  //   this._labelLen.element.style.display = isEditing ? "block" : "none";
+    
+  //   const s = new THREE.Vector3(), e = new THREE.Vector3();
+  //   this.start_node.getWorldPosition(s); this.end_node.getWorldPosition(e);
+  //   const midLocal = new THREE.Vector3().lerpVectors(s, e, 0.5);
+  //   this.worldToLocal(midLocal);
+  //   this._labelLen.position.copy(midLocal);
+  //   this._labelLen.position.y += 0.5;
+  // }
+
   updateDOMValues() {
-    if (!this.uiGroup || !this._labelLen || !this._inputLenElement) return;
+    // Добавили проверку this._labelLenInner
+    if (!this.uiGroup || !this._labelLen || !this._inputLenElement || !this._labelLenInner) return;
+    
     const isEditing = typeof STATE !== "undefined" && STATE.isEditingLengths === true;
     this._inputLenElement.value = this.Length.toFixed(2);
-    this._labelLen.visible = isEditing;
-    this._labelLen.element.style.display = isEditing ? "block" : "none";
     
-    const s = new THREE.Vector3(), e = new THREE.Vector3();
-    this.start_node.getWorldPosition(s); this.end_node.getWorldPosition(e);
-    const midLocal = new THREE.Vector3().lerpVectors(s, e, 0.5);
+    // 1. Управляем видимостью самого CSS2D-объекта (обёртки)
+    this._labelLen.visible = isEditing;
+
+    // 2. ✅ ИСПРАВЛЕНИЕ: Явно переключаем display у ВНУТРЕННЕГО блока
+    if (isEditing) {
+      this._labelLenInner.style.display = "flex";
+    } else {
+      this._labelLenInner.style.display = "none";
+    }
+    
+    // 3. Находим точные мировые координаты начала и конца трубы
+    const s = new THREE.Vector3();
+    const e = new THREE.Vector3();
+    this.start_node.getWorldPosition(s);
+    this.end_node.getWorldPosition(e);
+    
+    // 4. Вычисляем точную мировую середину (50%)
+    const midWorld = new THREE.Vector3().lerpVectors(s, e, 0.5);
+    
+    // 5. Переводим в локальные координаты трубы
+    const midLocal = midWorld.clone();
     this.worldToLocal(midLocal);
+    
+    // 6. Устанавливаем позицию БЕЗ лишних смещений
     this._labelLen.position.copy(midLocal);
-    this._labelLen.position.y += 0.5;
   }
 
   updateLabelsPosition() { this.updateDOMValues(); }
