@@ -79,8 +79,8 @@ document.getElementById("btnToggleVelocity").onclick = toggleVelocityLabels;
 // ============================================================================
 // ПРИВЯЗКА КНОПОК (добавьте это в блок с остальными document.getElementById)
 // ============================================================================
-document.getElementById("src_tank").onclick = toggleDNLabels;
-document.getElementById("src_city").onclick = toggleLengthLabels;
+document.getElementById("DN_visible").onclick = toggleDNLabels;
+document.getElementById("L_visible").onclick = toggleLengthLabels;
 
 //Слушатель для редактирования длин
 document.getElementById("btnToggleLengthEdit").onclick = toggleLengthEditMode;
@@ -128,7 +128,7 @@ function toggleDNLabels() {
         }
     });
 
-    const btn = document.getElementById("src_tank");
+    const btn = document.getElementById("DN_visible");
     if (btn) {
         STATE.showLabelsDN ? btn.classList.add("active") : btn.classList.remove("active");
     }
@@ -144,7 +144,7 @@ function toggleLengthLabels() {
         }
     });
 
-    const btn = document.getElementById("src_city");
+    const btn = document.getElementById("L_visible");
     if (btn) {
         STATE.showLabelsLength ? btn.classList.add("active") : btn.classList.remove("active");
     }
@@ -155,9 +155,16 @@ function toggleFlowLabels() {
     STATE.showLabelsMassFlowRate = !STATE.showLabelsMassFlowRate;
     console.log("🔘 Расход (Q):", STATE.showLabelsMassFlowRate);
 
-    // ✅ Обновляем видимость через методы классов
+    // ✅ 1. Обновляем видимость меток расхода на ТРУБАХ
     STATE.Three_D_objects.forEach((obj) => {
         if (obj.type === "Edge" && typeof obj._updateLabelsVisibility === "function") {
+            obj._updateLabelsVisibility();
+        }
+    });
+
+    // ✅ 2. ДОБАВИТЬ: Обновляем видимость меток расхода на УЗЛАХ (включая оросители и источники)
+    STATE.Three_D_objects.forEach((obj) => {
+        if ((obj.type === "Node" || obj.type === "Sprinkler" || obj.type === "Source") && typeof obj._updateLabelsVisibility === "function") {
             obj._updateLabelsVisibility();
         }
     });
@@ -435,15 +442,17 @@ function CreatePipeline(pbCX, pbCY, pbCZ, activeAxis, activeAxis_direction, pbLe
         const Piepe_visible = new THREE.TubeGeometry(path, 64, VisualPipelins.d_pipe_base/2, 12, false);
         const Pipe_connection = new Edge_new(Piepe_visible, Edge_Material, Node_Start, Node_End, 'Edge', pbLength, pbDiameter, type_tube, k_t, kvelocity);
         
-        // Используем .attach() для сохранения мировых координат при смене родителя
         Node_Start.attach(Pipe_connection);
         if (!check_node_end) {
             Pipe_connection.attach(Node_End);
         }
-        // Pipe_connection.createUI(); //Добавил 09.11.2026
 
-        // ✅ Безопасный вызов: если метода нет — просто пропускаем,
-        // UI создастся автоматически при первом расчёте/режиме редактирования
+        // ✅ СОЗДАЁМ метки DN и L СРАЗУ, до расчёта
+        if (typeof Pipe_connection._ensureLabels === 'function') {
+            Pipe_connection._ensureLabels();          // создаёт _dnLabel, _lLabel с актуальными значениями
+            Pipe_connection._updateLabelsVisibility(); // показывает DN и L, скрывает Q и V (они = 0)
+        }
+
         if (typeof Pipe_connection.createUI === 'function') {
             try { Pipe_connection.createUI(); } catch (e) { console.warn('createUI:', e); }
         }
@@ -467,6 +476,11 @@ function CreatePipeline(pbCX, pbCY, pbCZ, activeAxis, activeAxis_direction, pbLe
         Engine.scene.add(Node_Start);
         Node_Start.attach(Pipe_connection);
         Pipe_connection.attach(Node_End); 
+
+        if (typeof Pipe_connection._ensureLabels === 'function') {
+            Pipe_connection._ensureLabels();
+            Pipe_connection._updateLabelsVisibility();
+        }
         }    
     
     
@@ -807,6 +821,11 @@ function create_branch(Node) {
         
         currentStartNode.attach(Pipe_connection);
         Pipe_connection.attach(currentEndNode);
+
+        if (typeof Pipe_connection._ensureLabels === 'function') {
+            Pipe_connection._ensureLabels();
+            Pipe_connection._updateLabelsVisibility();
+        }
 
         Pipe_connection.createUI();
                 
@@ -1254,10 +1273,10 @@ function visualizeResults(result) {
     updateToggleButtonState('btnToggleFlow', true);
     updateToggleButtonState('btnToggleVelocity', true);
 
-    const btnDN = document.getElementById("src_tank");
+    const btnDN = document.getElementById("DN_visible");
     if (btnDN) btnDN.classList.add("active");
     
-    const btnL = document.getElementById("src_city");
+    const btnL = document.getElementById("L_visible");
     if (btnL) btnL.classList.add("active");
 
     let nodesCount = 0;
@@ -1476,6 +1495,11 @@ function loadProjectFromJSON(file) {
                         // Привязываем трубу к узлам (как в CreatePipeline)
                         startNode.attach(edge);
                         edge.attach(endNode);
+
+                        if (typeof edge._ensureLabels === 'function') {
+                            edge._ensureLabels();
+                            edge._updateLabelsVisibility();
+                        }
                         
                         STATE.Three_D_objects.push(edge);
                     } else {
@@ -1725,26 +1749,32 @@ document.addEventListener("DOMContentLoaded", () => {
 // ============================================================================
 window.addEventListener('load', () => {
     setTimeout(() => {
-        // 1. Гарантированно скрываем экран загрузки
         const loadingEl = document.getElementById('loading');
-        if (loadingEl) {
-            loadingEl.classList.add('hidden');
-        }
+        if (loadingEl) loadingEl.classList.add('hidden');
 
-        // 2. Проверяем, инициализирован ли Engine
         const eng = window.Engine;
         if (eng && eng.scene && eng.renderer && eng.camera) {
             
-            // 3. Принудительно обновляем размеры рендера и камеры
             eng.renderer.setSize(window.innerWidth, window.innerHeight);
             eng.camera.aspect = window.innerWidth / window.innerHeight;
             eng.camera.updateProjectionMatrix();
-
-             World.initAxesGizmo();
+            World.initAxesGizmo();
             
             console.log("✅ Сцена успешно инициализирована и готова к работе");
             
-            // ✅ 4. ЗАПУСКАЕМ ИНИЦИАЛИЗАЦИЮ КОНТЕКСТНОГО МЕНЮ
+            // ✅ ДОБАВИТЬ ЭТО: Включаем DN и L по умолчанию при старте
+            if (typeof STATE !== 'undefined') {
+                STATE.showLabelsDN = true;
+                STATE.showLabelsLength = true;
+            }
+
+            // ✅ ДОБАВИТЬ ЭТО: Делаем кнопки визуально активными (красными) сразу
+            const btnDN = document.getElementById("DN_visible");
+            if (btnDN) btnDN.classList.add("active");
+            
+            const btnL = document.getElementById("L_visible");
+            if (btnL) btnL.classList.add("active");
+            
             if (typeof window.initContextMenu === 'function') {
                 window.initContextMenu();
             } else {
@@ -1754,7 +1784,7 @@ window.addEventListener('load', () => {
         } else {
             console.warn("⚠️ Объект Engine или сцена не найдены при загрузке!");
         }
-    }, 500); // Задержка 500мс дает время на полную инициализацию Engine
+    }, 500);
 });
 
 

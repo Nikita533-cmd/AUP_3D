@@ -2836,3 +2836,46 @@ button.close-btn:focus {
 .cad-context-menu li.separator:hover {
     background-color: transparent;
 }
+
+
+
+
+
+
+
+/* ===================================================================
+   ЕДИНЫЙ КРАСНЫЙ СТИЛЬ ДЛЯ ВСЕХ АКТИВНЫХ КНОПОК (ГСК, Результаты и др.)
+   =================================================================== */
+
+/* 1. Базовый стиль кнопки (гарантируем стабильность) */
+.btn-ribbon {
+    background: transparent !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    color: #ffffff !important;
+    transition: all 0.2s ease !important;
+}
+
+.btn-ribbon:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* 2. АКТИВНОЕ СОСТОЯНИЕ (Ярко-красный цвет при клике) */
+.btn-ribbon.active {
+    background: #f30707 !important;       /* Яркий красный цвет */
+    border-color: #f30707 !important;
+    color: #ffffff !important;            /* Белый текст */
+    font-weight: bold !important;
+    box-shadow: 0 0 12px rgba(243, 7, 7, 0.6) !important; /* Красное свечение для акцента */
+}
+
+/* 3. Делаем текстовую иконку или emoji белой при активации */
+.btn-ribbon.active .btn-icon {
+    color: #ffffff !important;
+}
+
+/* 4. СПЕЦИАЛЬНО ДЛЯ КНОПКИ ГСК (ЛСК): перекрашиваем SVG-линии осей в белый цвет */
+.btn-ribbon.active svg path {
+    stroke: #ffffff !important;
+    fill: #ffffff !important;
+}

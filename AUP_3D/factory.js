@@ -47,7 +47,26 @@ export class Node_new extends THREE.Mesh {
   // Единая точка входа для обновления данных узла
   applyResult(data) {
     this.pressure_m = data.pressure_m || 0;
-    this.flow_l_s = (data.type && data.type.toLowerCase() === 'sprinkler') ? (data.sprinkler_flow_l_s || 0) : 0;
+
+    // ✅ ГЛАВНОЕ ИСПРАВЛЕНИЕ: смотрим на this.type (тип объекта на сцене),
+    // а НЕ на data.type (которого может не быть в ответе бэкенда)
+    if (this.type === 'Sprinkler') {
+      // Подхватываем расход из любого возможного имени поля
+      this.flow_l_s =
+        data.sprinkler_flow_l_s ??
+        data.flow_l_s ??
+        data.q_l_s ??
+        data.flow ??
+        0;
+    } else {
+      this.flow_l_s = 0; // у обычных узлов и источников локальный расход = 0
+    }
+
+    // 🔍 ВРЕМЕННАЯ ОТЛАДКА — удалите после проверки
+    if (this.type === 'Sprinkler') {
+      console.log(`💧 Ороситель ${this.uuid.slice(0,8)}: flow_l_s = ${this.flow_l_s}, ключи ответа:`, Object.keys(data));
+    }
+
     this._ensureLabels();
     this._updateLabelTexts();
     this._updateLabelsVisibility();
@@ -118,34 +137,18 @@ export class Node_new extends THREE.Mesh {
     }
   }
 
-  _updateLabelsVisibility() {
-    const showDN = typeof STATE !== "undefined" && STATE.showLabelsDN;
+   _updateLabelsVisibility() {
+    const showP = typeof STATE !== "undefined" && STATE.showLabelsPressure;
     const showQ = typeof STATE !== "undefined" && STATE.showLabelsMassFlowRate;
-    const showL = typeof STATE !== "undefined" && STATE.showLabelsLength;
-    const showV = typeof STATE !== "undefined" && STATE.showLabelsVelocity;
 
-    // DN виден только если включен флаг
-    if (this._dnLabel) {
-      this._dnLabel.visible = !!showDN;
-      this._dnLabel.userData.targetOffset = showQ ? 0.35 : 0.18;
+    // Давление (P)
+    if (this._pLabel) {
+      this._pLabel.visible = !!showP && this.pressure_m > 0;
     }
     
-    // Q виден только если включен флаг и есть расход
+    // Расход (Q) — используем this.flow_l_s, а НЕ this.massflowrate!
     if (this._qLabel) {
-      this._qLabel.visible = !!showQ && this.massflowrate > 0;
-      this._qLabel.userData.targetOffset = 0.18;
-    }
-
-    // L виден только если включен флаг
-    if (this._lLabel) {
-      this._lLabel.visible = !!showL;
-      this._lLabel.userData.targetOffset = showV ? -0.35 : -0.18;
-    }
-
-    // V виден только если включен флаг и есть скорость
-    if (this._vLabel) {
-      this._vLabel.visible = !!showV && this.velocity > 0;
-      this._vLabel.userData.targetOffset = -0.18;
+      this._qLabel.visible = !!showQ && this.flow_l_s > 0;
     }
   }
 
