@@ -720,10 +720,11 @@ function edit_pipe_tube(Edge) {
 // функция для обновления глобал координат (функция внутри класса Node)
 function update_Node_XYZ(){
     Engine.scene.traverse((child) => {    
-        if (child.name === 'Node_new') {
-                        
+        if (child.name === 'Node_new') {                        
             child.update_Global(); 
-            
+            if (typeof child._updateLabelTexts === 'function') {
+                child._updateLabelTexts();
+            }            
         }
     });
     console.log("Engine.scene.children_update_Node_XYZ",Engine.scene.children);
@@ -1809,6 +1810,7 @@ window.addEventListener('load', () => {
             if (typeof STATE !== 'undefined') {
                 STATE.showLabelsDN = true;
                 STATE.showLabelsLength = true;
+                STATE.showLabelsElevation = true;
             }
 
             // ДОБАВИТЬ ЭТО: Делаем кнопки визуально активными (красными) сразу
@@ -1817,6 +1819,9 @@ window.addEventListener('load', () => {
             
             const btnL = document.getElementById("L_visible");
             if (btnL) btnL.classList.add("active");
+
+            const btnH = document.getElementById("H_visible");
+            if (btnH) btnH.classList.add("active"); 
             
             if (typeof window.initContextMenu === 'function') {
                 window.initContextMenu();
