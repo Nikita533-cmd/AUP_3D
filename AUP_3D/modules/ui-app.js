@@ -194,13 +194,13 @@ export class UIApp {
     // });
 
     
-    ["src_tank", "src_city", "src_pump"].forEach((id) => {
-      document.getElementById(id).onclick = () =>
-        Utils.showStatus("Функция добавления источника находится в разработке");
-    });
+    // ["src_tank", "src_city", "src_pump"].forEach((id) => {
+    //   document.getElementById(id).onclick = () =>
+    //     Utils.showStatus("Функция добавления источника находится в разработке");
+    // });
 
-    document.getElementById("menuSceneSettings").onclick = () =>
-      this.scene.openSceneSettings();
+    // document.getElementById("menuSceneSettings").onclick = () =>
+    //   this.scene.openSceneSettings();
     // document.getElementById("menuRunCalc").onclick = () =>
     //   Utils.showStatus("Запуск гидравлического расчета... (демо-режим)");
 
@@ -208,13 +208,13 @@ export class UIApp {
     // document.getElementById("menuShowAutoConnections").onclick = () =>
     //   this.graph.showAutoConnections();
 
-    document.getElementById("menuResetView").onclick = () =>
-      this.scene.resetView();
-    document.getElementById("menuToggleGrid").onclick = () =>
-      this.scene.toggleGrid();
+    // document.getElementById("menuResetView").onclick = () =>
+    //   this.scene.resetView();
+    // document.getElementById("menuToggleGrid").onclick = () =>
+    //   this.scene.toggleGrid();
     document.getElementById("menuTopView").onclick = () => this.scene.topView();
-    document.getElementById("menuToggleCameraMode").onclick = () =>
-      this.scene.toggleCameraMode();
+    // document.getElementById("menuToggleCameraMode").onclick = () =>
+    //   this.scene.toggleCameraMode();
 
     const toggleConnBtn = document.getElementById("menuToggleConnectionPoints");
     if (toggleConnBtn)
