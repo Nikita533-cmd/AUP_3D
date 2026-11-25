@@ -1,3 +1,4 @@
+// ui-app.js///
 import { Engine } from "../engine.js";
 import { Factory } from "../factory.js";
 import { STATE, Utils } from "../state.js";
@@ -23,13 +24,7 @@ export class UIApp {
     this.graph = new NetworkGraph();
     this.visuals = new VisualEffects();
     this.armature = new Armature(); 
-    this.input = null;
-
-
-
-    // this.Pipeline = new Edge_new();
-
-    
+    this.input = null;    
   }
 
   init() {
@@ -53,111 +48,6 @@ export class UIApp {
 
   _bindRibbonButtons() {
 
-    // document.getElementById("menuCreatePipeline").onclick = () =>
-    //   this.pipeline.CreatePipeline();
-
-
-
-
-
-
-
-
-
-
-    // document.getElementById("menuNew").onclick = () => {
-    //   document.getElementById("newProjectModal").classList.add("active");
-    //   document.getElementById("projectNameInput").value = "";
-    //   document.getElementById("projectFolderPath").value = "";
-    //   STATE.project.folderHandle = null;
-    // };
-
-    // document.getElementById("menuOpen").onclick = () => this.project.open();
-    // document.getElementById("menuSave").onclick = () => this.project.save();
-
-    
-    // document.getElementById("menuSplitSegment").onclick = () =>
-    //   this.split.startSegmentMode();
-    // document.getElementById("menuSplitPipeline").onclick = () =>
-    //   this.split.openPipelineModal();
-    // document.getElementById("menuDuplicateObject").onclick = () => {
-    //   const o = STATE.objects.find(
-    //     (x) => x.id === STATE.selectedObjectId && x.type === "pipeline",
-    //   );
-    //   if (o) this.editor.startDuplicate(o);
-    //   else Utils.showStatus("Выберите трубопровод в дереве");
-    // };
-
-    // document.getElementById("menuConnectPoints").onclick = () => {
-    //   if (STATE.connectPointsMode.active) {
-    //     this.input._cancelConnectPoints();
-    //   } else {
-    //     STATE.connectPointsMode.active = true;
-    //     STATE.connectPointsMode.selectedPoints = [];
-    //     Utils.showStatus("Выберите 2 шара");
-    //   }
-    // };
-
-    // document.getElementById("menuConnectBranches").onclick = () => {
-    //   if (STATE.connectMode.active) {
-    //     STATE.connectMode.active = false;
-    //     STATE.connectMode.selectedBranches = [];
-    //   } else {
-    //     STATE.connectMode.active = true;
-    //     STATE.connectMode.selectedBranches = [];
-    //     Utils.showStatus("Выберите 2 узла");
-    //   }
-    // };
-
-    // document.getElementById("menuCreateBranch").onclick = () => {
-    //   this._updateCreateBranchInputs(4);
-    //   document.getElementById("createBranchSprCount").value = 4;
-    //   document.getElementById("createBranchModal").classList.add("active");
-    // };
-
-    // document.getElementById("menuDuplicateBranch").onclick = () => {
-    //   const o = STATE.objects.find(
-    //     (x) => x.id === STATE.selectedObjectId && x.type === "branch",
-    //   );
-    //   if (o) this.editor.startDuplicate(o);
-    //   else Utils.showStatus("Выберите ветку в дереве");
-    // };
-
-    // document.getElementById("menuCreateRow").onclick = () => {
-    //   document.getElementById("createRowLeftCount").value = 3;
-    //   document.getElementById("createRowRightCount").value = 3;
-    //   this._updateCreateRowSideInputs("Left", 3);
-    //   this._updateCreateRowSideInputs("Right", 3);
-    //   document.getElementById("createRowModal").classList.add("active");
-    // };
-
-    // document.getElementById("menuDuplicateRow").onclick = () => {
-    //   const o = STATE.objects.find(
-    //     (x) => x.id === STATE.selectedObjectId && x.type === "sprinkler_row",
-    //   );
-    //   if (o) this.editor.startDuplicate(o);
-    //   else Utils.showStatus("Выберите рядок в дереве");
-    // };
-
-    // document.getElementById("arm_valve").onclick = () => {
-    //   STATE.insertValveMode = !STATE.insertValveMode;
-    //   const btn = document.getElementById("arm_valve");
-    //   if (STATE.insertValveMode) {
-    //     btn.classList.add("active");
-    //     Utils.showStatus(
-    //       "🔧 Режим вставки узла управления АКТИВЕН. Кликните по участку трубопровода для разбивки.",
-    //     );
-    //   } else {
-    //     btn.classList.remove("active");
-    //     Utils.showStatus("Режим вставки узла управления отключен.");
-    //   }
-    // };
-
-    // ["arm_gate", "arm_check", "arm_filter", "arm_reg"].forEach((id) => {
-    //   document.getElementById(id).onclick = () =>
-    //     Utils.showStatus("Функция добавления арматуры находится в разработке");
-    // });
-
         // === КНОПКИ АРМАТУРЫ (НОВЫЙ УНИВЕРСАЛЬНЫЙ КОД) ===
     const armatureButtons = {
       'arm_valve': 'valve',
@@ -167,54 +57,25 @@ export class UIApp {
       'arm_reg': 'reg'
     };
 
-    // Object.entries(armatureButtons).forEach(([btnId, armatureType]) => {
-    //   document.getElementById(btnId).onclick = () => {
-    //     if (STATE.insertArmatureMode === armatureType) {
-    //       // Если уже выбран этот тип — отключаем режим
-    //       STATE.insertArmatureMode = null;
-    //       document.getElementById(btnId).classList.remove('active');
-    //       Utils.showStatus('Режим вставки арматуры отключен');
-    //     } else {
-    //       // Выбираем новый тип
-    //       STATE.insertArmatureMode = armatureType;
-          
-    //       // Снимаем выделение со всех кнопок арматуры
-    //       Object.keys(armatureButtons).forEach(id => {
-    //         document.getElementById(id).classList.remove('active');
-    //       });
-          
-    //       // Выделяем нажатую кнопку
-    //       document.getElementById(btnId).classList.add('active');
-          
-    //       // Показываем подсказку из класса Armature
-    //       const name = this.armature.getTypeInfo(armatureType).name;
-    //       Utils.showStatus(`🔧 ${name}. Кликните по трубе.`);
-    //     }
-    //   };
-    // });
+    // === ПЕРЕКЛЮЧЕНИЕ ВИДОВ КАМЕРЫ ===
+    const viewButtons = [
+      ["menuTopView",   () => this.scene.topView()],
+      ["menuFrontView", () => this.scene.frontView()],
+      ["menuBackView",  () => this.scene.backView()],
+      ["menuRightView", () => this.scene.rightView()],
+      ["menuLeftView",  () => this.scene.leftView()],
+      ["menuIsoView",   () => this.scene.isoView()],
+    ];
 
-    
-    ["src_tank", "src_city", "src_pump"].forEach((id) => {
-      document.getElementById(id).onclick = () =>
-        Utils.showStatus("Функция добавления источника находится в разработке");
+    viewButtons.forEach(([id, handler]) => {
+      const btn = document.getElementById(id);
+      if (btn) btn.onclick = handler;
+      else console.warn(`⚠️ Кнопка вида "${id}" не найдена в HTML`);
     });
 
-    document.getElementById("menuSceneSettings").onclick = () =>
-      this.scene.openSceneSettings();
-    // document.getElementById("menuRunCalc").onclick = () =>
-    //   Utils.showStatus("Запуск гидравлического расчета... (демо-режим)");
 
-    // document.getElementById("menuShowGraph").onclick = () => this.graph.show();
-    // document.getElementById("menuShowAutoConnections").onclick = () =>
-    //   this.graph.showAutoConnections();
-
-    document.getElementById("menuResetView").onclick = () =>
-      this.scene.resetView();
-    document.getElementById("menuToggleGrid").onclick = () =>
-      this.scene.toggleGrid();
-    document.getElementById("menuTopView").onclick = () => this.scene.topView();
-    document.getElementById("menuToggleCameraMode").onclick = () =>
-      this.scene.toggleCameraMode();
+    // document.getElementById("menuToggleCameraMode").onclick = () =>
+    //   this.scene.toggleCameraMode();
 
     const toggleConnBtn = document.getElementById("menuToggleConnectionPoints");
     if (toggleConnBtn)
@@ -224,18 +85,6 @@ export class UIApp {
     if (toggleDiamBtn)
       toggleDiamBtn.onclick = () => this.visuals.toggleDiameters();
   }
-
-  // _bindToolbarButtons() {
-  //   document.getElementById("resetViewBtn").onclick = () =>
-  //     this.scene.resetView();
-  //   document.getElementById("toggleGridBtn").onclick = () =>
-  //     this.scene.toggleGrid();
-  //   document.getElementById("topViewBtn").onclick = () => this.scene.topView();
-  //   document.getElementById("toggleConnectionPointsBtn").onclick = () =>
-  //     this.visuals.toggleConnectionPoints();
-  //   document.getElementById("toggleDiametersBtn").onclick = () =>
-  //     this.visuals.toggleDiameters();
-  // }
 
   _bindPipelineBuilderButtons() {
 
@@ -317,35 +166,14 @@ export class UIApp {
       STATE.pipeline.diameter = parseInt(e.target.value) || 25;
       this.pipeline.updatePreview();
     });
-
-    // document
-    //   .getElementById("pbConfirm")
-    //   .addEventListener("click", () => this.pipeline.addSegment());
-    // document
-    //   .getElementById("pbFinish")
-    //   .addEventListener("click", () => this.pipeline.finish());
-    // document
-    //   .getElementById("pbCancel")
-    //   .addEventListener("click", () => this.pipeline.cancel());
   }
 
   _bindModalButtons() {
     document.getElementById("sceneSettingsCancelBtn").onclick = () =>
       document.getElementById("sceneSettingsModal").classList.remove("active");
 
-    // ============================================
-    // МОДАЛЬНОЕ ОКНО "НОВЫЙ ПРОЕКТ"
-    // ============================================
-
-    // Кнопка "Новый проект..." в ribbon — открывает модалку
-    // document.getElementById("menuNew").onclick = () => {
-    //   document.getElementById("newProjectModal").classList.add("active");
-    //   document.getElementById("projectNameInput").value = "";
-    //   document.getElementById("projectFolderPath").value = "";
-    //   STATE.project.folderHandle = null;
-    // };
-
-    // ✅ ВОТ ЭТОЙ СТРОКИ НЕ ХВАТАЛО — кнопка "Выбрать папку"
+   
+    // ВОТ ЭТОЙ СТРОКИ НЕ ХВАТАЛО — кнопка "Выбрать папку"
     document.getElementById("selectFolderBtn").onclick = async () => {
       try {
         if ("showDirectoryPicker" in window) {
