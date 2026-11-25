@@ -22,11 +22,15 @@ export class Node_new extends THREE.Mesh {
     // 3D Метки (Спрайты)
     this._pLabel = null;
     this._qLabel = null;
+    this._elevLabel = null;
     
     this.updateSprinklerArrow();
     if (typeof STATE !== "undefined" && STATE.Three_D_objects) {
       STATE.Three_D_objects.push(this);
     }
+
+    this._ensureLabels();
+    this._updateLabelsVisibility();
   }
 
   update_Global() {
@@ -48,8 +52,6 @@ export class Node_new extends THREE.Mesh {
   applyResult(data) {
     this.pressure_m = data.pressure_m || 0;
 
-    // ✅ ГЛАВНОЕ ИСПРАВЛЕНИЕ: смотрим на this.type (тип объекта на сцене),
-    // а НЕ на data.type (которого может не быть в ответе бэкенда)
     if (this.type === 'Sprinkler') {
       // Подхватываем расход из любого возможного имени поля
       this.flow_l_s =
@@ -62,9 +64,9 @@ export class Node_new extends THREE.Mesh {
       this.flow_l_s = 0; // у обычных узлов и источников локальный расход = 0
     }
 
-    // 🔍 ВРЕМЕННАЯ ОТЛАДКА — удалите после проверки
+    // ВРЕМЕННАЯ ОТЛАДКА — удалите после проверки
     if (this.type === 'Sprinkler') {
-      console.log(`💧 Ороситель ${this.uuid.slice(0,8)}: flow_l_s = ${this.flow_l_s}, ключи ответа:`, Object.keys(data));
+      console.log(`Ороситель ${this.uuid.slice(0,8)}: flow_l_s = ${this.flow_l_s}, ключи ответа:`, Object.keys(data));
     }
 
     this._ensureLabels();
@@ -82,6 +84,11 @@ export class Node_new extends THREE.Mesh {
       this._qLabel = this._createSprite('Q = 0 л/с', '#000000', 5);
       this._qLabel.name = 'FlowLabel';
       this.add(this._qLabel);
+    }
+    if (!this._elevLabel) {
+      this._elevLabel = this. _createElevSprite(this.Y_gl);
+      this._elevLabel.name = 'ElevationLabel';
+      this.add(this._elevLabel);
     }
   }
 
@@ -123,6 +130,46 @@ export class Node_new extends THREE.Mesh {
     return sprite;
   }
 
+  _createElevSprite(yValue) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    const DPR = Math.min(window.devicePixelRatio || 1, 3);
+    const size = 1024 * DPR;
+    canvas.width = size;
+    canvas.height = size;
+
+    const fontSize = Math.round(40 * DPR);
+    // ✅ ЗАМЕНА ТОЧКИ НА ЗАПЯТУЮ в значении
+    const text = `▽ ${yValue.toFixed(3).replace('.', ',')} м`; 
+
+    ctx.font = `Bold ${fontSize}px Arial, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = Math.round(12 * DPR);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+    ctx.strokeText(text, size / 2, size / 2);
+
+    ctx.fillStyle = '#000000';
+    ctx.fillText(text, size / 2, size / 2);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+
+    const material = new THREE.SpriteMaterial({
+      map: texture,
+      depthTest: false,
+      transparent: true,
+      sizeAttenuation: true
+    });
+
+    const sprite = new THREE.Sprite(material);
+    sprite.userData.baseScale = 5;
+    return sprite;
+  }
 
   _updateLabelTexts() {
     if (this._pLabel) {
@@ -135,11 +182,19 @@ export class Node_new extends THREE.Mesh {
       this._qLabel.material.map.dispose();
       this._qLabel.material.map = newSprite.material.map;
     }
+    if (this._elevLabel) {
+      // ✅ ИСПРАВЛЕНО: обновляем только текстуру спрайта, без geometry
+      const newSprite = this._createElevSprite(this.Y_gl);
+      this._elevLabel.material.map.dispose();
+      this._elevLabel.material.map = newSprite.material.map;
+      this._elevLabel.userData.baseScale = newSprite.userData.baseScale;
+    }
   }
 
-   _updateLabelsVisibility() {
+  _updateLabelsVisibility() {
     const showP = typeof STATE !== "undefined" && STATE.showLabelsPressure;
     const showQ = typeof STATE !== "undefined" && STATE.showLabelsMassFlowRate;
+    const showH = typeof STATE !== "undefined" && STATE.showLabelsElevation;
 
     // Давление (P)
     if (this._pLabel) {
@@ -150,31 +205,64 @@ export class Node_new extends THREE.Mesh {
     if (this._qLabel) {
       this._qLabel.visible = !!showQ && this.flow_l_s > 0;
     }
+
+    // Высотная отметка
+    if (this._elevLabel) {
+      this._elevLabel.visible = !!showH;
+    }
   }
 
-  // Вызывается из глобального updateLabelsForZoom
-  updateLabelTransform(sizeFactor, offsetFactor, camRight, camUp) {
-    if (!this._pLabel || !this._qLabel) return;
+  updateLabelTransform(sizeFactor, offsetFactor, camRight, camUp, camPos) {
+    if (!this._pLabel && !this._qLabel && !this._elevLabel) return;
 
     const applySprite = (label, rightOff, upOff) => {
-      // ✅ Мировое смещение относительно узла → локальное
+      if (!label) return;
+      
+      this.updateMatrixWorld(true); // Гарантируем актуальность координат
+      
       const worldAnchor = this.getWorldPosition(new THREE.Vector3());
       const worldPos = worldAnchor.clone()
         .addScaledVector(camRight, rightOff)
         .addScaledVector(camUp, upOff);
+      
       this.worldToLocal(worldPos);
       label.position.copy(worldPos);
-      const s = 5 * sizeFactor;
+      
+      const s = (label.userData.baseScale || 5) * sizeFactor;
       label.scale.set(s, s, 1);
     };
 
-    applySprite(this._pLabel, 0.0, 0.15);   // P: справа-сверху
-    applySprite(this._qLabel, 0.0, -0.35);  // Q: слева-снизу
+    const isElevVisible = this._elevLabel && this._elevLabel.visible;
+
+    // 1. Высотная отметка (H): теперь на высоте 0.15
+    if (this._elevLabel) {
+      applySprite(this._elevLabel, 0.0, 0.15 * offsetFactor); // <-- ИЗМЕНЕНО НА 0.15
+    }
+
+    // 2. Давление (P): над высотной отметкой (0.45), ИЛИ на её месте (0.15), если она выключена
+    if (this._pLabel) {
+      const pUpOff = isElevVisible ? 0.35 * offsetFactor : 0.15 * offsetFactor; // <-- СКОРРЕКТИРОВАНО
+      applySprite(this._pLabel, 0.0, pUpOff);
+    }
+
+    // 3. Расход (Q): всегда снизу узла
+    if (this._qLabel) {
+      applySprite(this._qLabel, 0.0, -0.5 * offsetFactor);
+    }
   }
 
   destroyLabels() {
     if (this._pLabel) { this.remove(this._pLabel); this._pLabel.material.map.dispose(); this._pLabel = null; }
     if (this._qLabel) { this.remove(this._qLabel); this._qLabel.material.map.dispose(); this._qLabel = null; }
+    
+    // Полная очистка памяти для Mesh
+    if (this._elevLabel) { 
+      this.remove(this._elevLabel); 
+      this._elevLabel.geometry.dispose(); 
+      this._elevLabel.material.map.dispose(); 
+      this._elevLabel.material.dispose(); 
+      this._elevLabel = null; 
+    }
   }
 
   updateSprinklerArrow() {

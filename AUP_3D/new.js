@@ -73,14 +73,15 @@ document.getElementById("btnTogglePressure").onclick = togglePressureLabels;
 //Слушатель показать/скрыть расходы по участкам труб
 document.getElementById("btnToggleFlow").onclick = toggleFlowLabels;
 
-//Слушатель показать/скрыть скоости по участкам труб
+//Слушатель показать/скрыть скорости по участкам труб
 document.getElementById("btnToggleVelocity").onclick = toggleVelocityLabels;
 
-// ============================================================================
-// ПРИВЯЗКА КНОПОК (добавьте это в блок с остальными document.getElementById)
-// ============================================================================
 document.getElementById("DN_visible").onclick = toggleDNLabels;
+
 document.getElementById("L_visible").onclick = toggleLengthLabels;
+
+// Привязка кнопки высотных отметок
+document.getElementById("H_visible").onclick = toggleElevationLabels;
 
 //Слушатель для редактирования длин
 document.getElementById("btnToggleLengthEdit").onclick = toggleLengthEditMode;
@@ -204,6 +205,30 @@ function toggleVelocityLabels() {
     const btn = document.getElementById("btnToggleVelocity");
     if (btn) {
         STATE.showLabelsVelocity ? btn.classList.add("active") : btn.classList.remove("active");
+    }
+}
+
+// Управление видимостью высотных отметок (H)
+function toggleElevationLabels() {
+    // Инициализируем флаг, если его ещё нет
+    if (typeof STATE.showLabelsElevation === 'undefined') {
+        STATE.showLabelsElevation = true;
+    }
+    
+    STATE.showLabelsElevation = !STATE.showLabelsElevation;
+    console.log("🔘 Высотные отметки (H):", STATE.showLabelsElevation);
+
+    // Обновляем видимость меток на всех узлах
+    STATE.Three_D_objects.forEach((obj) => {
+        if ((obj.type === "Node" || obj.type === "Sprinkler" || obj.type === "Source") && typeof obj._updateLabelsVisibility === "function") {
+            obj._updateLabelsVisibility();
+        }
+    });
+
+    // Переключаем визуальный класс кнопки (красный/обычный)
+    const btn = document.getElementById("H_visible");
+    if (btn) {
+        STATE.showLabelsElevation ? btn.classList.add("active") : btn.classList.remove("active");
     }
 }
 
@@ -1277,21 +1302,25 @@ function visualizeResults(result) {
     STATE.calculationLabels = [];
 
     // 3. Включаем все флаги видимости
-    STATE.showLabelsPressure = true;
-    STATE.showLabelsMassFlowRate = true;
-    STATE.showLabelsVelocity = true;
+    STATE.showLabelsPressure = false;
+    STATE.showLabelsMassFlowRate = false;
+    STATE.showLabelsVelocity = false;
     STATE.showLabelsDN = true;          
     STATE.showLabelsLength = true; 
+    STATE.showLabelsElevation = true;
 
-    updateToggleButtonState('btnTogglePressure', true);
-    updateToggleButtonState('btnToggleFlow', true);
-    updateToggleButtonState('btnToggleVelocity', true);
+    updateToggleButtonState('btnTogglePressure', false);
+    updateToggleButtonState('btnToggleFlow', false);
+    updateToggleButtonState('btnToggleVelocity', false);
 
     const btnDN = document.getElementById("DN_visible");
     if (btnDN) btnDN.classList.add("active");
     
     const btnL = document.getElementById("L_visible");
     if (btnL) btnL.classList.add("active");
+
+    const btnH = document.getElementById("H_visible");
+    if (btnH) btnH.classList.add("active");
 
     let nodesCount = 0;
     let edgesCount = 0;

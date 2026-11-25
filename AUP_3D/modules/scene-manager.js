@@ -1,9 +1,7 @@
-// modules/scene-manager.js
-
+import * as THREE from "three"; // ✅ ДОБАВЛЕНО: необходимо для new THREE.Vector3
 import { Engine } from "../engine.js";
 import { World } from "../world.js";
-
-// import { Engine } from '../engine.js';
+import { STATE } from "../state.js"; // ✅ ДОБАВЛЕНО: необходимо для toggleGrid
 
 export class SceneManager {
     resetView() {
@@ -12,32 +10,76 @@ export class SceneManager {
         Engine.controls.update();
     }
 
-    topView() {
-        Engine.camera.position.set(0, 50, 0);
-        Engine.controls.target.set(0, 5, 0);
-        Engine.controls.update();
+    // ============================================================================
+    // УНИВЕРСАЛЬНЫЙ ПЕРЕКЛЮЧАТЕЛЬ ВИДОВ
+    // ============================================================================
+    _applyView(dir, upVec) {
+        if (!Engine || !Engine.camera || !Engine.controls) return;
+
+        const camera = Engine.camera;
+        const controls = Engine.controls;
+
+        // Точка, на которую смотрим (центр вращения) — НЕ трогаем,
+        // чтобы не сбрасывать панорамирование пользователя
+        const target = controls.target.clone();
+
+        // Сохраняем текущее расстояние = уровень приближения (зум)
+        let dist = camera.position.distanceTo(target);
+        if (!isFinite(dist) || dist < 0.01) dist = 100;
+
+        // Нормализуем направление вида
+        const dirN = dir.clone().normalize();
+
+        // Ставим камеру в target + направление * расстояние
+        camera.position.copy(target).addScaledVector(dirN, dist);
+
+        // Корректный вектор "вверх" (иначе вид сверху даст gimbal-lock / переворот)
+        camera.up.copy(upVec);
+
+        // Пересчитываем контролы
+        controls.update();
+        camera.updateProjectionMatrix();
     }
 
-    setView(direction) {
-        const c = Engine.controls.target.clone();
-        const d = 30;
-        const positions = {
-            top: [c.x, c.y + d, c.z],
-            bottom: [c.x, c.y - d, c.z],
-            front: [c.x, c.y, c.z + d],
-            back: [c.x, c.y, c.z - d],
-            left: [c.x - d, c.y, c.z],
-            right: [c.x + d, c.y, c.z]
-        };
-        if (positions[direction]) {
-            Engine.camera.position.set(...positions[direction]);
-            Engine.controls.update();
-        }
+    // Вид Сверху (план с "севером" вверх, т.е. -Z)
+    topView() {
+        this._applyView(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, -1));
+    }
+
+    // Вид Снизу
+    bottomView() {
+        this._applyView(new THREE.Vector3(0, -1, 0), new THREE.Vector3(0, 0, -1));
+    }
+
+    // Вид Спереди (камера на +Z, смотрит на объект)
+    frontView() {
+        this._applyView(new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 1, 0));
+    }
+
+    // Вид Сзади
+    backView() {
+        this._applyView(new THREE.Vector3(0, 0, -1), new THREE.Vector3(0, 1, 0));
+    }
+
+    // Вид Справа (камера на +X)
+    rightView() {
+        this._applyView(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1, 0));
+    }
+
+    // Вид Слева (камера на -X)
+    leftView() {
+        this._applyView(new THREE.Vector3(-1, 0, 0), new THREE.Vector3(0, 1, 0));
+    }
+
+    // Изометрия (камера в первом октанте)
+    isoView() {
+        const d = 1 / Math.sqrt(3);
+        this._applyView(new THREE.Vector3(d, d, d), new THREE.Vector3(0, 1, 0));
     }
 
     toggleGrid() {
         STATE.showGrid = !STATE.showGrid;
-        if (STATE.meshes.grid) {
+        if (STATE.meshes && STATE.meshes.grid) {
             STATE.meshes.grid.visible = STATE.showGrid;
         }
         this._updateButtonLabels();
@@ -62,6 +104,7 @@ export class SceneManager {
         
         nc.position.copy(p);
         nc.lookAt(t);
+        nc.up.copy(Engine.camera.up); // ✅ Важно сохранить up вектор при смене камеры!
         nc.updateProjectionMatrix();
         
         Engine.camera = nc;
@@ -72,19 +115,27 @@ export class SceneManager {
     }
 
     openSceneSettings() {
-        document.getElementById('scenePlaneWidth').value = document.getElementById('planeWidth').value;
-        document.getElementById('scenePlaneDepth').value = document.getElementById('planeDepth').value;
-        document.getElementById('sceneAxesSize').value = document.getElementById('axesSizeInput').value;
-        document.getElementById('sceneSettingsModal').classList.add('active');
+        const pw = document.getElementById('scenePlaneWidth');
+        const pd = document.getElementById('scenePlaneDepth');
+        const as = document.getElementById('sceneAxesSize');
+        if(pw) pw.value = document.getElementById('planeWidth')?.value || 50;
+        if(pd) pd.value = document.getElementById('planeDepth')?.value || 50;
+        if(as) as.value = document.getElementById('axesSizeInput')?.value || 2;
+        
+        const modal = document.getElementById('sceneSettingsModal');
+        if(modal) modal.classList.add('active');
     }
 
     applySceneSettings() {
-        World.updateGroundSize(
-            document.getElementById('scenePlaneWidth').value,
-            document.getElementById('scenePlaneDepth').value
-        );
-        World.updateAxesSize(document.getElementById('sceneAxesSize').value);
-        document.getElementById('sceneSettingsModal').classList.remove('active');
+        const pw = document.getElementById('scenePlaneWidth')?.value || 50;
+        const pd = document.getElementById('scenePlaneDepth')?.value || 50;
+        const as = document.getElementById('sceneAxesSize')?.value || 2;
+
+        World.updateGroundSize(pw, pd);
+        World.updateAxesSize(as);
+        
+        const modal = document.getElementById('sceneSettingsModal');
+        if(modal) modal.classList.remove('active');
     }
 
     _updateButtonLabels() {
