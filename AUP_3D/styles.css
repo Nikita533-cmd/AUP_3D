@@ -2989,3 +2989,20 @@ button.close-btn:focus {
     background: #d32f2f !important;
     color: #ffffff !important;
 }
+
+
+
+#contextMenuList li:not(.separator) {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#contextMenuList .ctx-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+}
