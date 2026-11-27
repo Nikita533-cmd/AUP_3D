@@ -315,6 +315,21 @@
             <path d="M5 8.5H10.5V17.5A2 2 0 0 0 12.5 19.5H19" />
           </svg>
         </span><span>Трасса</span></button>
+
+        <button class="btn-ribbon" id="menuTracePipeline" title="Трассировка через Gizmo">
+            <span class="btn-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="5" cy="18" r="2.5" fill="currentColor"/>
+                    <line x1="7" y1="17" x2="14" y2="10"/>
+                    <circle cx="16" cy="8" r="2.5" fill="none" stroke-dasharray="2 2"/>
+                    <line x1="16" y1="8" x2="20" y2="8" stroke="#ff4444"/>
+                    <line x1="16" y1="8" x2="16" y2="4" stroke="#44ff44"/>
+                    <line x1="16" y1="8" x2="13" y2="11" stroke="#4488ff"/>
+                </svg>
+            </span>
+            <span>Трасса (Gizmo)</span>
+        </button>
+
         <button class="btn-ribbon" id="menuCreateBranch"><span class="btn-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://w3.org">
             <!-- Магистральная труба с фланцами -->
@@ -1474,8 +1489,29 @@
     <ul id="contextMenuList"></ul>
 </div>
 
-<!-- Контейнер для плавающих инпутов длин
-<div id="lengthInputsContainer" class="length-inputs-container" style="display: none;"></div> -->
+<div class="gizmo-panel" id="gizmoPanel">
+    <div class="gizmo-panel-title">Gizmo</div>
+    <button class="gizmo-mode-btn active" data-mode="translate" title="Перемещение (G)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/>
+        </svg>
+    </button>
+    <button class="gizmo-mode-btn" data-mode="rotate" title="Вращение (R)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+        </svg>
+    </button>
+    <button class="gizmo-mode-btn" data-mode="scale" title="Масштаб (S)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+        </svg>
+    </button>
+    <button class="gizmo-hide-btn" title="Скрыть (Esc)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+    </button>
+</div>
 
 </body>
 </html>

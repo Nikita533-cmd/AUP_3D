@@ -7,11 +7,26 @@ import { STATE, Utils, VisualPipelins } from "./state.js";
 import { get_load_pbDiameter } from './check_input.js';
 import { checkAllPipelines } from './collision.js';
 import { World } from './world.js';
+import { TransformControls } from "three/addons/controls/TransformControls.js";
 
 // ============================================================================
 // ДИНАМИЧЕСКОЕ МАСШТАБИРОВАНИЕ МЕТOK ПОД ЗУМ КАМЕРЫ
 // ============================================================================
 STATE.calculationLabels = STATE.calculationLabels || [];
+
+// ============================================================================
+// TRANSFORM GIZMO + РЕЖИМ ТРАССИРОВКИ
+// ============================================================================
+let transformControls = null;
+let gizmoMode = 'translate';
+
+STATE.tracing = {
+    active: false,
+    ghostNode: null,
+    ghostEdge: null,
+    anchorNode: null,
+    chainLength: 0,
+};
 
 const BASE_ZOOM = 1000;
 const COMPENSATION_SIZE = 1.0;    // Коэффициент для РАЗМЕРА метки (1.0 = всегда читаемы)
@@ -1585,6 +1600,7 @@ window.addEventListener('load', () => {
             eng.camera.aspect = window.innerWidth / window.innerHeight;
             eng.camera.updateProjectionMatrix();
             World.initAxesGizmo();
+            initTransformGizmo();
             
             console.log("Сцена успешно инициализирована и готова к работе");
             
@@ -1759,6 +1775,7 @@ const CONTEXT_ICONS = {
 };
 
 function buildContextMenu(obj) {
+    showTransformGizmo(obj);
     contextMenuList.innerHTML = '';
     let items = [];
     
@@ -1862,7 +1879,22 @@ document.addEventListener('click', (event) => {
 });
 
 document.addEventListener('keydown', (event) => {
+    const activeElement = document.activeElement;
+    if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) return;
+
+    // ✅ Режим трассировки: Enter = зафиксировать, Esc = отменить
+    if (STATE.tracing.active) {
+        if (event.key === 'Enter') { event.preventDefault(); commitTracingNode(); return; }
+        if (event.key === 'Escape') { event.preventDefault(); cancelTracingMode(); return; }
+    }
+
     if (event.key === 'Escape') hideContextMenu();
+
+    switch (event.key.toLowerCase()) {
+        case 'g': setGizmoMode('translate'); break;
+        case 'r': setGizmoMode('rotate'); break;
+        case 's': setGizmoMode('scale'); break;
+    }
 });
 
 // ============================================================================
@@ -1908,7 +1940,8 @@ function deleteCurrentSelection() {
         console.log("Ничего не выбрано для удаления");
         return;
     }
-
+    
+    hideTransformGizmo();
     const type = obj.type;
 
     if (type === 'Edge') {
@@ -1972,6 +2005,278 @@ function deleteCurrentSelection() {
         console.log("Этот тип объекта нельзя удалить клавишей Delete");
     }
 }
+
+// ============================================================================
+// ИНИЦИАЛИЗАЦИЯ GIZMO
+// ============================================================================
+function initTransformGizmo() {
+    if (!Engine || !Engine.camera || !Engine.renderer) return;
+
+    transformControls = new TransformControls(Engine.camera, Engine.renderer.domElement);
+    transformControls.setSize(0.75);
+    transformControls.setSpace('world');
+    transformControls.setMode(gizmoMode);
+    transformControls.visible = false;
+    Engine.scene.add(transformControls);
+
+    transformControls.addEventListener('dragging-changed', (event) => {
+        if (Engine.controls) Engine.controls.enabled = !event.value;
+
+        if (STATE.tracing.active && !event.value) return; // в режиме трассировки commit по Enter
+
+        const obj = Engine.selectedObject;
+        if (!obj) return;
+        if (event.value) {
+            if (typeof obj.onGizmoDragStart === 'function') obj.onGizmoDragStart();
+        } else {
+            onGizmoTransformEnd();
+        }
+    });
+
+    transformControls.addEventListener('change', () => {
+        if (STATE.tracing.active && STATE.tracing.ghostNode?.userData?._onGizmoMove) {
+            STATE.tracing.ghostNode.userData._onGizmoMove();
+            return;
+        }
+        const obj = Engine.selectedObject;
+        if (obj && typeof obj.onGizmoDrag === 'function') obj.onGizmoDrag();
+    });
+
+    console.log('✅ TransformControls инициализирован');
+}
+
+function setGizmoMode(mode) {
+    if (!transformControls) return;
+    gizmoMode = mode;
+    transformControls.setMode(mode);
+    document.querySelectorAll('.gizmo-mode-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === mode);
+    });
+    Utils?.showStatus(`Gizmo: ${mode === 'translate' ? 'Перемещение' : mode === 'rotate' ? 'Вращение' : 'Масштаб'}`);
+}
+
+function showTransformGizmo(object) {
+    if (!transformControls || !object) return;
+    transformControls.attach(object);
+    transformControls.visible = true;
+}
+
+function hideTransformGizmo() {
+    if (!transformControls) return;
+    transformControls.detach();
+    transformControls.visible = false;
+}
+
+function onGizmoTransformEnd() {
+    const obj = Engine.selectedObject;
+    if (!obj) return;
+
+    if (obj.type === 'Node' || obj.type === 'Sprinkler' || obj.type === 'Source') {
+        obj.onGizmoDragEnd?.();
+
+        Engine.scene.traverse((child) => {
+            if (child.type === 'Edge' && child.start_node && child.end_node) {
+                if (child.start_node.uuid === obj.uuid || child.end_node.uuid === obj.uuid) {
+                    child.onConnectedNodeMoved?.();
+                }
+            }
+        });
+
+        updateTreeUI();
+        checkAllPipelines();
+        Utils?.showStatus(`Узел: X=${obj.X_gl.toFixed(2)} Y=${obj.Y_gl.toFixed(2)} Z=${obj.Z_gl.toFixed(2)}`);
+    }
+
+    if (obj.type === 'Edge') {
+        obj.rebuildGeometry?.();
+        updateTreeUI();
+        checkAllPipelines();
+    }
+}
+
+// ============================================================================
+// РЕЖИМ ТРАССИРОВКИ (Gizmo Tracing)
+// ============================================================================
+const TRACING_COLORS = {
+    ghostNode: 0xffaa00,
+    ghostEdge: 0x88aaff,
+    realEdge: '#0F1379',
+};
+
+function startTracingMode() {
+    if (!Engine || !transformControls) { Utils?.showStatus('❌ Gizmo не готов'); return; }
+
+    let anchor = Engine.selectedObject;
+    if (!anchor || !['Node', 'Sprinkler', 'Source'].includes(anchor.type)) {
+        const geom = new THREE.SphereGeometry(VisualPipelins.d_node_base/2, 32, 32);
+        const mat = new THREE.MeshBasicMaterial({ color: '#800080' });
+        anchor = new Node_new(geom, mat, 'Source');
+        anchor.position.set(0, 0, 0);
+        Engine.scene.add(anchor);
+        Engine.selectedObject = anchor;
+        Utils?.showStatus('🟣 Создан источник в (0,0,0)');
+    }
+
+    if (STATE.tracing.active) cancelTracingMode(false);
+
+    STATE.tracing.anchorNode = anchor;
+    STATE.tracing.chainLength = 0;
+
+    const ghostGeom = new THREE.SphereGeometry(VisualPipelins.d_node_base/2, 32, 32);
+    const ghostMat = new THREE.MeshBasicMaterial({
+        color: TRACING_COLORS.ghostNode, transparent: true, opacity: 0.55, depthTest: false,
+    });
+    const ghostNode = new THREE.Mesh(ghostGeom, ghostMat);
+    ghostNode.name = 'TracingGhostNode';
+    ghostNode.position.copy(anchor.position);
+    Engine.scene.add(ghostNode);
+
+    const ghostEdgeGeom = buildGhostEdgeGeometry(anchor, ghostNode);
+    const ghostEdgeMat = new THREE.MeshBasicMaterial({
+        color: TRACING_COLORS.ghostEdge, transparent: true, opacity: 0.45, depthTest: false,
+    });
+    const ghostEdge = new THREE.Mesh(ghostEdgeGeom, ghostEdgeMat);
+    ghostEdge.name = 'TracingGhostEdge';
+    Engine.scene.add(ghostEdge);
+
+    STATE.tracing.ghostNode = ghostNode;
+    STATE.tracing.ghostEdge = ghostEdge;
+    STATE.tracing.active = true;
+
+    transformControls.attach(ghostNode);
+    transformControls.setMode('translate');
+    transformControls.visible = true;
+
+    ghostNode.userData._onGizmoMove = () => {
+        ghostEdge.geometry.dispose();
+        ghostEdge.geometry = buildGhostEdgeGeometry(STATE.tracing.anchorNode, ghostNode);
+        const len = ghostNode.position.distanceTo(STATE.tracing.anchorNode.position);
+        Utils?.showStatus(`🎯 Участок ${len.toFixed(2)} м | Всего ${(STATE.tracing.chainLength + len).toFixed(2)} м | Enter — зафиксировать, Esc — отмена`);
+    };
+    ghostNode.userData._onGizmoMove();
+
+    Utils?.showStatus('🎯 Трассировка: тяните Gizmo, Enter — узел, Esc — отмена');
+}
+
+function buildGhostEdgeGeometry(fromNode, toNode) {
+    const path = new THREE.LineCurve3(fromNode.position.clone(), toNode.position.clone());
+    return new THREE.TubeGeometry(path, 32, VisualPipelins.d_pipe_base/2, 8, false);
+}
+
+function commitTracingNode() {
+    if (!STATE.tracing.active || !STATE.tracing.ghostNode) return;
+
+    const anchor = STATE.tracing.anchorNode;
+    const ghost = STATE.tracing.ghostNode;
+    const len = ghost.position.distanceTo(anchor.position);
+
+    if (len < 0.1) { Utils?.showStatus('⚠️ Слишком короткий участок'); return; }
+
+    const Node_Geometry = new THREE.SphereGeometry(VisualPipelins.d_node_base/2, 32, 32);
+    const Node_Material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+    const realNode = new Node_new(Node_Geometry, Node_Material, 'Node');
+    realNode.position.copy(ghost.position);
+    Engine.scene.add(realNode);
+
+    const pbDiameter = document.getElementById("pbDiameter");
+    const DN_tube = pbDiameter ? parseFloat(pbDiameter.selectedOptions[0].textContent) : 50;
+    const k_t = pbDiameter ? parseFloat(pbDiameter.selectedOptions[0].dataset.k_t) || 0.01 : 0.01;
+    const kvelocity = pbDiameter ? parseFloat(pbDiameter.selectedOptions[0].dataset.kvelocity) || 1.0 : 1.0;
+    const type_tube = document.getElementById("get_tube_pipe")?.selectedOptions[0]?.textContent || "Стальная";
+
+    const path = new THREE.LineCurve3(anchor.position.clone(), realNode.position.clone());
+    const pipeGeom = new THREE.TubeGeometry(path, 64, VisualPipelins.d_pipe_base/2, 12, false);
+    const pipeMat = new THREE.MeshBasicMaterial({ color: TRACING_COLORS.realEdge });
+    const realEdge = new Edge_new(pipeGeom, pipeMat, anchor, realNode, 'Edge', len, DN_tube, type_tube, k_t, kvelocity);
+
+    anchor.attach(realEdge);
+    realEdge.attach(realNode);
+    realEdge._ensureLabels?.();
+    realEdge._updateLabelsVisibility?.();
+    realEdge.createUI?.();
+
+    STATE.tracing.chainLength += len;
+    STATE.tracing.anchorNode = realNode;
+    Engine.selectedObject = realNode;
+
+    transformControls.detach();
+    Engine.scene.remove(ghost);
+    ghost.geometry.dispose();
+    ghost.material.dispose();
+    Engine.scene.remove(STATE.tracing.ghostEdge);
+    STATE.tracing.ghostEdge.geometry.dispose();
+    STATE.tracing.ghostEdge.material.dispose();
+
+    const newGhostGeom = new THREE.SphereGeometry(VisualPipelins.d_node_base/2, 32, 32);
+    const newGhostMat = new THREE.MeshBasicMaterial({
+        color: TRACING_COLORS.ghostNode, transparent: true, opacity: 0.55, depthTest: false,
+    });
+    const newGhost = new THREE.Mesh(newGhostGeom, newGhostMat);
+    newGhost.name = 'TracingGhostNode';
+    newGhost.position.copy(realNode.position);
+    Engine.scene.add(newGhost);
+
+    const newEdgeGeom = buildGhostEdgeGeometry(realNode, newGhost);
+    const newEdgeMat = new THREE.MeshBasicMaterial({
+        color: TRACING_COLORS.ghostEdge, transparent: true, opacity: 0.45, depthTest: false,
+    });
+    const newEdge = new THREE.Mesh(newEdgeGeom, newEdgeMat);
+    newEdge.name = 'TracingGhostEdge';
+    Engine.scene.add(newEdge);
+
+    STATE.tracing.ghostNode = newGhost;
+    STATE.tracing.ghostEdge = newEdge;
+
+    newGhost.userData._onGizmoMove = () => {
+        newEdge.geometry.dispose();
+        newEdge.geometry = buildGhostEdgeGeometry(realNode, newGhost);
+        const l = newGhost.position.distanceTo(realNode.position);
+        Utils?.showStatus(`🎯 Участок ${l.toFixed(2)} м | Всего ${(STATE.tracing.chainLength + l).toFixed(2)} м | Enter — зафиксировать`);
+    };
+    newGhost.userData._onGizmoMove();
+
+    transformControls.attach(newGhost);
+    transformControls.visible = true;
+
+    Engine.scene.updateMatrixWorld(true);
+    update_Node_XYZ();
+    updateTreeUI();
+    checkAllPipelines();
+
+    Utils?.showStatus(`✅ Узел создан (Y=${realNode.position.y.toFixed(2)} м). Тяните дальше.`);
+}
+
+function cancelTracingMode(showMessage = true) {
+    if (!STATE.tracing.active) return;
+    transformControls?.detach();
+    if (STATE.tracing.ghostNode) {
+        Engine.scene.remove(STATE.tracing.ghostNode);
+        STATE.tracing.ghostNode.geometry.dispose();
+        STATE.tracing.ghostNode.material.dispose();
+    }
+    if (STATE.tracing.ghostEdge) {
+        Engine.scene.remove(STATE.tracing.ghostEdge);
+        STATE.tracing.ghostEdge.geometry.dispose();
+        STATE.tracing.ghostEdge.material.dispose();
+    }
+    STATE.tracing.ghostNode = null;
+    STATE.tracing.ghostEdge = null;
+    STATE.tracing.anchorNode = null;
+    STATE.tracing.active = false;
+    STATE.tracing.chainLength = 0;
+    if (showMessage) Utils?.showStatus('❌ Трассировка отменена');
+}
+
+function toggleTracingMode() {
+    if (STATE.tracing.active) cancelTracingMode();
+    else startTracingMode();
+}
+
+// Экспорт в window
+window.toggleTracingMode = toggleTracingMode;
+window.startTracingMode = startTracingMode;
+window.commitTracingNode = commitTracingNode;
+window.cancelTracingMode = cancelTracingMode;
 
 // Экспортируем функцию инициализации глобально
 window.initContextMenu = initContextMenu;

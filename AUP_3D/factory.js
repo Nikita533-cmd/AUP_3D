@@ -86,7 +86,7 @@ export class Node_new extends THREE.Mesh {
       this.add(this._qLabel);
     }
     if (!this._elevLabel) {
-      this._elevLabel = this. _createElevSprite(this.Y_gl);
+      this._elevLabel = this._createElevSprite(this.Y_gl);
       this._elevLabel.name = 'ElevationLabel';
       this.add(this._elevLabel);
     }
@@ -258,7 +258,6 @@ export class Node_new extends THREE.Mesh {
     // Полная очистка памяти для Mesh
     if (this._elevLabel) { 
       this.remove(this._elevLabel); 
-      this._elevLabel.geometry.dispose(); 
       this._elevLabel.material.map.dispose(); 
       this._elevLabel.material.dispose(); 
       this._elevLabel = null; 
@@ -286,6 +285,49 @@ export class Node_new extends THREE.Mesh {
       group.add(shaft, head);
       this.add(group);
     }
+  }
+
+  // ============================================================================
+  // ПОДДЕРЖКА TRANSFORM CONTROLS (GIZMO)
+  // ============================================================================
+  onGizmoDragStart() {
+    if (this.material && this.material.emissive) {
+      this.userData._originalEmissive = this.material.emissive.getHex();
+      this.material.emissive.setHex(0x444444);
+    }
+  }
+
+  onGizmoDrag() {
+    this.update_Global();
+    if (typeof this._updateLabelTexts === 'function') {
+      this._updateLabelTexts();
+    }
+  }
+
+  onGizmoDragEnd() {
+    if (this.material && this.material.emissive && this.userData._originalEmissive !== undefined) {
+      this.material.emissive.setHex(this.userData._originalEmissive);
+    }
+    this.update_Global();
+    if (typeof this._updateLabelTexts === 'function') this._updateLabelTexts();
+    if (typeof this._updateLabelsVisibility === 'function') this._updateLabelsVisibility();
+    return true;
+  }
+
+  getWorldPositionSafe(target) {
+    return this.getWorldPosition(target || new THREE.Vector3());
+  }
+
+  setWorldPositionSafe(x, y, z) {
+    const parent = this.parent;
+    if (parent) {
+      const localPos = parent.worldToLocal(new THREE.Vector3(x, y, z));
+      this.position.copy(localPos);
+    } else {
+      this.position.set(x, y, z);
+    }
+    this.updateMatrixWorld(true);
+    this.update_Global();
   }
 }
 
@@ -679,19 +721,51 @@ export class Edge_new extends THREE.Mesh {
     this._dnLabel = null; this._qLabel = null; this._lLabel = null; this._vLabel = null; this._flowArrow = null;
   }
 
-    // ✅ Обратная совместимость: публичный createUI (вызывается из new.js)
+    // Обратная совместимость: публичный createUI (вызывается из new.js)
     createUI() {
         if (!this.uiGroup) this._createLengthUI();
         this.updateDOMValues();
     }
 
-    // ✅ Обратная совместимость: публичный updateResults
+    // Обратная совместимость: публичный updateResults
     updateResults(massflowrate, velocity) {
         this.massflowrate = massflowrate;
         this.velocity = velocity;
         if (this.uiGroup) this.updateDOMValues();
         else this._createLengthUI();
     }
+
+  // ============================================================================
+  // ПОДДЕРЖКА TRANSFORM CONTROLS (GIZMO) для труб
+  // ============================================================================
+  rebuildGeometry() {
+    if (!this.start_node || !this.end_node) return;
+
+    const s = new THREE.Vector3();
+    const e = new THREE.Vector3();
+    this.start_node.getWorldPosition(s);
+    this.end_node.getWorldPosition(e);
+
+    this.Length = s.distanceTo(e);
+
+    const localS = s.clone();
+    const localE = e.clone();
+    this.worldToLocal(localS);
+    this.worldToLocal(localE);
+
+    const path = new THREE.LineCurve3(localS, localE);
+    this.geometry.dispose();
+    this.geometry = new THREE.TubeGeometry(path, 64, VisualPipelins.d_pipe_base/2, 12, false);
+
+    if (typeof this._updateLabelTexts === 'function') this._updateLabelTexts();
+    if (typeof this.createFlowArrow === 'function') this.createFlowArrow();
+    if (typeof this._updateLabelsVisibility === 'function') this._updateLabelsVisibility();
+  }
+
+  onConnectedNodeMoved() {
+    this.rebuildGeometry();
+    return true;
+  }
 }
 
 // ============================================================================

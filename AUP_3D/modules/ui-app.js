@@ -74,8 +74,15 @@ export class UIApp {
     });
 
 
-    // document.getElementById("menuToggleCameraMode").onclick = () =>
-    //   this.scene.toggleCameraMode();
+    const btnTrace = document.getElementById("menuTracePipeline");
+    if (btnTrace) {
+        btnTrace.onclick = () => {
+            if (typeof window.toggleTracingMode === 'function') {
+                window.toggleTracingMode();
+                btnTrace.classList.toggle('active', STATE.tracing.active);
+            }
+        };
+    }
 
     const toggleConnBtn = document.getElementById("menuToggleConnectionPoints");
     if (toggleConnBtn)

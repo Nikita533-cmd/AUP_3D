@@ -3006,3 +3006,30 @@ button.close-btn:focus {
     width: 16px;
     height: 16px;
 }
+
+
+
+.gizmo-panel {
+    position: fixed; bottom: 20px; right: 20px; z-index: 9999;
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(15, 19, 121, 0.95); padding: 8px 12px;
+    border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    backdrop-filter: blur(10px);
+}
+.gizmo-panel-title {
+    color: rgba(255,255,255,0.7); font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px; margin-right: 6px;
+}
+.gizmo-mode-btn {
+    background: transparent; border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 5px; padding: 6px 8px; cursor: pointer; color: white;
+    display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+}
+.gizmo-mode-btn:hover { background: rgba(255,255,255,0.15); }
+.gizmo-mode-btn.active { background: #f30707; border-color: #f30707; box-shadow: 0 0 10px rgba(243,7,7,0.5); }
+.gizmo-hide-btn {
+    background: transparent; border: 1px solid rgba(211,47,47,0.5);
+    border-radius: 5px; padding: 6px 8px; cursor: pointer; color: #ff6b6b;
+    display: flex; align-items: center; justify-content: center; margin-left: 6px;
+}
+.gizmo-hide-btn:hover { background: rgba(211,47,47,0.3); color: white; }
