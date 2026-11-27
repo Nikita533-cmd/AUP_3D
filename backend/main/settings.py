@@ -15,9 +15,10 @@ DEBUG = os.getenv("DEBUG", "true").lower() == "true"
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", 'localhost, 192.168.1.113, 127.0.0.1').split(', ')
 
 CSRF_TRUSTED_ORIGINS = [
-    "http://127.0.0.1:8000",
+    "http://127.0.0.1:8001",
     "http://localhost:8000",
 ]
+# CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", 'http://127.0.0.1:8000').split(', ')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -46,11 +47,11 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'main.urls'
-
+TEMPLATES_DIR = BASE_DIR / 'templates'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': (TEMPLATES_DIR,),
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -156,4 +157,13 @@ REST_FRAMEWORK = {
         'rest_framework.filters.SearchFilter',
     ],
     'URL_FORMAT_OVERRIDE': None,
+}
+
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.ManifestStaticFilesStorage",
+    },
 }

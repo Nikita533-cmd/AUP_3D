@@ -10,6 +10,7 @@ import { clearSceneForLoad } from "./new.js";
 import { STATE, Utils, VisualPipelins } from "./state.js";
 import { Edge_new, Node_new } from './factory.js';
 
+import { SaveResults } from './api_module.js';
 // getTubeTypes
 
 
@@ -174,7 +175,7 @@ async function get__Results() {
     });
 }
 
-async function exportToJSON() {
+export async function exportToJSON() {
     const Data_base = {
         Node: [],
         Edge: [],

@@ -76,7 +76,7 @@ export async function GetResults() {
   return data;                        // это и есть «возвращаемые данные», но внутри Promise
 }
 
-async function SaveResults(body) {
+export async function SaveResults(body) {
   const response = await fetch('/api/results/', {
     // headers: {
     //   'Accept': 'application/json',

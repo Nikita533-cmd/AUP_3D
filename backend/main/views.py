@@ -20,6 +20,11 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from .serializers import ALlSerializer
+from django.shortcuts import render
+
+
+def start(request):
+    return render(request, 'index.html')
 
 @api_view(['POST'])
 def new(request):

@@ -1,6 +1,7 @@
 // ============================================================
 // factory.js — Фабрика и классы 3D-объектов с инкапсулированными метками
 // ============================================================
+
 import * as THREE from "three";
 import { CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
 import { AXES_SETTINGS, CONFIG, STATE, VisualPipelins } from "./state.js";

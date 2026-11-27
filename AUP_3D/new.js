@@ -7,7 +7,7 @@ import { STATE, Utils, VisualPipelins } from "./state.js";
 import { get_load_pbDiameter } from './check_input.js';
 import { checkAllPipelines } from './collision.js';
 import { World } from './world.js';
-
+import { exportToJSON } from './check_input.js';
 
 
 // ============================================================================
@@ -1348,47 +1348,47 @@ function visualizeResults(result) {
 // ============================================================================
 
 // 5.1. Улучшенное сохранение (ваша функция, немного доработанная для надежности)
-function exportToJSON() {
-    const Data_base = {
-        Node: [],
-        Edge: [],
-        PRESSURE_TARGET: 19.17
-    };
+// function exportToJSON() {
+//     const Data_base = {
+//         Node: [],
+//         Edge: [],
+//         PRESSURE_TARGET: 19.17
+//     };
     
-    Engine.scene.traverse((child) => {    
-        if (typeof child.add_list === 'function') {
-            if (child.type === 'Edge' || child.isEdgeGroup) {
-                const edge = child.isEdgeGroup ? child.children.find(m => m.name === 'thickPipe') : child;
-                if (edge && typeof edge.add_list === 'function') {
-                    Data_base.Edge.push(edge.add_list());
-                }
-            } else {
-                Data_base.Node.push(child.add_list());
-            }
-        }       
-    });
+//     Engine.scene.traverse((child) => {    
+//         if (typeof child.add_list === 'function') {
+//             if (child.type === 'Edge' || child.isEdgeGroup) {
+//                 const edge = child.isEdgeGroup ? child.children.find(m => m.name === 'thickPipe') : child;
+//                 if (edge && typeof edge.add_list === 'function') {
+//                     Data_base.Edge.push(edge.add_list());
+//                 }
+//             } else {
+//                 Data_base.Node.push(child.add_list());
+//             }
+//         }       
+//     });
     
-    const jsonString = JSON.stringify(Data_base, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
+//     const jsonString = JSON.stringify(Data_base, null, 2);
+//     const blob = new Blob([jsonString], { type: 'application/json' });
+//     const url = URL.createObjectURL(blob);
     
-    const link = document.createElement('a');
-    link.href = url;
-    // Имя файла с текущей датой и временем
-    const date = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-    link.download = `AUP_Project_${date}.json`;
+//     const link = document.createElement('a');
+//     link.href = url;
+//     // Имя файла с текущей датой и временем
+//     const date = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+//     link.download = `AUP_Project_${date}.json`;
     
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+//     document.body.appendChild(link);
+//     link.click();
+//     document.body.removeChild(link);
+//     URL.revokeObjectURL(url);
     
-    if (typeof Utils !== 'undefined' && Utils.showStatus) {
-        Utils.showStatus('Проект успешно сохранен');
-    } else {
-        console.log("Проект успешно сохранен");
-    }
-}
+//     if (typeof Utils !== 'undefined' && Utils.showStatus) {
+//         Utils.showStatus('Проект успешно сохранен');
+//     } else {
+//         console.log("Проект успешно сохранен");
+//     }
+// }
 
 // 5.2. Функция полной очистки сцены перед загрузкой
 export function clearSceneForLoad() {

@@ -8,3 +8,4 @@ docker compose up -d
 
   docker build --no-cache -t aup_3d-1-gateway .
 docker build --no-cache -t aup_3d-gateway-1 .
+

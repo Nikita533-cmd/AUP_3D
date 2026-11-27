@@ -1,7 +1,8 @@
 import logging
+import uuid
 from decimal import Decimal
 from typing import List
-import uuid
+
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
@@ -73,7 +74,12 @@ class Sprinkler(models.Model):
     groups = ArrayField(
         verbose_name="Группы помещений", base_field=models.CharField(max_length=255), blank=True, null=True
     )
-
+    # groups = models.JSONField(
+    #     verbose_name="Группы помещений",
+    #     default=list,
+    #     blank=True,
+    #     null=True,
+    # )
     k0 = models.DecimalField("коэффициент k0", default=0, max_digits=5, decimal_places=4, null=True, blank=True)
     k1 = models.DecimalField("коэффициент k1", default=0, max_digits=5, decimal_places=4, null=True, blank=True)
     k2 = models.DecimalField("коэффициент k2", default=0, max_digits=5, decimal_places=4, null=True, blank=True)

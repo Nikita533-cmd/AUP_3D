@@ -36,7 +36,7 @@ services:
     volumes:
       - static:/staticfiles
       - media:/media
-      - ./AUP_3D:/staticfiles
+      # - ./AUP_3D:/staticfiles
     depends_on:
       - backend
       - aup_3d

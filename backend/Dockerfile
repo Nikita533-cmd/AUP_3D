@@ -5,7 +5,7 @@ ENV PYTHONUNBUFFERED=1
 RUN mkdir -p /app 
 WORKDIR /app
 RUN pip install django-import-export
-RUN pip install  gunicorn
+RUN pip install gunicorn
 
 COPY requirements.txt .
 RUN pip install -r requirements.txt 
